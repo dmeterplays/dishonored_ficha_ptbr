@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ficha de Personagem — Dishonored RPG</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Crimson+Text:wght@400;600&display=swap');
+
+:root{
+  --bg-dark:#14181c;
+  --panel:#1d2329;
+  --panel-2:#232a31;
+  --ink:#e7e0ce;
+  --gold:#b9975b;
+  --gold-dim:#7a6238;
+  --rust:#8a3324;
+  --void:#3b6e63;
+  --line:#3a4149;
+}
+
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  background:
+    radial-gradient(circle at 20% 10%, #1c2229 0%, transparent 45%),
+    var(--bg-dark);
+  color:var(--ink);
+  font-family:'Crimson Text', serif;
+  padding:32px 16px 80px;
+}
+
+.sheet{
+  max-width:900px;
+  margin:0 auto;
+  border:1px solid var(--line);
+  background:var(--panel);
+  box-shadow:0 0 0 1px #000, 0 20px 60px rgba(0,0,0,.5);
+}
+
+header.title-block{
+  padding:28px 32px 20px;
+  border-bottom:1px solid var(--gold-dim);
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  flex-wrap:wrap;
+  gap:12px;
+}
+header.title-block h1{
+  font-family:'Cinzel', serif;
+  font-size:1.6rem;
+  letter-spacing:.08em;
+  color:var(--gold);
+  margin:0;
+  text-transform:uppercase;
+}
+header.title-block .sub{
+  font-size:.85rem;
+  color:#8b8f94;
+  letter-spacing:.04em;
+}
+
+.label{
+  font-family:'Cinzel', serif;
+  font-size:.68rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--gold);
+  display:block;
+  margin-bottom:4px;
+}
+
+input[type=text], textarea{
+  width:100%;
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  color:var(--ink);
+  font-family:'Crimson Text', serif;
+  font-size:1rem;
+  padding:8px 10px;
+  border-radius:2px;
+}
+input[type=text]:focus, textarea:focus{outline:1px solid var(--gold-dim);}
+
+.info-grid{
+  display:grid;
+  grid-template-columns:2fr 1fr 1fr;
+  gap:16px;
+  padding:20px 32px;
+  border-bottom:1px solid var(--line);
+}
+.info-grid .full{grid-column:1/-1;}
+
+section{padding:24px 32px;border-bottom:1px solid var(--line);}
+section h2{
+  font-family:'Cinzel', serif;
+  font-size:.95rem;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--gold);
+  margin:0 0 16px;
+  border-left:3px solid var(--rust);
+  padding-left:10px;
+}
+
+/* Estresse */
+.stress-controls{
+  display:flex;gap:24px;flex-wrap:wrap;align-items:flex-end;margin-bottom:16px;
+}
+.stress-controls .field{display:flex;flex-direction:column;gap:4px;}
+.stress-controls input[type=number]{
+  width:70px;text-align:center;
+  background:var(--panel-2);border:1px solid var(--line);
+  color:var(--gold);font-family:'Cinzel',serif;font-weight:700;
+  font-size:1rem;padding:6px;
+}
+.stress-row{display:flex;flex-wrap:wrap;gap:8px;}
+.stress-box{
+  width:30px;height:30px;
+  border:1px solid var(--gold-dim);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;
+  font-size:.7rem;color:#666;
+  background:var(--panel-2);
+  transition:.15s;
+  user-select:none;
+}
+.stress-box.checked{
+  background:var(--rust);
+  border-color:var(--rust);
+  color:#fff;
+}
+
+.dual-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;}
+@media (max-width:640px){.dual-grid{grid-template-columns:1fr;}}
+
+.stat-row{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;
+  padding:6px 0;border-bottom:1px dashed var(--line);
+}
+.stat-row:last-child{border-bottom:none;}
+.stat-row .name-input{
+  flex:1;
+  background:transparent;
+  border:none;
+  border-bottom:1px solid transparent;
+  color:var(--ink);
+  font-family:'Crimson Text', serif;
+  font-size:.95rem;
+  padding:2px 0;
+}
+.stat-row .name-input:focus{
+  outline:none;
+  border-bottom:1px solid var(--gold-dim);
+}
+.stat-row input[type=number]{
+  width:56px;text-align:center;
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  color:var(--gold);
+  font-family:'Cinzel', serif;
+  font-weight:700;
+  font-size:1rem;
+  padding:4px;
+  flex-shrink:0;
+}
+.remove-btn{
+  background:none;border:1px solid var(--line);color:#888;
+  width:24px;height:24px;line-height:1;cursor:pointer;flex-shrink:0;
+  border-radius:2px;font-size:.85rem;
+}
+.remove-btn:hover{border-color:var(--rust);color:var(--rust);}
+.add-btn{
+  margin-top:10px;
+  background:none;border:1px dashed var(--gold-dim);color:var(--gold);
+  padding:6px 14px;cursor:pointer;font-family:'Cinzel',serif;
+  font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;
+  border-radius:2px;
+}
+.add-btn:hover{background:var(--panel-2);}
+
+.counters{display:flex;gap:32px;flex-wrap:wrap;}
+.counter-block{text-align:center;}
+.counter-block input{
+  width:64px;text-align:center;font-size:1.4rem;
+  background:var(--panel-2);border:1px solid var(--gold-dim);
+  color:var(--gold);font-family:'Cinzel',serif;padding:6px;
+}
+.counter-block .label{margin-top:6px;margin-bottom:0;}
+
+.roller{
+  display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  padding:18px;margin-top:18px;
+}
+.roller .field{display:flex;flex-direction:column;gap:4px;}
+.roller select, .roller input[type=number]{
+  background:#161b20;border:1px solid var(--line);color:var(--ink);
+  padding:6px 8px;font-family:'Crimson Text',serif;
+}
+.roller button{
+  background:var(--rust);color:#fff;border:none;
+  font-family:'Cinzel',serif;letter-spacing:.08em;
+  padding:9px 18px;cursor:pointer;text-transform:uppercase;font-size:.8rem;
+}
+.roller button:hover{background:#a5402d;}
+#resultado{
+  margin-top:14px;padding:12px 16px;background:#161b20;
+  border-left:3px solid var(--void);font-size:.95rem;min-height:20px;
+}
+
+.textareas{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media (max-width:640px){.textareas{grid-template-columns:1fr;}}
+textarea{min-height:110px;resize:vertical;line-height:1.4;}
+
+footer{
+  text-align:center;padding:18px;font-size:.75rem;color:#666;
+  letter-spacing:.05em;
+}
+
+.save-bar{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  font-size:.75rem;color:#8b8f94;
+}
+#save-status{
+  letter-spacing:.04em;
+  transition:color .2s;
+}
+.mini-btn{
+  background:none;border:1px solid var(--gold-dim);color:var(--gold);
+  padding:5px 10px;cursor:pointer;font-family:'Cinzel',serif;
+  font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;
+  border-radius:2px;
+}
+.mini-btn:hover{background:var(--panel-2);}
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <header class="title-block">
+    <h1>Dishonored RPG</h1>
+    <div class="sub">Ficha de Personagem — traduzida por João</div>
+    <div class="save-bar">
+      <span id="save-status">Salvo neste dispositivo</span>
+      <button class="mini-btn" onclick="exportarFicha()">⭳ Exportar cópia</button>
+      <button class="mini-btn" onclick="document.getElementById('import-file').click()">⭱ Importar cópia</button>
+      <input type="file" id="import-file" accept=".json" style="display:none">
+    </div>
+  </header>
+
+  <div class="info-grid">
+    <div><span class="label">Nome</span><input type="text" id="nome"></div>
+    <div><span class="label">Idade</span><input type="text" id="idade"></div>
+    <div><span class="label">Arquétipo</span><input type="text" id="arquetipo"></div>
+    <div class="full"><span class="label">Primeira Verdade</span><input type="text" id="verdade1"></div>
+    <div class="full"><span class="label">Segunda Verdade</span><input type="text" id="verdade2"></div>
+  </div>
+
+  <section>
+    <h2>Estresse</h2>
+    <div class="stress-controls">
+      <div class="field">
+        <span class="label">Estresse Atual</span>
+        <input type="number" id="stress-atual" value="0" min="0" max="12">
+      </div>
+      <div class="field">
+        <span class="label">Estresse Máximo</span>
+        <input type="number" id="stress-max" value="12" min="1" max="20">
+      </div>
+    </div>
+    <div class="stress-row" id="stress-row"></div>
+  </section>
+
+  <section>
+    <div class="dual-grid">
+      <div>
+        <h2>Perícias</h2>
+        <div id="skills"></div>
+        <button class="add-btn" onclick="addRow('skills','skill')">+ Adicionar Perícia</button>
+      </div>
+      <div>
+        <h2>Estilos</h2>
+        <div id="styles"></div>
+        <button class="add-btn" onclick="addRow('styles','style')">+ Adicionar Estilo</button>
+      </div>
+    </div>
+
+    <div class="roller">
+      <div class="field">
+        <span class="label">Perícia</span>
+        <select id="sel-skill"></select>
+      </div>
+      <div class="field">
+        <span class="label">Estilo</span>
+        <select id="sel-style"></select>
+      </div>
+      <div class="field">
+        <span class="label">Foco</span>
+        <input type="number" id="foco" value="1" min="1" max="8" style="width:60px">
+      </div>
+      <div class="field">
+        <span class="label">Nº de Dados</span>
+        <select id="num-dados">
+          <option value="2">2d20</option>
+          <option value="3">3d20</option>
+          <option value="4">4d20</option>
+          <option value="5">5d20</option>
+        </select>
+      </div>
+      <button onclick="rolar()">Rolar</button>
+    </div>
+    <div id="resultado"></div>
+  </section>
+
+  <section>
+    <h2>Recursos</h2>
+    <div class="counters">
+      <div class="counter-block">
+        <input type="number" id="momentum" value="0" min="0" max="6">
+        <span class="label">Momentum</span>
+      </div>
+      <div class="counter-block">
+        <input type="number" id="void" value="0" min="0" max="3">
+        <span class="label">Pontos do Vazio</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Anotações</h2>
+    <div class="textareas">
+      <div><span class="label">Contatos</span><textarea id="nota-contatos"></textarea></div>
+      <div><span class="label">Focos</span><textarea id="nota-focos"></textarea></div>
+      <div><span class="label">Talentos</span><textarea id="nota-talentos"></textarea></div>
+      <div><span class="label">Pertences</span><textarea id="nota-pertences"></textarea></div>
+      <div><span class="label">Poderes</span><textarea id="nota-poderes"></textarea></div>
+      <div><span class="label">Notas Gerais</span><textarea id="nota-gerais"></textarea></div>
+    </div>
+  </section>
+
+  <footer>Baseado no sistema Modiphius 2d20 — adaptado para uso pessoal</footer>
+</div>
+
+<script>
+let rowCounter = 0;
+
+// Perícias e Estilos oficiais do sistema Dishonored 2d20
+let skills = [
+  {id:"fight", label:"Lutar", value:4},
+  {id:"move", label:"Mover", value:4},
+  {id:"study", label:"Estudar", value:4},
+  {id:"survive", label:"Sobreviver", value:4},
+  {id:"talk", label:"Falar", value:4},
+  {id:"tinker", label:"Consertar", value:4}
+];
+let styles = [
+  {id:"boldly", label:"Ousadamente", value:4},
+  {id:"carefully", label:"Cuidadosamente", value:4},
+  {id:"cleverly", label:"Habilmente", value:4},
+  {id:"forcefully", label:"Forçosamente", value:4},
+  {id:"quietly", label:"Silenciosamente", value:4},
+  {id:"swiftly", label:"Rapidamente", value:4}
+];
+
+function buildStatBlock(containerId, list){
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  list.forEach(item=>{
+    const row = document.createElement('div');
+    row.className='stat-row';
+    row.dataset.uid = item.uid;
+    row.innerHTML = `
+      <input type="text" class="name-input" value="${item.label}" data-role="name">
+      <input type="number" value="${item.value}" min="4" max="8" data-role="value">
+      <button class="remove-btn" title="Remover" onclick="removeRow('${containerId}','${item.uid}')">×</button>
+    `;
+    el.appendChild(row);
+  });
+  refreshRollerOptions();
+}
+
+function assignUids(list, prefix){
+  list.forEach(item=>{
+    if(!item.uid){ item.uid = prefix + (++rowCounter); }
+  });
+}
+
+function syncFromDOM(containerId, list){
+  const el = document.getElementById(containerId);
+  const rows = el.querySelectorAll('.stat-row');
+  rows.forEach((row, i)=>{
+    const nameInput = row.querySelector('[data-role="name"]');
+    const valueInput = row.querySelector('[data-role="value"]');
+    if(list[i]){
+      list[i].label = nameInput.value;
+      list[i].value = parseInt(valueInput.value) || 4;
+    }
+  });
+}
+
+function addRow(containerId, kind){
+  const list = kind === 'skill' ? skills : styles;
+  syncFromDOM(containerId, list);
+  const newItem = {label: kind === 'skill' ? 'Nova Perícia' : 'Novo Estilo', value:4};
+  assignUids([newItem], kind);
+  list.push(newItem);
+  buildStatBlock(containerId, list);
+}
+
+function removeRow(containerId, uid){
+  const list = containerId === 'skills' ? skills : styles;
+  syncFromDOM(containerId, list);
+  const idx = list.findIndex(i=>i.uid===uid);
+  if(idx > -1) list.splice(idx,1);
+  buildStatBlock(containerId, list);
+}
+
+assignUids(skills, 'skill');
+assignUids(styles, 'style');
+buildStatBlock('skills', skills);
+buildStatBlock('styles', styles);
+
+// keep model in sync live as user types (so roller/dropdowns stay correct)
+document.addEventListener('input', (e)=>{
+  if(e.target.closest('#skills')){ syncFromDOM('skills', skills); }
+  if(e.target.closest('#styles')){ syncFromDOM('styles', styles); }
+  if(e.target.matches('[data-role="name"]')){ refreshRollerOptions(); }
+});
+
+function refreshRollerOptions(){
+  const selSkill = document.getElementById('sel-skill');
+  const selStyle = document.getElementById('sel-style');
+  const prevSkill = selSkill.value;
+  const prevStyle = selStyle.value;
+  selSkill.innerHTML = '';
+  skills.forEach(item=>{
+    const o = document.createElement('option');
+    o.value = item.uid; o.textContent = item.label;
+    selSkill.appendChild(o);
+  });
+  selStyle.innerHTML = '';
+  styles.forEach(item=>{
+    const o = document.createElement('option');
+    o.value = item.uid; o.textContent = item.label;
+    selStyle.appendChild(o);
+  });
+  if([...selSkill.options].some(o=>o.value===prevSkill)) selSkill.value = prevSkill;
+  if([...selStyle.options].some(o=>o.value===prevStyle)) selStyle.value = prevStyle;
+}
+
+// Estresse: caixas geradas a partir do máximo, refletindo o valor atual
+const stressAtualInput = document.getElementById('stress-atual');
+const stressMaxInput = document.getElementById('stress-max');
+const stressRow = document.getElementById('stress-row');
+
+function buildStressBoxes(){
+  const max = Math.max(1, parseInt(stressMaxInput.value) || 12);
+  const atual = Math.min(parseInt(stressAtualInput.value) || 0, max);
+  stressAtualInput.value = atual;
+  stressAtualInput.max = max;
+
+  stressRow.innerHTML = '';
+  for(let i=1;i<=max;i++){
+    const box = document.createElement('div');
+    box.className = 'stress-box' + (i <= atual ? ' checked' : '');
+    box.dataset.index = i;
+    box.onclick = ()=>{
+      const clicked = parseInt(box.dataset.index);
+      const current = parseInt(stressAtualInput.value) || 0;
+      // clicar numa caixa já marcada reduz o estresse até ali; clicar numa vazia aumenta até ali
+      stressAtualInput.value = (clicked === current) ? clicked - 1 : clicked;
+      buildStressBoxes();
+    };
+    stressRow.appendChild(box);
+  }
+}
+stressAtualInput.addEventListener('input', buildStressBoxes);
+stressMaxInput.addEventListener('input', buildStressBoxes);
+buildStressBoxes();
+
+function rolar(){
+  const skillItem = skills.find(s=>s.uid === document.getElementById('sel-skill').value);
+  const styleItem = styles.find(s=>s.uid === document.getElementById('sel-style').value);
+  const skillVal = skillItem ? skillItem.value : 4;
+  const styleVal = styleItem ? styleItem.value : 4;
+  const foco = parseInt(document.getElementById('foco').value);
+  const numDados = parseInt(document.getElementById('num-dados').value);
+  const alvo = skillVal + styleVal;
+
+  let sucessos = 0;
+  let rolls = [];
+  for(let i=0;i<numDados;i++){
+    const r = Math.floor(Math.random()*20)+1;
+    rolls.push(r);
+    if(r <= foco) sucessos += 2;
+    else if(r <= alvo) sucessos += 1;
+  }
+
+  const nome = document.getElementById('nome').value || 'Personagem';
+  document.getElementById('resultado').innerHTML =
+    `<strong>${nome}</strong> — Alvo: ${alvo} · Foco: ${foco}<br>`+
+    `Dados rolados: [${rolls.join(', ')}]<br>`+
+    `<strong>Sucessos: ${sucessos}</strong>`;
+}
+
+/* ---------------- Salvar / Exportar / Importar ---------------- */
+
+const STORAGE_KEY = 'dishonored-ficha-v1';
+const textareaIds = ['nota-contatos','nota-focos','nota-talentos','nota-pertences','nota-poderes','nota-gerais'];
+
+function coletarEstado(){
+  syncFromDOM('skills', skills);
+  syncFromDOM('styles', styles);
+  const notas = {};
+  textareaIds.forEach(id => notas[id] = document.getElementById(id).value);
+  return {
+    nome: document.getElementById('nome').value,
+    idade: document.getElementById('idade').value,
+    arquetipo: document.getElementById('arquetipo').value,
+    verdade1: document.getElementById('verdade1').value,
+    verdade2: document.getElementById('verdade2').value,
+    stressAtual: document.getElementById('stress-atual').value,
+    stressMax: document.getElementById('stress-max').value,
+    momentum: document.getElementById('momentum').value,
+    void: document.getElementById('void').value,
+    skills: skills.map(s => ({label:s.label, value:s.value})),
+    styles: styles.map(s => ({label:s.label, value:s.value})),
+    notas
+  };
+}
+
+function aplicarEstado(estado){
+  if(!estado) return;
+  document.getElementById('nome').value = estado.nome || '';
+  document.getElementById('idade').value = estado.idade || '';
+  document.getElementById('arquetipo').value = estado.arquetipo || '';
+  document.getElementById('verdade1').value = estado.verdade1 || '';
+  document.getElementById('verdade2').value = estado.verdade2 || '';
+  document.getElementById('momentum').value = estado.momentum ?? 0;
+  document.getElementById('void').value = estado.void ?? 0;
+
+  if(Array.isArray(estado.skills) && estado.skills.length){
+    skills = estado.skills.map(s => ({...s}));
+    assignUids(skills, 'skill');
+  }
+  if(Array.isArray(estado.styles) && estado.styles.length){
+    styles = estado.styles.map(s => ({...s}));
+    assignUids(styles, 'style');
+  }
+  buildStatBlock('skills', skills);
+  buildStatBlock('styles', styles);
+
+  if(estado.notas){
+    textareaIds.forEach(id => {
+      if(estado.notas[id] !== undefined) document.getElementById(id).value = estado.notas[id];
+    });
+  }
+
+  document.getElementById('stress-max').value = estado.stressMax ?? 12;
+  document.getElementById('stress-atual').value = estado.stressAtual ?? 0;
+  buildStressBoxes();
+}
+
+let saveTimeout = null;
+function salvarLocal(){
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(()=>{
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(coletarEstado()));
+      const status = document.getElementById('save-status');
+      status.textContent = 'Salvo neste dispositivo ✓';
+      status.style.color = 'var(--gold)';
+      setTimeout(()=>{ status.textContent = 'Salvo neste dispositivo'; status.style.color=''; }, 1500);
+    }catch(e){
+      console.error('Falha ao salvar localmente:', e);
+    }
+  }, 400);
+}
+
+function carregarLocal(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) aplicarEstado(JSON.parse(raw));
+  }catch(e){
+    console.error('Falha ao carregar ficha salva:', e);
+  }
+}
+
+function exportarFicha(){
+  const estado = coletarEstado();
+  const blob = new Blob([JSON.stringify(estado, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const nomeArq = (estado.nome || 'personagem').trim().replace(/[^a-z0-9áàâãéêíóôõúç\-_ ]/gi,'').replace(/\s+/g,'_') || 'personagem';
+  a.href = url;
+  a.download = `ficha_dishonored_${nomeArq}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+document.getElementById('import-file').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const estado = JSON.parse(reader.result);
+      aplicarEstado(estado);
+      salvarLocal();
+    }catch(err){
+      alert('Não foi possível ler este arquivo. Verifique se é um export válido desta ficha.');
+    }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+});
+
+// Autosave: qualquer alteração na ficha dispara o salvamento local
+document.addEventListener('input', salvarLocal);
+document.addEventListener('click', (e)=>{
+  if(e.target.classList.contains('stress-box')) salvarLocal();
+});
+
+// Carrega dados salvos anteriormente neste dispositivo/navegador, se existirem
+carregarLocal();
+</script>
+</body>
+</html>

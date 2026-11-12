@@ -25,7 +25,17 @@ const translations={
 'Footwork':'Jogo de pés','Self-made':'Por conta própria','Fieldcraft':'Conhecimento de campo','Forager':'Coletor','Trapper':'Armadilheiro','Surveyor':'Agrimensor','Rally':'Reagrupar','Marketeer negro':'Comerciante do mercado negro',
 'March of the Brave':'Marcha dos Bravos','Cautious Tune':'Melodia Cautelosa','Nil Whispers':'Sussurros do Nada','Stinging Whistle':'Assobio Cortante','Darkened Edges':'Bordas Escurecidas',
 'Rock\'s Rumble':'Estrondo da Rocha','Void\'s Seedling':'Semente do Vazio','Wrathful Scream':'Grito Furioso','Song of Inspiration':'Canção da Inspiração','Kinseeker':'Buscador de Parentes','Arpejo rápido':'Arpejo Rápido','Chamado do Camaleão':'Chamado do Camaleão','Blink':'Piscar',
-'Into the Void':'No Vazio','Vazio':'Vazio'};
+'Into the Void':'No Vazio','Vazio':'Vazio',
+'Puxar classificação':'Valer-se da patente','Carga de ombro':'Investida de ombro','Recuperação de peças':'Reaproveitar peças',
+'Anotações pessoais':'Anotações pessoais','Primeiro olhar':'Primeira impressão','Footwork':'Jogo de pés',
+'Self-made':'Por conta própria','Marketeer negro':'Negociante do mercado negro','Fieldcraft':'Técnicas de campo',
+'Forager':'Coleta de recursos','Surveyor':'Topógrafo','Trapper':'Especialista em armadilhas',
+'Wrathful Scream':'Grito de fúria','Song of Inspiration':'Canção da inspiração','March of the Brave':'Marcha dos corajosos',
+'Nil Whispers':'Sussurros do Nada','Stinging Whistle':'Assobio penetrante',
+'Void\'s Seedling':'Semente do Vazio','Darkened Edges':'Bordas escurecidas',
+'Kinseeker':'Busca familiar','Rock\'s Rumble':'Estrondo das rochas',
+'Crescendo sedento de sangue':'Crescendo sanguinário','Arpejo rápido':'Arpejo veloz',
+'Longo alcance':'Alcance longo','Piscar (Blink)':'Piscar'};
 const translateName=name=>translations[name]||name;
 const glossary={
 'Qualidades':{short:'Regras especiais da arma',detail:'Além do dano, uma arma pode ter uma ou mais qualidades que mudam como ela é usada. Por exemplo, Bagunçado gera 1 de Caos por ataque; Alcance define a distância; Desajeitado aumenta a dificuldade.',source:'Livro, capítulo 6, páginas 83–84'},
@@ -92,6 +102,11 @@ else if(page==='amuletos')entries=bonecharms;
 else if(page==='poderes')entries=powers;
 else if(page==='pericias')entries=[...skills.map(x=>({...x,tipo:'Perícia'})),...styles.map(x=>({...x,tipo:'Estilo'}))];
 else if(page==='loja')entries=items;
+// Dicas rápidas disponíveis em todas as seções, sem abrir a ficha ou consultar outro site.
+const helpRow=make('div','','catalog-help-row');helpRow.append(make('span','Dúvidas sobre as regras?','muted'));
+const recommended=page==='loja'?['Qualidades','Dano','Bagunçado','Proteção']:page==='arquetipos'?['Arquétipo','Perícia','Estilo','Foco','XP']:page==='poderes'?['Pontos do Vazio','Verdade','Caos']:page==='pericias'?['Perícia','Estilo','Foco','Momentum']:['Pontos do Vazio','Verdade','Caos'];
+for(const term of recommended){const chip=make('span','', 'help-chip');chip.append(make('span',term),helpButton(term));helpRow.appendChild(chip)}
+$('results').before(helpRow);
 const filter=$('category-filter');
 const types=page==='amuletos'?[...new Set(entries.map(e=>e.tipo))]:page==='poderes'?[...new Set(entries.map(e=>e.tipo))]:page==='pericias'?['Perícia','Estilo']:page==='loja'?[...new Set(entries.map(e=>e.categoria))]:[];
 if(types.length){for(const type of types){const o=make('option',type);o.value=type;filter.appendChild(o)}}else filter.style.display='none';

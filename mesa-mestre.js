@@ -2,7 +2,7 @@
 const $=id=>document.getElementById(id);
 const make=(tag,text,cls)=>{const x=document.createElement(tag);if(text!==undefined&&text!==null)x.textContent=String(text);if(cls)x.className=cls;return x};
 const sections={povo_comum:'O Povo Comum',nobreza:'A Nobreza',selvagens:'O Selvagem',notorios:'O Notório'};
-const tiers={menor:'Menor',notavel:'Notável',principal:'Principal'};
+const tiers={incidental:'Incidental',menor:'Menor',notavel:'Notável',principal:'Principal'};
 const skills=['Lutar','Mover','Estudar','Sobreviver','Falar','Consertar'];
 const styles=['Ousadamente','Cuidadosamente','Habilmente','Forçosamente','Silenciosamente','Rapidamente'];
 export function initMasterEditor({db,roomId,onSaved,getCatalog}){
@@ -67,7 +67,7 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog}){
   paired(ident,put('gm-truth','Verdade / característica',sheet.verdade1||''),put('gm-truth2','Segunda Verdade',sheet.verdade2||''));
   const story=make('textarea');story.id='gm-background';story.value=sheet.background||'';const storyLabel=make('label','Histórico e observações');storyLabel.htmlFor=story.id;ident.append(storyLabel,story);root.append(ident);
   const resources=section('Estresse e recursos');
-  paired(resources,put('gm-stress','Estresse atual',sheet.stressAtual??0,'number',1000),put('gm-stressmax',npc&&working.tier==='menor'?'Trilha (0 = derrotado com ataque)':'Estresse máximo',sheet.stressMax??12,'number',1000));
+  paired(resources,put('gm-stress','Estresse atual',sheet.stressAtual??0,'number',1000),put('gm-stressmax',npc&&['menor','incidental'].includes(working.tier)?'Trilha (0 = derrotado com ataque)':'Estresse máximo',sheet.stressMax??12,'number',1000));
   if(npc){
    paired(resources,put('gm-void','Pontos do Vazio',sheet.void??0,'number',20),put('gm-momentum','Momentum',sheet.momentum??0,'number',50));
   }else{
@@ -183,7 +183,7 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog}){
   sheet.ataques=$('gm-attack-text').value;
   sheet.regrasEspeciais=$('gm-special-text').value;
   sheet.notas={...(sheet.notas||{}),'nota-focos':sheet.focos,'nota-poderes':$('gm-power-text').value,'nota-talentos':$('gm-talent-text').value};
-  if(npc){sheet.void=readNum('gm-void',0,20);sheet.momentum=readNum('gm-momentum',0,50);sheet.defeated_on_success=$('gm-tier').value==='menor';}
+  if(npc){sheet.void=readNum('gm-void',0,20);sheet.momentum=readNum('gm-momentum',0,50);sheet.defeated_on_success=['menor','incidental'].includes($('gm-tier').value);}
   else{sheet.arquetipo=$('gm-archetype').value.trim();sheet.gmInventory=structuredClone(inventory);}
   return {name,sheet};
  }

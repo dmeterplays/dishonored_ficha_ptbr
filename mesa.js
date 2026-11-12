@@ -56,30 +56,37 @@ function enemyView(){
  const root=$('enemy-roster');root.replaceChildren();
  if(!enemies.length){root.append(node('p','Nenhum inimigo na mesa. O mestre pode adicioná-los pelo bestiário.','small'));return}
  for(const e of enemies){
-  const card=node('div',null,'player-card');
-  card.dataset.enemyId=e.id;
-  card.append(node('strong',e.name),node('p',(e.tier==='principal'?'Principal':e.tier==='notavel'?'Notável':e.tier==='incidental'?'Incidental':'Menor')+(e.visible===false?' · Oculto':'')+' · '+(e.section==='nobreza'?'Nobreza':e.section==='selvagens'?'Selvagem':e.section==='notorios'?'Notório':'Povo Comum')));
-  const now=Number(e.sheet?.stressAtual||0),max=Number(e.sheet?.stressMax||6);
-  card.append(node('p',max===0?'Sem trilha de estresse · cai após ataque bem-sucedido':'Estresse '+now+'/'+max));
-  const meter=node('div',null,'meter'),fill=node('span');
-  fill.style.width=Math.min(100,Math.max(0,now/Math.max(1,max)*100))+'%';meter.append(fill);if(max>0)card.append(meter);
-  card.append(node('p','Pontos do Vazio: '+(e.sheet?.void||0)));
+  const card=node('div',null,'player-card');card.dataset.enemyId=e.id;
+  const label=e.tier==='principal'?'Principal':e.tier==='notavel'?'Notável':e.tier==='incidental'?'Incidental':'Menor';
+  card.append(node('strong',e.name),node('p',label+(e.visible===false?' · Oculto':'')+' · '+(e.section==='nobreza'?'Nobreza':e.section==='selvagens'?'Selvagem':e.section==='notorios'?'Notório':'Povo Comum')));
+  if(e.stress_visible===false&&!gm()){
+   card.append(node('p','Estresse oculto pelo mestre','small'));
+  }else if(e.stress_max===0){
+   card.append(node('p','Sem trilha de estresse','small'));
+  }else if(e.stress_max!==null){
+   const now=Number(e.stress_now||0),max=Number(e.stress_max);
+   card.append(node('p','Estresse '+now+'/'+max));
+   const meter=node('div',null,'meter'),fill=node('span');
+   fill.style.width=Math.min(100,Math.max(0,now/Math.max(1,max)*100))+'%';
+   meter.append(fill);card.append(meter);
+  }
   if(gm()){
-   const open=node('button','Abrir ficha de inimigo','secondary');open.type='button';open.className='gm-open';
+   card.append(node('p','Pontos do Vazio: '+(e.void_points??0),'small'));
+   const open=node('button','Ações e rolagens','secondary');open.type='button';open.className='gm-open';
    open.addEventListener('click',()=>gmEditor?.chooseEnemy(e.id));card.append(open);
   }
   root.append(card);
  }
  gmEditor?.highlight();
 }
-
 function diceView(rolls){
  const root=$('rolls');root.replaceChildren();
  if(!rolls.length){root.append(node('p','Ainda não houve rolagens.'));return}
  for(const r of rolls){
   const actor=roster.find(x=>x.user_id===r.user_id);
+  const npc=enemies.find(x=>x.id===r.enemy_id);
   const div=node('article',null,'roll-card'+(r.visibility==='public'?'':' private'));
-  const h=node('h4',(actor?.character_name||actor?.display_name||'Jogador')+' · '+r.skill+' + '+r.style);
+  const h=node('h4',(npc?.name||actor?.character_name||actor?.display_name||'Inimigo')+' · '+(r.action_label&&r.action_label!=='Teste livre'?r.action_label+' · ':'')+r.skill+' + '+r.style);
   const vis=r.visibility==='public'?'Pública':r.visibility==='private'?'Privada':'Somente mestre';
   const date=new Date(r.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   div.append(h,node('p',date+' · '+vis+' · Dificuldade '+r.difficulty));
@@ -115,10 +122,10 @@ async function refresh({side=false}={}){
   const [r,m,rr,st,pu,enemyResponse]=await Promise.all([
    db.from('dh_rooms').select('id,code,name,owner_id,shop_open,chaos,adventure_number,active').eq('id',roomId).single(),
    db.rpc('dh_room_roster',{p_room:roomId}),
-   db.from('dh_room_rolls').select('id,user_id,character_id,skill,style,focus,focus_value,difficulty,dice,rolls,target,successes,complications,visibility,created_at').eq('room_id',roomId).order('created_at',{ascending:false}).limit(75),
+   db.from('dh_room_rolls').select('id,user_id,character_id,enemy_id,action_label,skill,style,focus,focus_value,difficulty,dice,rolls,target,successes,complications,visibility,created_at').eq('room_id',roomId).order('created_at',{ascending:false}).limit(75),
    db.from('dh_room_stock').select('catalog_id,available,quantity').eq('room_id',roomId),
    db.from('dh_room_purchases').select('id,room_id,character_id,catalog_id,amount,currency,created_at').eq('room_id',roomId).order('created_at',{ascending:false}).limit(200),
-   db.from('dh_room_enemies').select('id,name,section,tier,sheet,inventory,visible').eq('room_id',roomId).order('created_at',{ascending:true}).limit(150)
+   db.rpc('dh_room_enemies_roster',{p_room:roomId})
   ]);
   if(r.error)throw Error('Sala não encontrada ou sem acesso. '+r.error.message);
   const oldMode=room?.shop_open;

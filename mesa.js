@@ -1,8 +1,9 @@
 import {db,getAuth} from './personagens-common.js';
+import {initMasterEditor} from './mesa-mestre.js';
 const $=id=>document.getElementById(id),roomId=new URLSearchParams(location.search).get('id');
 const isUuid=x=>/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(x||'');
 const node=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined&&txt!==null)e.textContent=String(txt);if(cls)e.className=cls;return e};
-let me,room,roster=[],mine=null,mySheet=null,items=[],stock=[],purchases=[],tab='sheet',busy=false,costs={};
+let me,room,roster=[],enemies=[],mine=null,mySheet=null,items=[],stock=[],purchases=[],tab='sheet',busy=false,costs={},gmEditor=null;
 const gm=()=>room?.owner_id===me?.id;
 const say=(id,msg,bad=false)=>{$(id).textContent=msg;$(id).className=bad?'error':'status'};
 const clip=x=>String(x??'').slice(0,5000);
@@ -20,6 +21,8 @@ function roomView(){
  $('adventure-number').textContent='Aventura '+room.adventure_number;
  $('chaos-current').textContent=String(room.chaos??0);
  $('gm-tools').classList.toggle('hidden',!gm());
+ $('bestiary-link').classList.toggle('hidden',!gm());
+ $('bestiary-link').href='bestiario.html?room='+encodeURIComponent(roomId);
 }
 function rosterView(){
  const root=$('roster');root.replaceChildren();
@@ -35,13 +38,41 @@ function rosterView(){
    card.append(node('p','Vazio: '+p.void_points+' · Momentum: '+p.momentum));
    if(gm())card.append(node('p','Moedas: '+fmt(p.coins)+' · XP: '+fmt(p.xp)));
   }
+  if(gm()&&p.character_id){
+   card.dataset.characterId=p.character_id;
+   const open=node('button','Abrir ficha no painel direito','secondary');open.type='button';open.className='gm-open';
+   open.addEventListener('click',()=>gmEditor?.choosePlayer(p.character_id));card.append(open);
+  }
   root.append(card);
  }
+ gmEditor?.highlight();
  if(!roster.length)root.append(node('p','Ainda não há participantes.'));
  const chooser=$('gm-character'),old=chooser.value;chooser.replaceChildren();
  for(const p of roster)if(p.character_id)option(chooser,p.character_id,p.character_name);
  if([...chooser.options].some(x=>x.value===old))chooser.value=old;
 }
+
+function enemyView(){
+ const root=$('enemy-roster');root.replaceChildren();
+ if(!enemies.length){root.append(node('p','Nenhum inimigo na mesa. O mestre pode adicioná-los pelo bestiário.','small'));return}
+ for(const e of enemies){
+  const card=node('div',null,'player-card');
+  card.dataset.enemyId=e.id;
+  card.append(node('strong',e.name),node('p',(e.tier==='principal'?'Principal':e.tier==='notavel'?'Notável':'Menor')+(e.visible===false?' · Oculto':'')+' · '+(e.section==='nobreza'?'Nobreza':e.section==='selvagens'?'Selvagem':e.section==='notorios'?'Notório':'Povo Comum')));
+  const now=Number(e.sheet?.stressAtual||0),max=Number(e.sheet?.stressMax||6);
+  card.append(node('p','Estresse '+now+'/'+max));
+  const meter=node('div',null,'meter'),fill=node('span');
+  fill.style.width=Math.min(100,Math.max(0,now/Math.max(1,max)*100))+'%';meter.append(fill);card.append(meter);
+  card.append(node('p','Pontos do Vazio: '+(e.sheet?.void||0)));
+  if(gm()){
+   const open=node('button','Abrir ficha de inimigo','secondary');open.type='button';open.className='gm-open';
+   open.addEventListener('click',()=>gmEditor?.chooseEnemy(e.id));card.append(open);
+  }
+  root.append(card);
+ }
+ gmEditor?.highlight();
+}
+
 function diceView(rolls){
  const root=$('rolls');root.replaceChildren();
  if(!rolls.length){root.append(node('p','Ainda não houve rolagens.'));return}
@@ -81,18 +112,19 @@ function rollerView(){
 async function refresh({side=false}={}){
  if(busy)return;busy=true;
  try{
-  const [r,m,rr,st,pu]=await Promise.all([
+  const [r,m,rr,st,pu,enemyResponse]=await Promise.all([
    db.from('dh_rooms').select('id,code,name,owner_id,shop_open,chaos,adventure_number,active').eq('id',roomId).single(),
    db.rpc('dh_room_roster',{p_room:roomId}),
    db.from('dh_room_rolls').select('id,user_id,character_id,skill,style,focus,focus_value,difficulty,dice,rolls,target,successes,complications,visibility,created_at').eq('room_id',roomId).order('created_at',{ascending:false}).limit(75),
    db.from('dh_room_stock').select('catalog_id,available,quantity').eq('room_id',roomId),
-   db.from('dh_room_purchases').select('id,room_id,character_id,catalog_id,amount,currency,created_at').eq('room_id',roomId).order('created_at',{ascending:false}).limit(200)
+   db.from('dh_room_purchases').select('id,room_id,character_id,catalog_id,amount,currency,created_at').eq('room_id',roomId).order('created_at',{ascending:false}).limit(200),
+   db.from('dh_room_enemies').select('id,name,section,tier,sheet,inventory,visible').eq('room_id',roomId).order('created_at',{ascending:true}).limit(150)
   ]);
   if(r.error)throw Error('Sala não encontrada ou sem acesso. '+r.error.message);
   const oldMode=room?.shop_open;
-  room=r.data;roster=m.error?[]:m.data||[];stock=st.error?[]:st.data||[];purchases=pu.error?[]:pu.data||[];
+  room=r.data;roster=m.error?[]:m.data||[];stock=st.error?[]:st.data||[];purchases=pu.error?[]:pu.data||[];enemies=enemyResponse.error?[]:enemyResponse.data||[];
   mine=roster.find(x=>x.user_id===me.id)||null;
-  roomView();rosterView();diceView(rr.data||[]);
+  roomView();rosterView();enemyView();diceView(rr.data||[]);
   $('coins').textContent='Moedas: '+(mine?.character_id?fmt(mine.coins):'—');
   $('xp').textContent='XP: '+(mine?.character_id?fmt(mine.xp):'—');
   if(side||oldMode!==room.shop_open)renderSide();
@@ -100,7 +132,7 @@ async function refresh({side=false}={}){
  }catch(e){say('room-status',e.message,true)}finally{busy=false}
 }
 async function loadMySheet(redraw=true){
- if(!mine?.character_id){mySheet=null;rollerView();if(redraw)renderSide();return}
+ if(!mine?.character_id){mySheet=null;rollerView();$('my-character').replaceChildren(node('p',gm()?'Você está como mestre. Clique em Abrir ficha de um participante ou inimigo no painel esquerdo.':'Vincule uma ficha à campanha pelo lobby.'));if(redraw)renderSide();return}
  const {data,error}=await db.from('dh_characters').select('id,name,sheet,creation_status').eq('id',mine.character_id).eq('owner_id',me.id).single();
  if(error){say('side-msg',error.message,true);return}
  mySheet=data.sheet;rollerView();
@@ -346,10 +378,13 @@ $('stock-search').addEventListener('input',stockView);
 async function boot(){
  if(!isUuid(roomId))throw Error('Endereço de sala inválido.');
  me=await getAuth();
+ gmEditor=initMasterEditor({db,roomId,getCatalog:()=>items,onSaved:async()=>{await refresh({side:true});await loadMySheet(true)}});
  await refresh({side:false});
  if(!room)return;
  $('table').classList.remove('hidden');
  await loadCatalog();await loadMySheet(true);
+ const selectedEnemy=new URLSearchParams(location.search).get('enemy');
+ if(selectedEnemy&&gm()&&enemies.some(e=>e.id===selectedEnemy)){await gmEditor.chooseEnemy(selectedEnemy);history.replaceState(null,'','mesa.html?id='+encodeURIComponent(roomId));}
  setInterval(()=>refresh(),4500);
 }
 try{await boot()}catch(e){say('room-status',e.message,true)}

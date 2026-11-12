@@ -96,6 +96,77 @@ function showQualities(card,item){
  card.appendChild(row);
 }
 
+
+/* Ajuda compacta no canto superior direito de cada card. */
+let activeCardHelp=null;
+function closeCardHelp(){
+ if(!activeCardHelp)return;
+ activeCardHelp.panel.hidden=true;
+ activeCardHelp.button.setAttribute('aria-expanded','false');
+ activeCardHelp=null;
+}
+document.addEventListener('click',event=>{
+ if(activeCardHelp&&!activeCardHelp.panel.parentElement.contains(event.target))closeCardHelp();
+});
+document.addEventListener('keydown',event=>{
+ if(event.key==='Escape'&&activeCardHelp){
+  const btn=activeCardHelp.button;closeCardHelp();btn.focus();
+ }
+});
+function addCardHelp(card,entry){
+ const button=make('button','?','card-help');
+ button.type='button';
+ button.setAttribute('aria-label','Explicar '+translateName(entry.nome));
+ button.setAttribute('aria-expanded','false');
+ button.title='Entenda este conteúdo';
+ const panel=make('div','','card-tooltip');
+ panel.hidden=true;
+ panel.setAttribute('role','region');
+ const title=make('h3','Sobre '+translateName(entry.nome));
+ panel.append(title);
+ const addHelpText=(label,content)=>{
+  const section=make('div','','card-tooltip-section');
+  section.append(make('strong',label),make('p',content));
+  panel.appendChild(section);
+ };
+ if(page==='loja'){
+  addHelpText('O que é?',entry.descricao||'Item de equipamento da campanha.');
+  if(entry.dano!==null&&entry.dano!==undefined)addHelpText('Dano',entry.dano+' de estresse causado por um ataque bem-sucedido, antes de eventuais modificadores.');
+  const qualities=qualitiesByItem[entry.nome]||[];
+  qualities.forEach(term=>{
+   const info=glossary[term];
+   if(info)addHelpText(term,info.detail);
+  });
+  addHelpText('Preço',entry.preco.toLocaleString('pt-BR')+' moedas — valor de referência, sujeito a disponibilidade e ajustes do mestre.');
+ }else if(page==='arquetipos'){
+  addHelpText('Benefícios iniciais','Perícias: '+entry.pericias+'. Estilos: '+entry.estilos.replaceAll('Inteligentemente','Habilmente')+'.');
+  addHelpText('Outros benefícios','Focos sugeridos: '+entry.focos+'. Equipamento: '+entry.pertences+'. Contatos: '+entry.contatos+'.');
+  addHelpText('Talentos','Selecione um talento do arquétipo. A lista completa e os efeitos ficam em “Ver os 4 talentos”.');
+ }else if(page==='amuletos'){
+  addHelpText('Efeito',entry.descricao);
+  addHelpText('Categoria',entry.tipo+'. Amuletos são equipamentos sobrenaturais; a quantidade que pode ser equipada é limitada pelas regras do Vazio.');
+ }else if(page==='poderes'){
+  addHelpText('Efeito',entry.descricao);
+  addHelpText('Uso',entry.tipo==='Poder ativo'?entry.custo+' Ponto(s) do Vazio para ativar, sujeito às condições do poder.':'Aprimoramento passivo: não exige gasto de Vazio a cada uso.');
+ }else if(page==='pericias'){
+  addHelpText('O que representa?',entry.descricao);
+  addHelpText('Como funciona','Combine uma perícia com um estilo em um teste 2d20. O valor base é 4; aumentar em +1 custa 10 XP pelas regras padrão.');
+ }
+ const footer=make('small',entry.pagina?'Livro de regras • página '+entry.pagina:'Referência do catálogo');
+ panel.appendChild(footer);
+ button.addEventListener('click',event=>{
+  event.stopPropagation();
+  const alreadyOpen=activeCardHelp?.button===button;
+  closeCardHelp();
+  if(alreadyOpen)return;
+  panel.hidden=false;
+  button.setAttribute('aria-expanded','true');
+  activeCardHelp={button,panel};
+ });
+ panel.addEventListener('click',event=>event.stopPropagation());
+ card.append(button,panel);
+}
+
 const talentData=Object.entries(talentGroups).flatMap(([archetype,talents])=>talents.map(([name,description])=>({archetype,name,description})));
 if(page==='arquetipos')entries=archetypes;
 else if(page==='amuletos')entries=bonecharms;
@@ -112,6 +183,7 @@ const types=page==='amuletos'?[...new Set(entries.map(e=>e.tipo))]:page==='poder
 if(types.length){for(const type of types){const o=make('option',type);o.value=type;filter.appendChild(o)}}else filter.style.display='none';
 const matches=(entry,q,cat)=>{const text=(JSON.stringify(entry)+' '+translateName(entry.nome||'')).toLocaleLowerCase('pt-BR');const t=(entry.tipo||entry.categoria||'');return (!cat||cat===t)&&(!q||text.includes(q.toLocaleLowerCase('pt-BR')))};
 function render(){
+ closeCardHelp();
  const root=$('results');root.replaceChildren();
  const q=$('search').value.trim(),cat=filter.value;
  const visible=entries.filter(x=>matches(x,q,cat));
@@ -144,6 +216,7 @@ function render(){
  if(e.dano!==null)line(card,'Dano',String(e.dano));showQualities(card,e);
  card.append(make('p',e.descricao));
  }
+ addCardHelp(card,e);
  root.appendChild(card);
  }
 }

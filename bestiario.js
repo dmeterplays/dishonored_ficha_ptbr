@@ -56,7 +56,11 @@ try{
   const {data,error}=await db.from('dh_rooms').select('owner_id,name').eq('id',roomId).single();
   if(error||!data||data.owner_id!==me.id)throw Error('Somente o mestre da sala pode adicionar inimigos ao bestiário da campanha.');
   room=data;$('table-link').href='mesa.html?id='+encodeURIComponent(roomId);
- }else $('custom-section').classList.add('hidden');
+ }else {
+   $('custom-section').classList.add('hidden');
+   const {data:profile,error:profileError}=await db.from('dh_profiles').select('role').eq('id',me.id).single();
+   if(profileError||!['master','admin'].includes(profile?.role))throw Error('O bestiário é reservado aos mestres.');
+ }
  const {data,error}=await db.from('dh_npc_templates').select('id,name,section,tier,description,book_page,sheet').order('book_page').order('name').limit(250);
  if(error)throw Error(error.message);catalog=data||[];
  $('bestiary-workspace').classList.remove('hidden');

@@ -81,7 +81,7 @@ async function save(){
  saving=true;$('save-top').disabled=true;$('save-bottom').disabled=true;
  try{
  const data=gather();if(!validSheet(data))throw Error('A ficha não possui valores válidos.');
- const payload={name:data.nome||'Sem nome',archetype:data.arquetipo||null,sheet:data,updated_at:new Date().toISOString()};
+ const payload={name:data.nome||'Sem nome',archetype:data.arquetipo||null,sheet:data};
  const {data:updated,error}=await db.from('dh_characters').update(payload).eq('id',id).eq('owner_id',user.id).select('id,name,archetype,sheet').single();
  if(error)throw Error(error.message);
  character={...character,...updated};dirty=false;$('save-indicator').textContent='Ficha salva na sua conta ✓';$('save-indicator').className='status';status('Ficha salva no Supabase.');updateHero();renderCatalog();

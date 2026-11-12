@@ -42,7 +42,7 @@ async function refresh(){
  if(role==='master'){await loadMaster();await loadChaos();}
 }
 $('auth-form').addEventListener('submit',async e=>{e.preventDefault();const {error}=await client.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});message('auth-message',error?error.message:'Login realizado.',!!error)});
-$('signup').addEventListener('click',async()=>{const {error}=await client.auth.signUp({email:$('email').value.trim(),password:$('password').value,options:{data:{display_name:$('display').value.trim()}}});message('auth-message',error?error.message:'Conta criada. Confirme seu e-mail, caso a confirmação esteja habilitada.',!!error)});
+$('signup').addEventListener('click',async()=>{const {error}=await client.auth.signUp({email:$('email').value.trim(),password:$('password').value,options:{emailRedirectTo:new URL('campanha.html',window.location.href).href,data:{display_name:$('display').value.trim()}}});message('auth-message',error?error.message:'Conta criada. Confirme seu e-mail, caso a confirmação esteja habilitada.',!!error)});
 $('logout').addEventListener('click',async()=>{await client.auth.signOut()});
 function validSheet(d){return d&&typeof d==='object'&&!Array.isArray(d)&&typeof d.nome==='string'&&Array.isArray(d.skills)&&d.skills.length>0&&Array.isArray(d.styles)&&d.styles.length>0&&d.skills.every(x=>x&&typeof x.label==='string'&&Number.isFinite(Number(x.value)))&&d.styles.every(x=>x&&typeof x.label==='string'&&Number.isFinite(Number(x.value)));}
 $('import-btn').addEventListener('click',async()=>{

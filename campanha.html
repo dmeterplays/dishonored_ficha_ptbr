@@ -5,7 +5,7 @@
 header{background:#111a1de8;border-bottom:1px solid var(--line);padding:19px max(20px,calc((100vw - 1080px)/2));display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
 a{color:var(--gold)}h1,h2,h3,button{font-family:Cinzel,serif}h1{font-size:29px;color:var(--gold)}h2{color:var(--gold);font-size:20px}.wrap{max-width:1080px;margin:auto;padding:30px 20px 90px}.panel{background:var(--panel);border:1px solid var(--line);padding:24px;margin:15px 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px}.grid .panel{margin:0}input,select{background:#111b1e;color:white;border:1px solid #637071;padding:11px;width:100%;margin:6px 0 13px;font:18px 'Crimson Text',serif}label{display:block;color:var(--gold);font-size:15px}button,.button{border:1px solid var(--gold);background:var(--gold);color:#111a1a;padding:12px 16px;cursor:pointer;font:12px Cinzel,serif;display:inline-block;text-decoration:none}button.secondary{background:transparent;color:var(--gold)}button:disabled{opacity:.5;cursor:not-allowed}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}p,.muted{color:#abb8b7;line-height:1.5}.hidden{display:none!important}.ok{color:#91ceb8}.bad{color:#e2a69d}.number{font:28px Cinzel,serif;color:#f1d4a0}.counter{display:flex;align-items:center;gap:12px}.counter button{width:44px;height:44px}.entry{border-top:1px solid var(--line);padding:12px 0}small{color:#a5b0ae}#master-area{border-left:3px solid #af5949}#character-list .panel{overflow-wrap:anywhere}
 </style></head><body>
-<header><a href="./" style="font:700 17px Cinzel,serif;text-decoration:none">DISHONORED RPG</a><nav><a href="catalogo.html">Catálogo e progressão</a> · <a href="ficha_dishonored_ptbr.html">Ficha antiga</a></nav></header>
+<header><a href="./" style="font:700 17px Cinzel,serif;text-decoration:none">DISHONORED RPG</a><nav><a href="catalogo.html">Catálogo e progressão</a> · <a id="admin-link" class="hidden" href="admin.html">Administração</a> · <a href="ficha_dishonored_ptbr.html">Ficha antiga</a></nav></header>
 <main class="wrap"><h1>Central da campanha</h1><p>Entre com sua conta para importar personagens, acompanhar o próprio Momentum e solicitar avanços. O painel de Caos é exclusivo do mestre.</p>
 <div id="setup" class="panel hidden"><h2>Integração ainda não configurada</h2><p>O site já tem as telas e o esquema de banco, mas falta conectar um projeto Supabase exclusivo de Dishonored. Não é seguro usar o banco do RPG Naruto.</p></div>
 <section id="auth-area" class="panel hidden"><h2>Entrar ou criar conta</h2><form id="auth-form"><label for="display">Nome de exibição (para novo cadastro)</label><input id="display" autocomplete="nickname" placeholder="Como quer ser chamado"><label for="email">E-mail</label><input id="email" type="email" autocomplete="email" required><label for="password">Senha</label><input id="password" type="password" minlength="6" autocomplete="current-password" required><div class="actions"><button type="submit" data-mode="login">Entrar</button><button type="button" id="signup" class="secondary">Criar conta</button></div></form><p id="auth-message" role="status"></p></section>
@@ -36,10 +36,10 @@ async function refresh(){
  if(pe){message('import-status','Erro ao carregar permissões: '+pe.message,true);return;}
  role=prof.role;
  $('welcome').textContent='Bem-vindo, '+(prof.display_name||user.email);
- $('role-info').textContent=role==='master'?'Acesso: Mestre':'Acesso: Jogador';
- show('master-area',role==='master');
+ $('role-info').textContent=role==='admin'?'Acesso: Administrador e Mestre':role==='master'?'Acesso: Mestre':'Acesso: Jogador';
+ show('master-area',role==='master'||role==='admin');show('admin-link',role==='admin');
  await loadCharacters();
- if(role==='master'){await loadMaster();await loadChaos();}
+ if(role==='master'||role==='admin'){await loadMaster();await loadChaos();}
 }
 $('auth-form').addEventListener('submit',async e=>{e.preventDefault();const {error}=await client.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});message('auth-message',error?error.message:'Login realizado.',!!error)});
 $('signup').addEventListener('click',async()=>{const {error}=await client.auth.signUp({email:$('email').value.trim(),password:$('password').value,options:{emailRedirectTo:new URL('campanha.html',window.location.href).href,data:{display_name:$('display').value.trim()}}});message('auth-message',error?error.message:'Conta criada. Confirme seu e-mail, caso a confirmação esteja habilitada.',!!error)});
@@ -91,7 +91,7 @@ async function loadChaos(){
  chaosValue=data.chaos;$('chaos-value').textContent=chaosValue;
 }
 async function adjustChaos(delta){
- if(role!=='master')return;
+ if(role!=='master'&&role!=='admin')return;
  const next=Math.max(0,chaosValue+delta);
  if(next===chaosValue)return;
  const {error}=await client.from('dh_master_state').update({chaos:next,updated_at:new Date().toISOString()}).eq('id',1).eq('chaos',chaosValue);

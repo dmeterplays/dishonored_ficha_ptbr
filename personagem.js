@@ -1,9 +1,10 @@
 import {db,el,cleanString,getAuth,validSheet,portraitURL,localJSON,placeholder} from './personagens-common.js';
 import {items,powers,bonecharms} from './catalogo-dados.js';
+import {initCharacterCollections} from './ficha-abas.js';
 const $=id=>document.getElementById(id);
 const id=new URLSearchParams(location.search).get('id');
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-let user,character,activeKind='item',selected=null,dirty=false,saving=false;
+let user,character,activeKind='item',selected=null,dirty=false,saving=false,collections=null;
 const noteKeys=[['nota-contatos','Contatos'],['nota-focos','Focos'],['nota-talentos','Talentos'],['nota-pertences','Pertences'],['nota-poderes','Poderes'],['nota-gerais','Notas gerais']];
 function status(text,bad=false){$('status').textContent=text;$('status').className=bad?'error':'status'}
 function formInput(parent,id,label,value,type='text'){
@@ -30,6 +31,7 @@ function renderStats(){
 function renderNotes(){
  const root=$('notes-fields');root.replaceChildren();
  for(const [key,label] of noteKeys){
+ if(!['nota-contatos','nota-gerais'].includes(key))continue;
  const box=el('div');const lbl=el('label',label);lbl.htmlFor=key;
  const area=el('textarea');area.id=key;area.value=character.sheet.notas?.[key]||'';
  box.append(lbl,area);root.append(box);
@@ -76,7 +78,8 @@ function gather(){
  });
  }
  data.notas={...(character.sheet.notas||{})};
- for(const [key] of noteKeys)data.notas[key]=$(key).value;
+ for(const [key] of noteKeys)if($(key))data.notas[key]=$(key).value;
+ if(collections)data.catalogSelections=collections.getSelection();
  return data;
 }
 function ready(data){return !!(data.nome?.trim()&&data.arquetipo?.trim()&&data.verdade1?.trim()&&data.verdade2?.trim()&&data.background?.trim());}
@@ -202,6 +205,6 @@ async function init(){
  const {data,error}=await db.from('dh_characters').select('id,name,owner_id,archetype,xp,momentum,void_points,sheet,portrait_path,creation_status').eq('id',id).eq('owner_id',user.id).single();
  if(error||!data){status('Esta ficha não foi encontrada na sua conta.',true);return}
  character=data;if(!validSheet(character.sheet)){status('Os dados desta ficha estão incompletos; reimporte o JSON original.',true);return}
- renderMain();await loadCatalogOverrides();
+ renderMain();collections=initCharacterCollections({db,sheet:character.sheet,onChange:setDirty});await loadCatalogOverrides();
 }
 try{await init()}catch(e){status(e.message,true)}

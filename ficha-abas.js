@@ -91,6 +91,16 @@ export function initCharacterCollections({db,sheet,onChange}){
    summary.append(left,node('span','Ver detalhes','collection-open'));
    card.append(summary);
    const expanded=details(entry,record);
+   if(kind==='focus'&&entry.origin!=='starting'){
+    const label=node('label','Classificação proposta (para avaliação do mestre)');
+    const number=node('input');number.type='number';number.min='1';number.max='8';number.step='1';number.value=entry.rank??2;number.className='collection-rank-input';
+    number.addEventListener('change',()=>{
+     const rank=Number(number.value);
+     if(!Number.isInteger(rank)||rank<1||rank>8){number.value=entry.rank??2;return}
+     entry.rank=rank;onChange();tell('Classificação proposta alterada. Salve a ficha para registrar.');
+    });
+    expanded.append(label,number);
+   }
    if(entry.origin!=='starting'){
     const controls=node('div',null,'action-group');
     const remove=node('button','Remover da ficha','secondary');
@@ -119,7 +129,7 @@ export function initCharacterCollections({db,sheet,onChange}){
    button.type='button';button.disabled=already;
    button.addEventListener('click',()=>{
     if(current().some(x=>x.id===record.id||normalize(x.name)===normalize(record.name)))return;
-    values[kind].push({id:record.id,name:record.name,description:record.description||'',origin:'reference',rank:null});
+    values[kind].push({id:record.id,name:record.name,description:record.description||'',origin:'reference',rank:kind==='focus'?2:null});
     onChange();render();renderOptions();tell('“'+record.name+'” adicionado como referência. Salve a ficha para registrar. Não houve compra ou aquisição automática.');
    });
    card.append(info,button);options.append(card);

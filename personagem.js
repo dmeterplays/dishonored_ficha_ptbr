@@ -113,7 +113,28 @@ $('portrait-upload').addEventListener('change',async event=>{
  }catch(e){status('Falha ao enviar retrato: '+e.message,true)}
  finally{event.target.value=''}
 });
-const catalogs={item:items,power:powers,bonecharm:bonecharms};
+const catalogs={item:items.map(x=>({...x})),power:powers.map(x=>({...x})),bonecharm:bonecharms.map(x=>({...x}))};
+async function loadCatalogOverrides(){
+ try{
+  const {data,error}=await db.from('dh_catalog').select('category,name,description,coins_cost,rules,published').in('category',['item','power','bonecharm']).eq('published',true).limit(500);
+  if(error)return;
+  for(const row of data||[]){
+   const list=catalogs[row.category];if(!list)continue;
+   const found=list.find(x=>x.nome.toLocaleLowerCase('pt-BR')===row.name.toLocaleLowerCase('pt-BR'));
+   if(found){
+    if(row.description)found.descricao=row.description;
+    if(row.category==='item'&&row.coins_cost!==null)found.preco=row.coins_cost;
+   }else if(row.category==='item'){
+    list.push({nome:row.name,descricao:row.description,preco:row.coins_cost,dano:row.rules?.dano??null,categoria:row.rules?.categoria||'Itens da campanha'});
+   }else if(row.category==='power'){
+    list.push({nome:row.name,descricao:row.description,tipo:row.rules?.tipo||'Poder ativo',custo:row.rules?.custo_vazio??null});
+   }else{
+    list.push({nome:row.name,descricao:row.description,tipo:row.rules?.tipo||'Amuleto da campanha'});
+   }
+  }
+  renderCatalog();
+ }catch(e){/* O catálogo básico funciona mesmo se estiver offline. */}
+}
 function renderCatalog(){
  const root=$('catalog-preview');root.replaceChildren();
  const search=$('catalog-search').value.trim().toLowerCase();
@@ -121,7 +142,7 @@ function renderCatalog(){
  if(!entries.length)root.append(el('p','Nenhum resultado.'));
  for(const e of entries){
  const card=el('article',null,'catalog-card');card.append(el('h4',e.nome));
- const badge=activeKind==='item'?e.preco+' moedas':activeKind==='power'?(e.tipo==='Poder ativo'?e.custo+' Ponto(s) do Vazio':'Passivo'):e.tipo;
+ const badge=activeKind==='item'?(e.preco===null?'Preço sob consulta':e.preco+' moedas'):activeKind==='power'?(e.tipo==='Poder ativo'?(e.custo===null?'Custo definido pelo mestre':e.custo+' Ponto(s) do Vazio'):'Passivo'):e.tipo;
  card.append(el('p',badge),el('p',e.descricao));
  const buttons=el('div',null,'action-group');
  const test=el('button','Testar '+(activeKind==='item'?'item':activeKind==='power'?'poder':'amuleto'));
@@ -174,6 +195,6 @@ async function init(){
  const {data,error}=await db.from('dh_characters').select('id,name,owner_id,archetype,xp,momentum,void_points,sheet,portrait_path').eq('id',id).eq('owner_id',user.id).single();
  if(error||!data){status('Esta ficha não foi encontrada na sua conta.',true);return}
  character=data;if(!validSheet(character.sheet)){status('Os dados desta ficha estão incompletos; reimporte o JSON original.',true);return}
- renderMain();
+ renderMain();await loadCatalogOverrides();
 }
 try{await init()}catch(e){status(e.message,true)}

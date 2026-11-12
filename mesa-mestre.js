@@ -286,11 +286,20 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog}){
   finally{saving=false;const current=$('gm-editor-save');if(current)current.disabled=false}
  }
  async function deleteEnemy(){
-  if(!selected||selected.kind!=='enemy')return;
-  if(!confirm('Remover permanentemente o inimigo “'+working.name+'” desta mesa?'))return;
-  const {error}=await db.rpc('dh_room_enemy_delete',{p_room:roomId,p_enemy:selected.id});
-  if(error)return message(error.message,true);
-  close();await onSaved();
+  if(!selected||selected.kind!=='enemy'||saving)return;
+  saving=true;
+  const enemyId=selected.id;
+  const button=[...$('gm-editor').querySelectorAll('button')].find(b=>b.textContent==='Remover inimigo da mesa');
+  if(button)button.disabled=true;
+  try{
+   const {error}=await db.rpc('dh_room_enemy_delete',{p_room:roomId,p_enemy:enemyId});
+   if(error)throw Error(error.message);
+   close();
+   await onSaved();
+  }catch(e){
+   message('Falha ao remover inimigo: '+e.message,true);
+   if(button?.isConnected)button.disabled=false;
+  }finally{saving=false}
  }
  async function choosePlayer(id){
   const {data,error}=await db.rpc('dh_room_gm_sheet',{p_room:roomId,p_character:id});

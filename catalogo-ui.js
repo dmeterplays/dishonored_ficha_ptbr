@@ -21,12 +21,14 @@ function line(card,label,value){labeled(card,label,value)}
 function cardBase(name,badge){const card=make('article','', 'card');card.append(make('span',badge,'pill'),make('h2',name));return card}
 
 const translations={
+'Inteligentemente':'Habilmente','Forçadamente':'Forçosamente','Miscreant':'Malfeitor','Perspicácia':'Habilmente',
 'Footwork':'Jogo de pés','Self-made':'Por conta própria','Fieldcraft':'Conhecimento de campo','Forager':'Coletor','Trapper':'Armadilheiro','Surveyor':'Agrimensor','Rally':'Reagrupar','Marketeer negro':'Comerciante do mercado negro',
 'March of the Brave':'Marcha dos Bravos','Cautious Tune':'Melodia Cautelosa','Nil Whispers':'Sussurros do Nada','Stinging Whistle':'Assobio Cortante','Darkened Edges':'Bordas Escurecidas',
 'Rock\'s Rumble':'Estrondo da Rocha','Void\'s Seedling':'Semente do Vazio','Wrathful Scream':'Grito Furioso','Song of Inspiration':'Canção da Inspiração','Kinseeker':'Buscador de Parentes','Arpejo rápido':'Arpejo Rápido','Chamado do Camaleão':'Chamado do Camaleão','Blink':'Piscar',
 'Into the Void':'No Vazio','Vazio':'Vazio'};
 const translateName=name=>translations[name]||name;
 const glossary={
+'Qualidades':{short:'Regras especiais da arma',detail:'Além do dano, uma arma pode ter uma ou mais qualidades que mudam como ela é usada. Por exemplo, Bagunçado gera 1 de Caos por ataque; Alcance define a distância; Desajeitado aumenta a dificuldade.',source:'Livro, capítulo 6, páginas 83–84'},
 'Bagunçado':{short:'Arma barulhenta ou destrutiva',detail:'Qualidade de arma: é barulhenta, extremamente destrutiva ou deixa muita bagunça. Sempre que atacar com uma arma com essa qualidade, acrescente 1 ponto ao Caos do mestre. O Caos é gerado pelo ataque, mesmo que ele não acerte.',source:'Livro, capítulo 6, pág. 84'},
 'Dano':{short:'Estresse provocado ao acertar',detail:'O valor de dano indica quanto estresse um ataque bem-sucedido inflige na trilha de estresse do alvo. Proteção e outras regras podem modificar o resultado.',source:'Livro, capítulo 6, pág. 83'},
 'Corpo a corpo':{short:'Ataque em distância de contato',detail:'A arma é usada contra inimigos ao alcance corporal, isto é, próximos o bastante para se atingir fisicamente.',source:'Livro, capítulo 6, pág. 84'},
@@ -79,7 +81,7 @@ const qualitiesByItem={
 function showQualities(card,item){
  const list=qualitiesByItem[item.nome]||[];
  if(!list.length)return;
- const row=make('div','','qualities');row.append(make('strong','Qualidades: '));
+ const row=make('div','','qualities');row.append(make('strong','Qualidades: '),helpButton('Qualidades'));
  for(const term of list){const group=make('span','','quality');group.append(make('span',term),helpButton(term));row.appendChild(group)}
  card.appendChild(row);
 }
@@ -112,9 +114,9 @@ function render(){
  for(const t of (talentGroups[e.nome]||[])){const div=make('div','','talent');div.append(make('h3',translateName(t[0])),make('p',t[1].replaceAll('Inteligentemente','Habilmente')));det.appendChild(div)}
  card.appendChild(det);
  }else if(page==='amuletos'){
- card=cardBase(translateName(e.nome),e.tipo+' • pág. '+e.pagina);card.append(make('p',e.descricao));
+ card=cardBase(translateName(e.nome),e.tipo+' • pág. '+e.pagina);card.append(make('p',e.descricao.replaceAll('Inteligentemente','Habilmente')));
  }else if(page==='poderes'){
- card=cardBase(e.nome,e.tipo+' • pág. '+e.pagina);
+ card=cardBase(translateName(e.nome),e.tipo+' • pág. '+e.pagina);
  if(e.tipo==='Poder ativo'){const cost=make('div','', 'price');cost.append(document.createTextNode(e.custo+' Ponto'+(e.custo===1?'':'s')+' do Vazio para usar '),helpButton('Pontos do Vazio'));card.append(cost)}
  else card.append(make('div','Passivo • sem custo de uso','price'));
  card.append(make('p',e.descricao));
@@ -122,7 +124,7 @@ function render(){
  card=cardBase(translateName(e.nome),e.tipo);card.append(make('p',e.descricao));
  card.append(make('p','Valor inicial normal: 4. Avanço de +1 custa 10 XP pelas regras padrão.'));const terms=make('div','','statline');terms.append(document.createTextNode('O que é '+e.tipo+'? '),helpButton(e.tipo));card.append(terms);
  }else{
- card=cardBase(e.nome,e.categoria+' • pág. '+e.pagina);
+ card=cardBase(translateName(e.nome),e.categoria+' • pág. '+e.pagina);
  card.append(make('div',e.preco.toLocaleString('pt-BR')+' moedas','price'));
  if(e.dano!==null)line(card,'Dano',String(e.dano));showQualities(card,e);
  card.append(make('p',e.descricao));

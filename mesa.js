@@ -1,0 +1,285 @@
+import {db,getAuth} from './personagens-common.js';
+const $=id=>document.getElementById(id),roomId=new URLSearchParams(location.search).get('id');
+const isUuid=x=>/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(x||'');
+const node=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined&&txt!==null)e.textContent=String(txt);if(cls)e.className=cls;return e};
+let me,room,roster=[],mine=null,mySheet=null,items=[],stock=[],purchases=[],tab='sheet',busy=false;
+const gm=()=>room?.owner_id===me?.id;
+const say=(id,msg,bad=false)=>{$(id).textContent=msg;$(id).className=bad?'error':'status'};
+const clip=x=>String(x??'').slice(0,5000);
+const fmt=n=>Number(n||0).toLocaleString('pt-BR');
+const byId=x=>items.find(i=>i.id===x);
+const owns=x=>purchases.filter(p=>p.catalog_id===x.id);
+const storeRecord=x=>stock.find(s=>s.catalog_id===x.id);
+const available=x=>{const s=storeRecord(x);return !s||(s.available&&s.quantity!==0)};
+function option(select,value,label){const o=node('option',label);o.value=String(value);select.append(o)}
+function roomView(){
+ $('room-name').textContent=room.name;
+ $('room-code').textContent='Código: '+room.code;
+ $('shop-indicator').textContent=room.shop_open?'Loja aberta':'Loja fechada';
+ $('shop-toggle').textContent=room.shop_open?'Fechar loja':'Abrir loja';
+ $('adventure-number').textContent='Aventura '+room.adventure_number;
+ $('gm-tools').classList.toggle('hidden',!gm());
+}
+function rosterView(){
+ const root=$('roster');root.replaceChildren();
+ for(const p of roster){
+  const card=node('div',null,'player-card');
+  card.append(node('strong',p.character_name||p.display_name||(p.is_gm?'Mestre':'Jogador')));
+  card.append(node('p',(p.is_gm?'Mestre · ':'')+(p.character_name?(p.archetype||'Sem arquétipo'):'Sem personagem selecionado')));
+  if(p.character_id){
+   card.append(node('p','Estresse '+p.stress_now+'/'+p.stress_max));
+   const outer=node('div',null,'meter'),inner=node('span');
+   inner.style.width=Math.min(100,Math.max(0,Number(p.stress_now)/(Number(p.stress_max)||12)*100))+'%';
+   outer.append(inner);card.append(outer);
+   card.append(node('p','Vazio: '+p.void_points+' · Momentum: '+p.momentum));
+   if(gm())card.append(node('p','Moedas: '+fmt(p.coins)+' · XP: '+fmt(p.xp)));
+  }
+  root.append(card);
+ }
+ if(!roster.length)root.append(node('p','Ainda não há participantes.'));
+ const chooser=$('gm-character'),old=chooser.value;chooser.replaceChildren();
+ for(const p of roster)if(p.character_id)option(chooser,p.character_id,p.character_name);
+ if([...chooser.options].some(x=>x.value===old))chooser.value=old;
+}
+function diceView(rolls){
+ const root=$('rolls');root.replaceChildren();
+ if(!rolls.length){root.append(node('p','Ainda não houve rolagens.'));return}
+ for(const r of rolls){
+  const actor=roster.find(x=>x.user_id===r.user_id);
+  const div=node('article',null,'roll-card'+(r.visibility==='public'?'':' private'));
+  const h=node('h4',(actor?.character_name||actor?.display_name||'Jogador')+' · '+r.skill+' + '+r.style);
+  const vis=r.visibility==='public'?'Pública':r.visibility==='private'?'Privada':'Somente mestre';
+  const date=new Date(r.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  div.append(h,node('p',date+' · '+vis+' · Dificuldade '+r.difficulty));
+  div.append(node('div',(r.rolls||[]).join(' · '),'dice'));
+  const passed=r.successes>=r.difficulty;
+  div.append(node('p',r.successes+' sucesso(s) · '+r.complications+' complicação(ões) · '+(passed?'Sucesso':'Falha'),passed?'success':'fail'));
+  div.append(node('p','Alvo: '+r.target+(r.focus?' · Foco: '+r.focus+' ('+r.focus_value+')':'')));
+  root.append(div);
+ }
+}
+function focusOptions(){
+ const result=[];const built=mySheet?.creation?.focus;
+ if(Array.isArray(built))for(const f of built)if(f.nome&&f.valor)result.push({name:f.nome,rank:f.valor});
+ for(const f of mySheet?.catalogSelections?.focus||[])if(f.origin==='starting'&&f.name&&f.rank&&!result.some(x=>x.name===f.name))result.push({name:f.name,rank:f.rank});
+ return result;
+}
+function rollerView(){
+ const disabled=!mySheet;
+ $('roll-submit').disabled=disabled;
+ $('roll-character-hint').textContent=disabled?'Escolha uma ficha pronta pelo lobby para rolar.':'Você está rolando como '+(mine?.character_name||'personagem')+'. Escolha a privacidade antes de enviar.';
+ for(const [id,key] of [['roll-skill','skills'],['roll-style','styles']]){
+  const select=$(id),old=select.value;select.replaceChildren();
+  for(const item of mySheet?.[key]||[])option(select,item.label,item.label+' ('+item.value+')');
+  if([...select.options].some(o=>o.value===old))select.value=old;
+ }
+ const focus=$('roll-focus'),old=focus.value;focus.replaceChildren();option(focus,'','Sem foco');
+ for(const item of focusOptions())option(focus,item.name,item.name+' ('+item.rank+')');
+ if([...focus.options].some(o=>o.value===old))focus.value=old;
+}
+async function refresh({side=false}={}){
+ if(busy)return;busy=true;
+ try{
+  const [r,m,rr,st,pu]=await Promise.all([
+   db.from('dh_rooms').select('id,code,name,owner_id,shop_open,chaos,adventure_number,active').eq('id',roomId).single(),
+   db.rpc('dh_room_roster',{p_room:roomId}),
+   db.from('dh_room_rolls').select('id,user_id,character_id,skill,style,focus,focus_value,difficulty,dice,rolls,target,successes,complications,visibility,created_at').eq('room_id',roomId).order('created_at',{ascending:false}).limit(75),
+   db.from('dh_room_stock').select('catalog_id,available,quantity').eq('room_id',roomId),
+   db.from('dh_room_purchases').select('id,room_id,character_id,catalog_id,amount,currency,created_at').eq('room_id',roomId).order('created_at',{ascending:false}).limit(200)
+  ]);
+  if(r.error)throw Error('Sala não encontrada ou sem acesso. '+r.error.message);
+  const oldMode=room?.shop_open;
+  room=r.data;roster=m.error?[]:m.data||[];stock=st.error?[]:st.data||[];purchases=pu.error?[]:pu.data||[];
+  mine=roster.find(x=>x.user_id===me.id)||null;
+  roomView();rosterView();diceView(rr.data||[]);
+  $('coins').textContent='Moedas: '+(mine?.character_id?fmt(mine.coins):'—');
+  $('xp').textContent='XP: '+(mine?.character_id?fmt(mine.xp):'—');
+  if(side||oldMode!==room.shop_open)renderSide();
+  if(!m.error&&mine?.character_id&&(!mySheet||side))await loadMySheet(false);
+ }catch(e){say('room-status',e.message,true)}finally{busy=false}
+}
+async function loadMySheet(redraw=true){
+ if(!mine?.character_id){mySheet=null;rollerView();if(redraw)renderSide();return}
+ const {data,error}=await db.from('dh_characters').select('id,name,sheet,creation_status').eq('id',mine.character_id).eq('owner_id',me.id).single();
+ if(error){say('side-msg',error.message,true);return}
+ mySheet=data.sheet;rollerView();
+ const root=$('my-character');root.replaceChildren();
+ root.append(node('strong',mine.character_name));
+ const edit=node('a','Abrir ficha completa','btn secondary');edit.href='personagem.html?id='+encodeURIComponent(mine.character_id);edit.style.marginTop='8px';
+ root.append(edit);
+ if(redraw)renderSide();
+}
+function accordion(title,desc,secondary){
+ const details=node('details');details.append(node('summary',title));
+ const wrap=node('div');wrap.append(node('p',desc||'Sem descrição disponível.'));
+ if(secondary)wrap.append(node('p',secondary));
+ details.append(wrap);return details;
+}
+function statusText(product){
+ const s=storeRecord(product);
+ if(!s)return 'Disponível · estoque livre';
+ if(!s.available)return 'Indisponível nesta loja';
+ return s.quantity===null?'Disponível · sem limite':s.quantity+' unidade(s) disponíveis';
+}
+function purchaseButtons(product,wrap){
+ const owned=owns(product);
+ const isItem=product.category==='item',price=isItem?product.coins_cost:(product.archetype===mySheet?.arquetipo?10:15);
+ const type=isItem?'moedas':'XP';
+ const row=node('div',null,'row');
+ row.append(node('span',price===null?'Preço não definido':fmt(price)+' '+type,'small'));
+ const btn=node('button','Comprar','secondary');btn.type='button';
+ btn.disabled=!room.shop_open||!mine?.character_id||price===null||(isItem&&!available(product))||(!isItem&&owned.length>0);
+ btn.addEventListener('click',async()=>{
+  if(!confirm('Confirmar aquisição de '+product.name+' por '+price+' '+type+'?'))return;
+  btn.disabled=true;
+  const {error}=await db.rpc('dh_room_buy',{p_room:roomId,p_catalog:product.id});
+  if(error){say('side-msg','Compra recusada: '+error.message,true);btn.disabled=false;return}
+  say('side-msg','Aquisição realizada! O registro foi salvo e os recursos foram descontados.');
+  await refresh({side:true});await loadMySheet(true);
+ });
+ row.append(btn);wrap.append(row);
+ if(!room.shop_open)wrap.append(node('p','Somente consulta: o mestre ainda não abriu a loja.','small'));
+ if(isItem&&!available(product))wrap.append(node('p','Item bloqueado pelo mestre.','error'));
+ if(!isItem&&owned.length)wrap.append(node('p','Talento já adquirido nesta campanha.','small'));
+}
+function renderShop(){
+ const root=$('side-content');root.replaceChildren();
+ root.append(node('p','Modo loja: '+(room.shop_open?'ABERTO':'FECHADO')+'. Itens sem restrição explícita têm estoque livre. O mestre controla os itens limitados.','info'));
+ const search=node('input');search.type='search';search.placeholder='Pesquisar equipamentos ou talentos';search.setAttribute('aria-label','Pesquisar loja');
+ const select=node('select');option(select,'item','Equipamentos e itens');option(select,'talent','Talentos (XP)');
+ root.append(search,select);
+ const list=node('div',null,'items-list');root.append(list);
+ const paint=()=>{
+  list.replaceChildren();
+  const term=search.value.trim().toLocaleLowerCase('pt-BR');
+  const choices=items.filter(x=>x.category===select.value&&(!term||(x.name+' '+x.description).toLocaleLowerCase('pt-BR').includes(term))).slice(0,80);
+  for(const x of choices){
+   const card=node('div',null,'item-row');
+   card.append(node('strong',x.name),node('p',x.description||'Sem descrição.'));
+   if(x.category==='item')card.append(node('p',statusText(x)));
+   purchaseButtons(x,card);list.append(card);
+  }
+  if(!choices.length)list.append(node('p','Nenhum resultado.'));
+ };
+ search.addEventListener('input',paint);select.addEventListener('change',paint);paint();
+}
+function renderContent(kind){
+ const root=$('side-content');root.replaceChildren();
+ if(!mySheet){root.append(node('p','Vincule uma ficha ao entrar na campanha.'));return}
+ const initial=mySheet?.catalogSelections?.[kind]||[];
+ const acquired=purchases.filter(x=>x.character_id===mine.character_id&&byId(x.catalog_id)?.category===kind);
+ const seen=new Set();
+ for(const p of initial){
+  if(!p?.name)continue;
+  const record=items.find(x=>x.category===kind&&x.name.toLocaleLowerCase('pt-BR')===p.name.toLocaleLowerCase('pt-BR'));
+  root.append(accordion(p.name,record?.description||p.description||'Registro inicial da ficha.',p.origin==='reference'?'Opção anotada como referência; não é uma aquisição confirmada.':'Conteúdo registrado na ficha.'));
+  seen.add(p.name.toLocaleLowerCase('pt-BR'));
+ }
+ for(const p of acquired){
+  const record=byId(p.catalog_id);if(!record)continue;
+  root.append(accordion(record.name,record.description,'Adquirido por '+p.amount+' '+(p.currency==='xp'?'XP':'moedas')+'.'));
+  seen.add(record.name.toLocaleLowerCase('pt-BR'));
+ }
+ if(!seen.size)root.append(node('p','Nenhum conteúdo registrado nesta categoria.'));
+ const link=node('a','Gerenciar minhas abas na ficha','btn secondary');link.href='personagem.html?id='+encodeURIComponent(mine.character_id);root.append(link);
+}
+function renderSide(){
+ const root=$('side-content');root.replaceChildren();
+ for(const b of document.querySelectorAll('[data-tab]'))b.setAttribute('aria-selected',String(b.dataset.tab===tab));
+ if(tab==='shop'){renderShop();return}
+ if(tab==='sheet'){
+  if(!mine?.character_id){root.append(node('p','Nenhum personagem vinculado. Use a página Salas para vincular uma ficha.'));return}
+  root.append(node('p','Personagem: '+mine.character_name));
+  root.append(node('p','Arquétipo: '+mine.archetype));
+  root.append(node('p','Estresse: '+mine.stress_now+'/'+mine.stress_max+' · Vazio: '+mine.void_points+' · Momentum: '+mine.momentum));
+  const link=node('a','Editar ficha completa','btn secondary');link.href='personagem.html?id='+encodeURIComponent(mine.character_id);root.append(link);
+  root.append(node('p','A tabela de combate e os recursos mostrados aqui refletem sua ficha salva no Supabase.','small'));return;
+ }
+ if(tab==='actions'){
+  root.append(node('p','Escolha uma ação para configurar a próxima rolagem. A dificuldade e a privacidade continuam à sua escolha.','small'));
+  const actions=[['Ataque corpo a corpo','Lutar','Rapidamente'],['Ataque calculado','Lutar','Cuidadosamente'],['Fugir ou esquivar','Mover','Rapidamente'],['Observar inimigo','Estudar','Cuidadosamente'],['Intimidar','Falar','Forçosamente'],['Reparar equipamento','Consertar','Habilmente']];
+  for(const [name,skill,style] of actions){
+   const row=node('div',null,'item-row');
+   const b=node('button',name,'secondary');b.type='button';b.disabled=!mySheet;
+   b.addEventListener('click',()=>{
+    if(![...$('roll-skill').options].some(x=>x.value===skill)||![...$('roll-style').options].some(x=>x.value===style)){say('side-msg','Esta ação exige perícia ou estilo não disponível na ficha.',true);return}
+    $('roll-skill').value=skill;$('roll-style').value=style;
+    say('side-msg','Rolagem configurada para '+name+'. Use o botão Rolar dados no painel central.');
+    $('roll-submit').scrollIntoView({behavior:'smooth',block:'center'});
+   });row.append(b);root.append(row);
+  }
+  return;
+ }
+ renderContent(tab);
+}
+function stockView(){
+ if(!gm())return;
+ const root=$('stock-items');root.replaceChildren();
+ const query=$('stock-search').value.trim().toLocaleLowerCase('pt-BR');
+ for(const item of items.filter(x=>x.category==='item'&&(!query||x.name.toLocaleLowerCase('pt-BR').includes(query))).slice(0,50)){
+  const s=storeRecord(item);
+  const div=node('div',null,'item-row');
+  div.append(node('strong',item.name),node('p',s?statusText(item):'Sem restrição: disponível sem limite'));
+  const row=node('div',null,'row');
+  const qty=node('input');qty.type='number';qty.min='0';qty.placeholder='∞';qty.style.width='70px';qty.value=s?.quantity??'';
+  qty.setAttribute('aria-label','Limite de '+item.name);
+  const allow=node('button','Liberar','secondary');allow.type='button';
+  const block=node('button','Bloquear','secondary');block.type='button';
+  const set=async flag=>{
+   const count=qty.value.trim()===''?null:Number(qty.value);
+   if(count!==null&&(!Number.isSafeInteger(count)||count<0)){say('gm-msg','Estoque inválido.',true);return}
+   const {error}=await db.rpc('dh_room_set_stock',{p_room:roomId,p_catalog:item.id,p_available:flag,p_quantity:count});
+   if(error)say('gm-msg',error.message,true);else{say('gm-msg','Disponibilidade de '+item.name+' atualizada.');await refresh({side:true});stockView()}
+  };
+  allow.addEventListener('click',()=>set(true));block.addEventListener('click',()=>set(false));
+  row.append(qty,allow,block);div.append(row);root.append(div);
+ }
+}
+async function loadCatalog(){
+ const {data,error}=await db.from('dh_catalog').select('id,category,name,archetype,description,xp_cost,coins_cost,rules,published').in('category',['item','talent','power','bonecharm','focus']).eq('published',true).order('name').limit(400);
+ if(error){say('side-msg','Erro no catálogo: '+error.message,true);return}
+ items=data||[];stockView();renderSide();
+}
+for(const button of document.querySelectorAll('[data-tab]'))button.addEventListener('click',()=>{tab=button.dataset.tab;renderSide()});
+$('copy-code').addEventListener('click',async()=>{
+ try{await navigator.clipboard.writeText(room.code);say('room-status','Código copiado: '+room.code)}
+ catch(e){say('room-status','Código: '+room.code)}
+});
+$('roll-submit').addEventListener('click',async()=>{
+ const b=$('roll-submit');b.disabled=true;
+ try{
+ const payload={p_room:roomId,p_skill:$('roll-skill').value,p_style:$('roll-style').value,p_focus:$('roll-focus').value||null,p_dice:Number($('roll-dice').value),p_difficulty:Number($('roll-difficulty').value),p_visibility:$('roll-visibility').value};
+ const {error}=await db.rpc('dh_roll_room',payload);if(error)throw Error(error.message);
+ say('roll-msg',payload.p_visibility==='gm_only'?'Rolagem enviada somente ao mestre.':'Rolagem registrada na mesa!');
+ await refresh();
+ }catch(e){say('roll-msg',e.message,true)}finally{b.disabled=!mySheet}
+});
+$('shop-toggle').addEventListener('click',async()=>{
+ const {error}=await db.rpc('dh_room_set_shop',{p_room:roomId,p_open:!room.shop_open});
+ if(error)say('gm-msg',error.message,true);else{await refresh({side:true});stockView()}
+});
+$('gm-grant').addEventListener('click',async()=>{
+ const character=$('gm-character').value;
+ if(!character)return say('gm-msg','Selecione um personagem.',true);
+ const coins=Number($('gm-coins').value),xp=Number($('gm-xp').value);
+ if(!Number.isSafeInteger(coins)||!Number.isSafeInteger(xp)||Math.abs(coins)>100000||Math.abs(xp)>100000)return say('gm-msg','Insira valores inteiros até 100.000.',true);
+ if(!confirm('Aplicar '+(coins>=0?'+':'')+coins+' moedas e '+(xp>=0?'+':'')+xp+' XP ao personagem?'))return;
+ const {error}=await db.rpc('dh_room_adjust_resources',{p_room:roomId,p_character:character,p_coins_delta:coins,p_xp_delta:xp});
+ if(error)say('gm-msg',error.message,true);else{say('gm-msg','Recursos atualizados.');$('gm-coins').value='0';$('gm-xp').value='0';await refresh({side:true})}
+});
+$('gm-next').addEventListener('click',async()=>{
+ if(!confirm('Iniciar a próxima aventura? Isso reinicia a quantidade de avanços permitidos por aventura.'))return;
+ const {error}=await db.rpc('dh_room_next_adventure',{p_room:roomId});
+ if(error)say('gm-msg',error.message,true);else{say('gm-msg','Próxima aventura iniciada!');await refresh({side:true})}
+});
+$('stock-search').addEventListener('input',stockView);
+async function boot(){
+ if(!isUuid(roomId))throw Error('Endereço de sala inválido.');
+ me=await getAuth();
+ await refresh({side:false});
+ if(!room)return;
+ $('table').classList.remove('hidden');
+ await loadCatalog();await loadMySheet(true);
+ setInterval(()=>refresh(),4500);
+}
+try{await boot()}catch(e){say('room-status',e.message,true)}

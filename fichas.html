@@ -1,0 +1,6 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Minhas fichas | Dishonored RPG</title><link rel="stylesheet" href="./personagens.css"></head><body>
+<header><div class="wrap"><a class="brand" href="./">DISHONORED RPG</a><nav><a href="campanha.html">Campanha</a><a href="catalogo.html">Catálogo</a><a href="admin.html">Administração</a></nav></div></header>
+<main class="wrap"><span class="eyebrow">Arquivo pessoal da campanha</span><h1>Minhas fichas</h1><p>Seus personagens ficam associados à sua conta. Abra uma ficha para editar seus dados, enviar uma imagem e experimentar equipamentos ou poderes em testes simulados.</p>
+<section class="panel"><div class="row between"><div><h2>Importar uma ficha existente</h2><p class="small">Use o arquivo JSON que você já exportou na ficha antiga.</p></div><div><input id="upload-json" type="file" accept=".json,application/json" aria-label="Selecionar ficha JSON"><button id="import" type="button">Importar personagem</button></div></div><p id="status" class="status" role="status"></p></section>
+<section><div class="row between"><h2>Seus personagens</h2><span class="small" id="count"></span></div><div id="cards" class="grid"><p>Carregando...</p></div></section>
+</main><script type="module" src="./fichas.js"></script></body></html>

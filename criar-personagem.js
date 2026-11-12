@@ -1,4 +1,5 @@
 import {db,getAuth} from './personagens-common.js';
+import {focosOficiais} from './focos-oficiais.js';
 import {archetypes,talentGroups,skills as skillData,styles as styleData} from './catalogo-dados.js';
 const $=id=>document.getElementById(id);
 const canonicalStyles=['Ousadamente','Cuidadosamente','Habilmente','Forçosamente','Silenciosamente','Rapidamente'];
@@ -28,6 +29,44 @@ function benefitRows(){
  write('skill-preview',skillNames,n=>4+(primary.includes(n)?2:0)+(n===bonus?1:0));
  write('style-preview',canonicalStyles,n=>4+(n===first?1:0)+(n===second&&second!==first?1:0));
 }
+
+const normalizeFocus=text=>String(text||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
+function setupFocusPicker(id){
+ const field=$(id),popup=$(id+'-options'),label=$(id+'-explanation');
+ const toggle=document.querySelector('[data-for="'+id+'"]');
+ const close=()=>{popup.hidden=true;toggle.setAttribute('aria-expanded','false')};
+ const open=()=>{popup.hidden=false;toggle.setAttribute('aria-expanded','true')};
+ function updateDescription(){
+  const found=focosOficiais.find(x=>normalizeFocus(x.nome)===normalizeFocus(field.value.trim()));
+  label.textContent=found?found.descricao:field.value.trim()?'Foco personalizado: converse com o mestre sobre quando ele se aplica.':'';
+ }
+ function showOptions(){
+  const query=normalizeFocus(field.value.trim());
+  const choices=focosOficiais.filter(x=>!query||normalizeFocus(x.nome).includes(query)||normalizeFocus(x.descricao).includes(query));
+  popup.replaceChildren();
+  if(!choices.length){
+   const empty=document.createElement('div');empty.className='focus-option-empty';empty.textContent='Nenhum foco do livro encontrado. Você pode usar o nome que digitou, com aprovação do mestre.';popup.append(empty);
+  }
+  for(const focus of choices){
+   const button=document.createElement('button');button.type='button';button.className='focus-option';
+   const title=document.createElement('strong');title.textContent=focus.nome;
+   const desc=document.createElement('small');desc.textContent=focus.descricao;
+   button.append(title,desc);
+   button.addEventListener('click',()=>{field.value=focus.nome;updateDescription();close();field.focus();});
+   popup.append(button);
+  }
+  open();
+ }
+ field.addEventListener('focus',showOptions);
+ field.addEventListener('input',()=>{updateDescription();showOptions()});
+ field.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+ toggle.addEventListener('click',()=>{if(!popup.hidden){close();return}showOptions();field.focus()});
+ document.addEventListener('click',e=>{if(!field.parentElement.contains(e.target))close()});
+ return updateDescription;
+}
+const focusPickerUpdates=['focus-one','focus-two'].map(setupFocusPicker);
+function updateFocusPickerDescriptions(){focusPickerUpdates.forEach(fn=>fn())}
+
 function updateFocus(){
  const x=Number($('rank-one').value),y=Number($('rank-two').value),good=Number.isInteger(x)&&Number.isInteger(y)&&x>=2&&x<=6&&y>=2&&y<=6&&x+y===8;
  $('focus-total').textContent=x+y+'/8 pontos distribuídos'+(good?' ✓':' — distribua exatamente 8, com 2 a 6 por foco');
@@ -65,7 +104,7 @@ async function resumeDraft(){
  $('truth-one').value=sheet.verdade1||'';$('truth-two').value=sheet.verdade2||'';
  $('background').value=sheet.background||'';
  (config.contacts||[]).forEach((c,i)=>{if($('contact-'+i))$('contact-'+i).value=c.nome||'';if($('relation-'+i))$('relation-'+i).value=c.relacionamento||'Neutro'});
- benefitRows();updateFocus();updateReady();setStep(Math.max(1,Math.min(3,Number(config.stage)||1)));
+ benefitRows();updateFocus();updateFocusPickerDescriptions();updateReady();setStep(Math.max(1,Math.min(3,Number(config.stage)||1)));
 }
 
 function updateArchetype(){

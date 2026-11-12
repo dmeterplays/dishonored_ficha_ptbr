@@ -16,15 +16,24 @@ main{padding:45px 0 90px}.section-head{display:flex;align-items:baseline;justify
 .workspace{margin-top:46px;display:grid;grid-template-columns:1.4fr 1fr;gap:20px}.panel h2{margin:0 0 8px;font-size:20px;color:var(--gold)}.panel h3{font-size:15px;color:var(--gold);margin:23px 0 8px}.rule{border-top:1px solid var(--line);margin:18px 0}
 .counters{display:grid;grid-template-columns:1fr 1fr;gap:14px}.counter{border:1px solid var(--line);padding:18px;background:#152022}.counter .label{font:12px 'Cinzel',serif;color:var(--gold)}.counter .value{font:600 42px 'Cinzel',serif;text-align:center;margin:8px}.counter .controls{display:flex;justify-content:center;gap:10px}.smallbtn{background:#263438;border:1px solid #536264;color:var(--ink);width:36px;height:35px}.smallbtn:hover{background:#425458}
 label{display:block;color:var(--gold);font-size:14px;margin:14px 0 6px}input,textarea,select{background:#111b1e;border:1px solid #465558;color:var(--ink);width:100%;padding:10px;border-radius:0}textarea{min-height:120px;resize:vertical}.row{display:flex;gap:10px;align-items:center}.row>*{min-width:0}.row .grow{flex:1}.row .btn{white-space:nowrap}.truth{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line);padding:10px 0;overflow-wrap:anywhere}.truth button{background:none;color:#c78e87;border:0;font-size:16px}.hint{font-size:14px;color:var(--muted)}.track{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin:12px 0}.track button{height:32px;background:#182326;border:1px solid #64716c;color:#fff}.track button.on{background:var(--red);border-color:#d18470}
+.character-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:12px;margin-top:16px}.character-card{border:1px solid var(--line);background:#142023;padding:16px}.character-card h3{margin:0 0 6px;color:var(--gold);font-size:16px;overflow-wrap:anywhere}.character-card p{font-size:15px;margin:4px 0 12px}.character-card .actions{margin-top:10px;gap:7px}.character-card .btn{padding:9px 10px;min-height:38px}.character-card .remove{border:1px solid #72423d;color:#dda7a0;background:transparent}.empty-state{font-size:16px;color:var(--muted)}
 footer{border-top:1px solid var(--line);text-align:center;padding:24px;color:var(--muted);font-size:14px}
 @media(max-width:850px){.grid{grid-template-columns:1fr 1fr}.workspace{grid-template-columns:1fr}.hero{padding:58px 0 48px}}
 @media(max-width:560px){.grid,.counters{grid-template-columns:1fr}header .wrap{align-items:flex-start;flex-direction:column;padding-top:14px;padding-bottom:14px}nav{gap:14px}.hero p{font-size:19px}.row.stack{flex-direction:column;align-items:stretch}}
 </style>
 </head>
 <body>
-<header><div class="wrap"><a href="./" class="brand">DISHONORED <small>ROLEPLAYING GAME • PT-BR</small></a><nav><a href="#recursos">Recursos</a><a href="#mesa">Mesa do mestre</a><a href="ficha_dishonored_ptbr.html">Ficha de personagem</a></nav></div></header>
-<div class="hero"><div class="wrap"><div class="eyebrow">Império das Ilhas • Arquivo de campanha</div><h1>Suas escolhas <em>deixam marcas.</em></h1><p>Uma central para a sua campanha de Dishonored: personagens, rolagens, Verdades e o delicado equilíbrio entre Momentum e Caos.</p><div class="actions"><a class="btn" href="ficha_dishonored_ptbr.html">Abrir ficha existente ↗</a><a class="btn secondary" href="#mesa">Abrir mesa do mestre ↓</a></div></div></div>
-<main class="wrap"><section id="recursos"><div class="section-head"><h2>Arquivo da campanha</h2><span>Primeira versão</span></div><div class="grid"><a class="tile" href="ficha_dishonored_ptbr.html"><div class="symbol">◈</div><h3>Ficha de personagem</h3><p>Acesse a ficha original com perícias, estilos, estresse, recursos e rolagens 2d20.</p><span class="go">Acessar ficha →</span></a><a class="tile" href="#mesa"><div class="symbol">⚖</div><h3>Painel do mestre</h3><p>Gerencie o Caos, Momentum, Verdades e trilha de alerta da cena.</p><span class="go">Abrir painel →</span></a><a class="tile" href="#regras"><div class="symbol">✧</div><h3>Referência rápida</h3><p>Consulte os fundamentos da resolução 2d20 sem sair da campanha.</p><span class="go">Consultar →</span></a></div></section>
+<header><div class="wrap"><a href="./" class="brand">DISHONORED <small>ROLEPLAYING GAME • PT-BR</small></a><nav><a href="#personagens">Personagens</a><a href="#recursos">Recursos</a><a href="#mesa">Mesa do mestre</a><a href="ficha_dishonored_ptbr.html">Ficha de personagem</a></nav></div></header>
+<div class="hero"><div class="wrap"><div class="eyebrow">Império das Ilhas • Arquivo de campanha</div><h1>Suas escolhas <em>deixam marcas.</em></h1><p>Uma central para a sua campanha de Dishonored: personagens, rolagens, Verdades e o delicado equilíbrio entre Momentum e Caos.</p><div class="actions"><a class="btn" href="ficha_dishonored_ptbr.html">Abrir ficha existente ↗</a><button class="btn secondary" type="button" id="hero-import">⭱ Importar ficha JSON</button><a class="btn secondary" href="#mesa">Abrir mesa do mestre ↓</a></div></div></div>
+<main class="wrap"><section id="personagens" class="character-section">
+<div class="section-head"><h2>Meus personagens</h2><span>Arquivos compatíveis com a ficha original</span></div>
+<div class="panel">
+ <div class="row stack" style="justify-content:space-between;flex-wrap:wrap"><div><h2>Importar ficha existente</h2><p class="hint">Selecione o arquivo .json exportado na ficha antiga. Você pode guardar vários personagens neste navegador.</p></div><button class="btn" id="import-character" type="button">⭱ Importar ficha</button></div>
+ <input id="character-file" type="file" accept=".json,application/json" multiple hidden aria-label="Selecionar fichas JSON">
+ <p id="character-status" class="hint" role="status" aria-live="polite"></p>
+ <div id="character-list" class="character-list"></div>
+ <p class="hint">As fichas importadas ficam somente neste navegador, até ativarmos o banco online. Antes de abrir outra ficha, exporte uma cópia das alterações feitas na ficha atual.</p>
+</div></section><section id="recursos" style="margin-top:45px"><div class="section-head"><h2>Arquivo da campanha</h2><span>Primeira versão</span></div><div class="grid"><a class="tile" href="ficha_dishonored_ptbr.html"><div class="symbol">◈</div><h3>Ficha de personagem</h3><p>Acesse a ficha original com perícias, estilos, estresse, recursos e rolagens 2d20.</p><span class="go">Acessar ficha →</span></a><a class="tile" href="#mesa"><div class="symbol">⚖</div><h3>Painel do mestre</h3><p>Gerencie o Caos, Momentum, Verdades e trilha de alerta da cena.</p><span class="go">Abrir painel →</span></a><a class="tile" href="#regras"><div class="symbol">✧</div><h3>Referência rápida</h3><p>Consulte os fundamentos da resolução 2d20 sem sair da campanha.</p><span class="go">Consultar →</span></a></div></section>
 <section class="workspace" id="mesa"><div class="panel"><div class="section-head"><h2>Mesa do mestre</h2><span class="tag" id="save-note">Salvo neste navegador</span></div><p class="hint">Ferramentas locais para auxiliar a sessão. Não são sincronizadas entre jogadores.</p><div class="counters"><div class="counter"><div class="label">Momentum do grupo</div><div class="value" id="momentum-val">0</div><div class="controls"><button class="smallbtn" data-counter="momentum" data-delta="-1" aria-label="Diminuir Momentum">−</button><button class="smallbtn" data-counter="momentum" data-delta="1" aria-label="Aumentar Momentum">+</button></div><div class="hint" style="text-align:center;margin-top:8px">Máximo 6</div></div><div class="counter"><div class="label">Caos do mestre</div><div class="value" id="chaos-val">0</div><div class="controls"><button class="smallbtn" data-counter="chaos" data-delta="-1" aria-label="Diminuir Caos">−</button><button class="smallbtn" data-counter="chaos" data-delta="1" aria-label="Aumentar Caos">+</button></div><div class="hint" style="text-align:center;margin-top:8px">Sem limite fixo</div></div></div>
 <div class="rule"></div><h3>Verdades em jogo</h3><form id="truth-form" class="row stack"><input class="grow" id="truth-input" maxlength="180" placeholder="Ex.: Guardas em alerta no distrito" aria-label="Nova Verdade"><button class="btn secondary" type="submit">Adicionar</button></form><div id="truth-list"></div><div class="rule"></div><h3>Trilha de furtividade / alerta</h3><div id="track" class="track" aria-label="Trilha de alerta"></div><p class="hint">Clique nos segmentos para acompanhar o nível de alerta. O tamanho e a consequência da trilha são definidos pelo mestre.</p><label for="session-notes">Anotações da sessão</label><textarea id="session-notes" placeholder="Cena, NPCs, pistas, decisões e consequências..."></textarea></div>
 <div class="panel" id="regras"><h2>Guia rápido • 2d20</h2><p>Em um teste, some a <strong>perícia + estilo</strong> para obter o número-alvo. Cada d20 com resultado igual ou inferior ao alvo gera um sucesso.</p><div class="rule"></div><h3>Rolagens</h3><p><strong>1</strong> é crítico e vale dois sucessos. Com um foco aplicável, resultados iguais ou inferiores ao nível do foco também valem dois sucessos. Um <strong>20</strong> gera complicação.</p><h3>Dificuldade</h3><p>O mestre normalmente define de 0 a 5 sucessos necessários. Sucessos excedentes geram Momentum.</p><h3>Momentum e Caos</h3><p>O grupo pode guardar até 6 de Momentum; o mestre controla Caos. Comprar dados extras custa progressivamente 1, 2 e 3 pontos, até 5d20 no total.</p><h3>Vazio</h3><p>O personagem pode ter até 3 Pontos de Vazio. A ficha individual continua sendo o lugar para administrar esse recurso.</p><div class="rule"></div><p class="hint">Referência resumida do livro Dishonored RPG 2d20. As decisões narrativas e as regras completas continuam sob responsabilidade do mestre.</p></div></section></main>
@@ -42,5 +51,68 @@ function render(){document.getElementById('momentum-val').textContent=state.mome
 document.querySelectorAll('[data-counter]').forEach(b=>b.addEventListener('click',()=>{const name=b.dataset.counter;state[name]=clamp(state[name]+Number(b.dataset.delta),0,name==='momentum'?6:9999);persist();render()}));
 document.getElementById('truth-form').addEventListener('submit',e=>{e.preventDefault();const field=document.getElementById('truth-input');const value=field.value.trim();if(!value)return;state.truths.push(value);field.value='';persist();render()});
 const notes=document.getElementById('session-notes');notes.value=String(state.notes||'');notes.addEventListener('input',()=>{state.notes=notes.value;persist()});render();
+
+const CHARACTER_STORE='dishonored-personagens-v1';
+const ORIGINAL_SHEET_STORE='dishonored-ficha-v1';
+let characters=[];
+try{const found=JSON.parse(localStorage.getItem(CHARACTER_STORE)||'[]');if(Array.isArray(found))characters=found;}catch(e){}
+const charList=document.getElementById('character-list');
+const charStatus=document.getElementById('character-status');
+function isSheet(v){return v&&typeof v==='object'&&!Array.isArray(v)&&typeof v.nome==='string'&&Array.isArray(v.skills)&&v.skills.length>0&&v.skills.every(x=>x&&typeof x.label==='string'&&Number.isFinite(Number(x.value)))&&Array.isArray(v.styles)&&v.styles.length>0&&v.styles.every(x=>x&&typeof x.label==='string'&&Number.isFinite(Number(x.value)))&&(!('notas' in v)||(v.notas&&typeof v.notas==='object'&&!Array.isArray(v.notas)));}
+function saveCharacters(){localStorage.setItem(CHARACTER_STORE,JSON.stringify(characters));}
+function renderCharacters(){
+ charList.replaceChildren();
+ if(!characters.length){const p=document.createElement('p');p.className='empty-state';p.textContent='Nenhuma ficha importada ainda. Clique em “Importar ficha” para começar.';charList.appendChild(p);return;}
+ characters.forEach((character,i)=>{
+ const box=document.createElement('div');box.className='character-card';
+ const title=document.createElement('h3');title.textContent=character.data.nome.trim()||'Personagem sem nome';
+ const detail=document.createElement('p');detail.textContent='Arquétipo: '+(character.data.arquetipo||'Não informado');
+ const actions=document.createElement('div');actions.className='actions';
+ const open=document.createElement('button');open.className='btn';open.textContent='Abrir ficha';open.addEventListener('click',()=>openCharacter(i));
+ const exportBtn=document.createElement('button');exportBtn.className='btn secondary';exportBtn.textContent='Exportar';exportBtn.addEventListener('click',()=>{const blob=new Blob([JSON.stringify(character.data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ficha_dishonored_'+(character.data.nome||'personagem').replace(/[^a-z0-9_-]/gi,'_')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)});
+ const remove=document.createElement('button');remove.className='btn remove';remove.textContent='Remover';remove.addEventListener('click',()=>{if(!confirm('Remover esta cópia do portal? O arquivo original não será apagado.'))return;characters.splice(i,1);saveCharacters();renderCharacters()});
+ actions.append(open,exportBtn,remove);box.append(title,detail,actions);charList.appendChild(box);
+ });
+}
+function openCharacter(i){
+ const item=characters[i];if(!item)return;
+ // The original sheet reads a single localStorage key; preserve that sheet as
+ // a separate library entry before changing the active character.
+ let existing=null;try{existing=JSON.parse(localStorage.getItem(ORIGINAL_SHEET_STORE)||'null');}catch(e){}
+ if(isSheet(existing)){
+ const existingText=JSON.stringify(existing);
+ const targetText=JSON.stringify(item.data);
+ if(existingText!==targetText){
+ const currentName=existing.nome.trim()||'Personagem sem nome';
+ if(!confirm('A ficha atualmente aberta ('+currentName+') será substituída na tela. Uma cópia dela será guardada em Meus personagens antes de continuar. Deseja abrir '+(item.data.nome||'esta ficha')+'?'))return;
+ const backupId='auto-backup-'+Date.now()+'-'+Math.random().toString(36).slice(2);
+ characters.push({id:backupId,data:existing});
+ try{saveCharacters();}catch(err){alert('Sem espaço para salvar uma cópia de segurança. Exporte sua ficha atual antes de trocar.');return;}
+ }
+ }
+ try{localStorage.setItem(ORIGINAL_SHEET_STORE,JSON.stringify(item.data));window.location.href='ficha_dishonored_ptbr.html';}catch(err){alert('Não foi possível abrir a ficha. Verifique o armazenamento do navegador.');}
+}
+async function importCharacterFiles(files){
+ let ok=0;const failed=[];
+ for(const file of files){
+ try{
+ if(file.size>2*1024*1024)throw Error('arquivo muito grande');
+ const content=await file.text();const data=JSON.parse(content);
+ if(!isSheet(data))throw Error('formato incompatível');
+ const name=(data.nome||'').trim();
+ const same=characters.findIndex(x=>x.data.nome===data.nome&&JSON.stringify(x.data)===JSON.stringify(data));
+ if(same>=0){failed.push(file.name+' (cópia já importada)');continue;}
+ characters.push({id:'import-'+Date.now()+'-'+ok+'-'+Math.random().toString(36).slice(2),data});ok++;
+ }catch(err){failed.push(file.name+' ('+err.message+')');}
+ }
+ try{saveCharacters();renderCharacters();charStatus.textContent=ok+' ficha(s) importada(s).'+(failed.length?' Não importadas: '+failed.join('; '):'');}
+ catch(e){characters.splice(-ok,ok);charStatus.textContent='Não foi possível salvar no navegador. Verifique o espaço disponível.';}
+}
+const picker=document.getElementById('character-file');
+document.getElementById('import-character').addEventListener('click',()=>picker.click());
+document.getElementById('hero-import').addEventListener('click',()=>picker.click());
+picker.addEventListener('change',async()=>{if(picker.files.length)await importCharacterFiles([...picker.files]);picker.value='';});
+renderCharacters();
+
 </script>
 </body></html>

@@ -115,6 +115,11 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog}){
   root.append(controls);
   const link=make('a','Consultar ficha do bestiário','btn secondary');
   if(working.template_id){link.href='ficha-inimigo.html?id='+encodeURIComponent(working.template_id)+'&room='+encodeURIComponent(roomId);root.append(link)}
+  const remove=make('button','Remover inimigo da mesa','danger-button');
+  remove.type='button';
+  remove.style.marginTop='12px';
+  remove.addEventListener('click',deleteEnemy);
+  root.append(remove);
   message('');
  }
 

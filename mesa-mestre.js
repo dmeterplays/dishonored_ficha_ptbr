@@ -6,7 +6,7 @@ const tiers={menor:'Menor',notavel:'Notável',principal:'Principal'};
 const skills=['Lutar','Mover','Estudar','Sobreviver','Falar','Consertar'];
 const styles=['Ousadamente','Cuidadosamente','Habilmente','Forçosamente','Silenciosamente','Rapidamente'];
 export function initMasterEditor({db,roomId,onSaved,getCatalog}){
- let selected=null,working=null,inventory=[],saving=false;
+ let selected=null,working=null,inventory=[],focusEntries=[],saving=false;
  const message=(text,bad=false)=>{$('gm-editor-status').textContent=text;$('gm-editor-status').className=bad?'error':'status'};
  const put=(id,label,value,type='text',max)=>{
   const box=make('div');const lab=make('label',label);lab.htmlFor=id;
@@ -23,12 +23,24 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog}){
  const section=(title)=>{const s=make('section',null,'gm-sheet-section');s.append(make('h3',title));return s};
  const paired=(root,...fields)=>{const grid=make('div',null,'form-grid');grid.append(...fields);root.append(grid);};
  function close(){
-  selected=null;working=null;inventory=[];
+  selected=null;working=null;inventory=[];focusEntries=[];
   $('gm-selected').classList.add('hidden');$('player-side').classList.remove('hidden');
   $('right-title').textContent='Minha ficha e ações';$('gm-editor').replaceChildren();message('');
   document.querySelectorAll('.player-card.gm-active').forEach(x=>x.classList.remove('gm-active'));
  }
  $('gm-back-own').addEventListener('click',close);
+ function drawFocuses(){
+  const root=$('gm-focus-list');if(!root)return;root.replaceChildren();
+  focusEntries.forEach((item,i)=>{
+   const row=make('div',null,'gm-focus-entry');
+   const name=make('input');name.type='text';name.value=item.nome||'';name.placeholder='Nome do foco';
+   name.setAttribute('aria-label','Foco '+(i+1));name.addEventListener('input',()=>{item.nome=name.value});
+   const rank=make('input');rank.type='number';rank.min='1';rank.max='8';rank.step='1';rank.value=item.valor??2;
+   rank.setAttribute('aria-label','Classificação do foco '+(i+1));rank.addEventListener('input',()=>{item.valor=Number(rank.value)});
+   const remove=make('button','Remover','secondary');remove.type='button';remove.addEventListener('click',()=>{focusEntries.splice(i,1);drawFocuses()});
+   row.append(name,rank,remove);root.append(row);
+  });
+ }
  function drawInventory(){
   const root=$('gm-inventory-list');if(!root)return;
   root.replaceChildren();
@@ -89,7 +101,17 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog}){
   asText('gm-power-text','Poderes do Vazio',sheet.notas?.['nota-poderes']||'');
   asText('gm-talent-text','Talentos e vantagens',sheet.notas?.['nota-talentos']||'');
   asText('gm-special-text','Regras especiais e condições',sheet.regrasEspeciais||'');
+  if(!npc){
+   const focusTitle=make('h4','Focos ativos na rolagem (nome e classificação)');
+   abilities.append(focusTitle);
+   const focusList=make('div');focusList.id='gm-focus-list';abilities.append(focusList);
+   const addFocus=make('button','+ Adicionar foco','secondary');addFocus.type='button';
+   addFocus.addEventListener('click',()=>{focusEntries.push({nome:'',valor:2});drawFocuses()});
+   abilities.append(addFocus);
+   abilities.append(make('p','Estas classificações passam a valer nas rolagens oficiais.','small'));
+  }
   root.append(abilities);
+  if(!npc)drawFocuses();
   const inventorySection=section('Itens e equipamentos');
   inventorySection.append(make('p',npc?'Equipamentos deste inimigo.':'Inventário oficial concedido pelo mestre — separado de itens apenas anotados para teste.','small'));
   const invRoot=make('div');invRoot.id='gm-inventory-list';inventorySection.append(invRoot);
@@ -151,6 +173,12 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog}){
     return {...(old||{}),label,value:readNum(input.id,0,12)};
    }).concat(original.filter(item=>!known.has(item.label)));
   }
+  if(!npc){
+   const normalized=focusEntries.map(x=>({nome:String(x.nome||'').trim(),valor:Number(x.valor)}));
+   if(normalized.some(x=>!x.nome||!Number.isInteger(x.valor)||x.valor<1||x.valor>8))throw Error('Foco precisa de nome e classificação entre 1 e 8.');
+   if(new Set(normalized.map(x=>x.nome.toLocaleLowerCase('pt-BR'))).size!==normalized.length)throw Error('Focos duplicados.');
+   sheet.creation={...(sheet.creation||{}),focus:normalized};
+  }
   sheet.focos=$('gm-focus-text').value;
   sheet.ataques=$('gm-attack-text').value;
   sheet.regrasEspeciais=$('gm-special-text').value;
@@ -193,13 +221,13 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog}){
  async function choosePlayer(id){
   const {data,error}=await db.rpc('dh_room_gm_sheet',{p_room:roomId,p_character:id});
   if(error)return message(error.message,true);
-  selected={kind:'player',id};working=data;inventory=Array.isArray(data.sheet?.gmInventory)?structuredClone(data.sheet.gmInventory):[];
+  selected={kind:'player',id};working=data;inventory=Array.isArray(data.sheet?.gmInventory)?structuredClone(data.sheet.gmInventory):[];focusEntries=Array.isArray(data.sheet?.creation?.focus)?structuredClone(data.sheet.creation.focus):[];
   render();highlight();
  }
  async function chooseEnemy(id){
   const {data,error}=await db.from('dh_room_enemies').select('id,room_id,name,tier,section,sheet,inventory,visible').eq('room_id',roomId).eq('id',id).single();
   if(error)return message(error.message,true);
-  selected={kind:'enemy',id};working=data;inventory=Array.isArray(data.inventory)?structuredClone(data.inventory):[];
+  selected={kind:'enemy',id};working=data;inventory=Array.isArray(data.inventory)?structuredClone(data.inventory):[];focusEntries=[];
   render();highlight();
  }
  function highlight(){

@@ -39,6 +39,35 @@ function updateReady(){
  $('ready-help').textContent=ok?'Todas as informações essenciais foram preenchidas. Você pode concluir sua ficha.':'Você pode salvar um rascunho agora. Para marcar como pronto, preencha nome, duas Verdades e background.';
  $('finish').disabled=!ok;
 }
+
+async function resumeDraft(){
+ const id=new URLSearchParams(location.search).get('id');
+ if(!id)return;
+ if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))throw Error('Identificador inválido.');
+ const {data,error}=await db.from('dh_characters').select('id,sheet,creation_status').eq('id',id).eq('owner_id',user.id).single();
+ if(error||!data)throw Error('Rascunho não encontrado na sua conta.');
+ if(data.creation_status!=='draft'||!data.sheet?.creation)throw Error('Esta ficha não possui uma criação em etapas pendente. Edite-a pela ficha completa.');
+ const sheet=data.sheet,config=sheet.creation;
+ entryId=data.id;
+ if(archetypes.some(x=>x.nome===sheet.arquetipo)){$('archetype').value=sheet.arquetipo;updateArchetype();}
+ if(secondarySkills(current()).includes(config.bonusSkill))$('bonus-skill').value=config.bonusSkill;
+ const allowed=allowedStyles(current());
+ if(Array.isArray(config.styles)){
+  if(allowed.includes(config.styles[0]))$('first-style').value=config.styles[0];
+  if(allowed.includes(config.styles[1]))$('second-style').value=config.styles[1];
+ }
+ for(const radio of document.querySelectorAll('input[name="starting-talent"]'))radio.checked=radio.value===config.talent;
+ if(Array.isArray(config.focus)&&config.focus.length===2){
+  $('focus-one').value=config.focus[0].nome||'';$('rank-one').value=config.focus[0].valor||4;
+  $('focus-two').value=config.focus[1].nome||'';$('rank-two').value=config.focus[1].valor||4;
+ }
+ $('name').value=sheet.nome||'';$('age').value=sheet.idade||'';
+ $('truth-one').value=sheet.verdade1||'';$('truth-two').value=sheet.verdade2||'';
+ $('background').value=sheet.background||'';
+ (config.contacts||[]).forEach((c,i)=>{if($('contact-'+i))$('contact-'+i).value=c.nome||'';if($('relation-'+i))$('relation-'+i).value=c.relacionamento||'Neutro'});
+ benefitRows();updateFocus();updateReady();setStep(Math.max(1,Math.min(3,Number(config.stage)||1)));
+}
+
 function updateArchetype(){
  const a=current();
  const bonus=secondarySkills(a),styleOptions=allowedStyles(a);
@@ -139,4 +168,4 @@ for(const b of document.querySelectorAll('[data-step]'))b.addEventListener('clic
  else if(n===step)return;
  else{$('next').click()}
 });
-try{user=await getAuth();options($('archetype'),archetypes.map(x=>x.nome));updateArchetype();updateFocus();setStep(1);initialized=true}catch(e){$('message').textContent=e.message}
+try{user=await getAuth();options($('archetype'),archetypes.map(x=>x.nome));updateArchetype();updateFocus();setStep(1);await resumeDraft();initialized=true}catch(e){$('message').textContent=e.message;$('message').className='error'}

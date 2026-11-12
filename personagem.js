@@ -161,7 +161,7 @@ $('roll').addEventListener('click',()=>{
  const skill=v('skills'),style=v('styles'),focus=Number($('test-focus').value),dice=Number($('test-dice').value),difficulty=Number($('test-difficulty').value);
  if(![skill,style,focus,dice,difficulty].every(Number.isInteger)||skill<4||skill>8||style<4||style>8||focus<0||focus>8||dice<2||dice>5||difficulty<0||difficulty>5){$('roll-output').textContent='Corrija os valores do teste antes de rolar.';return}
  const target=skill+style;const rolls=Array.from({length:dice},roll20);
- const successes=rolls.reduce((n,r)=>n+(r<=focus?2:r<=target?1:0),0);
+ const successes=rolls.reduce((n,r)=>n+(r===1||(focus>0&&r<=focus)?2:r<=target?1:0),0);
  const complications=rolls.filter(n=>n===20).length;
  const won=successes>=difficulty;
  const base=selected.kind==='item'&&selected.entry.dano!==null&&selected.entry.dano!==undefined?' Dano base do item: '+selected.entry.dano+' (se houver acerto e efeito aplicável).':'';

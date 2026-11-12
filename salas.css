@@ -74,3 +74,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .gm-focus-entry input[type=number]{text-align:center;padding:7px}
 .gm-focus-entry button{padding:8px;font-size:10px}
 @media(max-width:560px){.gm-focus-entry{grid-template-columns:minmax(0,1fr) 55px auto}.gm-focus-entry button{padding:7px 5px}}
+
+/* Painel compacto de inimigos: somente rolagens e visibilidade do estresse. */
+.gm-stress-toggle{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:11px;background:#18282c;border:1px solid #526769;margin:12px 0}
+.gm-stress-toggle input{accent-color:var(--gold)}
+.gm-quick-roll{margin-top:16px}
+.gm-quick-roll h3{margin:0 0 11px}
+.gm-quick-roll h4{margin:16px 0 9px}
+.gm-enemy-actions{display:flex;flex-direction:column;gap:9px}
+.gm-enemy-action-row{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid #4a6060;background:#13252a;padding:10px}
+.gm-enemy-action-row>span{font-size:15px;line-height:1.35;flex:1;overflow-wrap:anywhere}
+.gm-enemy-action-row>button{flex-shrink:0;font-size:10px;padding:9px}
+@media(max-width:640px){.gm-enemy-action-row{flex-direction:column;align-items:stretch}}

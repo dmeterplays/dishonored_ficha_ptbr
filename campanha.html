@@ -13,13 +13,13 @@ a{color:var(--gold)}h1,h2,h3,button{font-family:Cinzel,serif}h1{font-size:29px;c
 <div class="grid"><div class="panel"><h2>Importar personagem existente</h2><p>Use o JSON exportado da ficha original.</p><input id="import-json" type="file" accept=".json,application/json"><button id="import-btn">Salvar personagem na conta</button><p id="import-status" role="status"></p></div><div class="panel"><h2>Seus recursos</h2><p>Os Pontos do Vazio continuam individuais. Cada personagem terá seu próprio Momentum e XP no banco de dados.</p><p><small>Alterações de XP/Momentum ficam reservadas ao mestre; recursos não podem ser alterados diretamente pelo navegador.</small></p></div></div>
 <section class="panel"><h2>Meus personagens</h2><div id="character-list" class="grid"></div></section>
 <section class="panel"><h2>Catálogo de progressão</h2><p>Veja os 13 arquétipos e custos oficiais de avanço.</p><a href="catalogo.html" class="button">Abrir catálogo</a></section>
-<section id="master-area" class="panel hidden"><h2>Painel privado do mestre</h2><p>Você pode consultar todas as fichas e solicitações de avanço. A tabela de Caos será persistida em uma próxima etapa, após criação da campanha.</p><div id="master-list"></div><h3>Solicitações dos jogadores</h3><div id="request-list"></div></section>
+<section id="master-area" class="panel hidden"><h2>Painel privado do mestre</h2><p>Você pode consultar todas as fichas e solicitações de avanço. A tabela de Caos será persistida em uma próxima etapa, após criação da campanha.</p><div class="panel"><h3>Caos (visível somente ao mestre)</h3><div class="counter"><button id="chaos-minus" class="secondary">−</button><span id="chaos-value" class="number">0</span><button id="chaos-plus" class="secondary">+</button></div><small>O valor é armazenado no Supabase com proteção por permissão.</small></div><div id="master-list"></div><h3>Solicitações dos jogadores</h3><div id="request-list"></div></section>
 </section></main>
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './supabase-config.js';
 const $=id=>document.getElementById(id);
-let client=null, user=null, role='player', myCharacters=[];
+let client=null, user=null, role='player', myCharacters=[];let chaosValue=0;
 function show(id,on){$(id).classList.toggle('hidden',!on)}
 function message(id,txt,bad=false){$(id).textContent=txt;$(id).className=bad?'bad':'ok'}
 if(!SUPABASE_URL||!SUPABASE_PUBLISHABLE_KEY){show('setup',true)}else{
@@ -39,7 +39,7 @@ async function refresh(){
  $('role-info').textContent=role==='master'?'Acesso: Mestre':'Acesso: Jogador';
  show('master-area',role==='master');
  await loadCharacters();
- if(role==='master')await loadMaster();
+ if(role==='master'){await loadMaster();await loadChaos();}
 }
 $('auth-form').addEventListener('submit',async e=>{e.preventDefault();const {error}=await client.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});message('auth-message',error?error.message:'Login realizado.',!!error)});
 $('signup').addEventListener('click',async()=>{const {error}=await client.auth.signUp({email:$('email').value.trim(),password:$('password').value,options:{data:{display_name:$('display').value.trim()}}});message('auth-message',error?error.message:'Conta criada. Confirme seu e-mail, caso a confirmação esteja habilitada.',!!error)});
@@ -65,6 +65,8 @@ async function loadCharacters(){
  addText(card,'h3',ch.name);addText(card,'p','Arquétipo: '+(ch.archetype||'Não definido'));
  addText(card,'div','XP: '+ch.xp+' · Momentum: '+ch.momentum+' · Vazio: '+ch.void_points);
  const controls=document.createElement('div');controls.className='actions';
+ const less=document.createElement('button');less.className='secondary';less.textContent='− Momentum';less.addEventListener('click',()=>adjustMomentum(ch,-1));
+ const more=document.createElement('button');more.className='secondary';more.textContent='+ Momentum';more.addEventListener('click',()=>adjustMomentum(ch,1));
  const exportButton=document.createElement('button');exportButton.textContent='Exportar JSON';exportButton.className='secondary';exportButton.addEventListener('click',()=>{const a=document.createElement('a');const url=URL.createObjectURL(new Blob([JSON.stringify(ch.sheet,null,2)],{type:'application/json'}));a.href=url;a.download='ficha_dishonored_'+ch.name.replace(/[^a-z0-9_-]/gi,'_')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)});
  const openButton=document.createElement('button');openButton.textContent='Abrir ficha antiga';openButton.addEventListener('click',()=>{if(!confirm('Sua ficha atual no navegador será substituída. Exporte antes suas alterações não salvas na nuvem.'))return;localStorage.setItem('dishonored-ficha-v1',JSON.stringify(ch.sheet));location.href='ficha_dishonored_ptbr.html'});
  const reqButton=document.createElement('button');reqButton.className='secondary';reqButton.textContent='Solicitar avanço';reqButton.addEventListener('click',async()=>{
@@ -73,9 +75,31 @@ async function loadCharacters(){
  const {error}=await client.from('dh_requests').insert({character_id:ch.id,request_type:'advance',details:{description:description.trim()}});
  alert(error?'Erro: '+error.message:'Solicitação enviada ao mestre.');
  });
- controls.append(exportButton,openButton,reqButton);card.appendChild(controls);list.appendChild(card);
+ controls.append(less,more,exportButton,openButton,reqButton);card.appendChild(controls);list.appendChild(card);
  });
 }
+async function adjustMomentum(ch,delta){
+ const next=Math.max(0,Math.min(6,ch.momentum+delta));
+ if(next===ch.momentum)return;
+ const {error}=await client.from('dh_characters').update({momentum:next}).eq('id',ch.id).eq('momentum',ch.momentum);
+ if(error)alert('Não foi possível alterar Momentum: '+error.message);
+ await loadCharacters();
+}
+async function loadChaos(){
+ const {data,error}=await client.from('dh_master_state').select('chaos').eq('id',1).single();
+ if(error){$('chaos-value').textContent='Erro';return;}
+ chaosValue=data.chaos;$('chaos-value').textContent=chaosValue;
+}
+async function adjustChaos(delta){
+ if(role!=='master')return;
+ const next=Math.max(0,chaosValue+delta);
+ if(next===chaosValue)return;
+ const {error}=await client.from('dh_master_state').update({chaos:next,updated_at:new Date().toISOString()}).eq('id',1).eq('chaos',chaosValue);
+ if(error)alert('Não foi possível alterar Caos: '+error.message);
+ await loadChaos();
+}
+$('chaos-minus').addEventListener('click',()=>adjustChaos(-1));
+$('chaos-plus').addEventListener('click',()=>adjustChaos(1));
 async function loadMaster(){
  const [{data:all,error:ae},{data:req,error:re}]=await Promise.all([
  client.from('dh_characters').select('name,archetype,xp,momentum,owner_id').order('created_at',{ascending:false}),

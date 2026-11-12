@@ -1,7 +1,7 @@
 import {db,getAuth} from './personagens-common.js';
 const $=id=>document.getElementById(id),params=new URLSearchParams(location.search),roomId=params.get('room');
 const sections={povo_comum:'O Povo Comum',nobreza:'A Nobreza',selvagens:'O Selvagem',notorios:'O Notório'};
-const tiers={menor:'NPC menor',notavel:'NPC notável',principal:'NPC principal'};
+const tiers={incidental:'NPC incidental',menor:'NPC menor',notavel:'NPC notável',principal:'NPC principal'};
 const create=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!=null)e.textContent=txt;if(cls)e.className=cls;return e};
 let catalog=[],me,room;
 const notice=(text,bad=false)=>{$('permission-message').textContent=text;$('permission-message').className=bad?'error':'status'};

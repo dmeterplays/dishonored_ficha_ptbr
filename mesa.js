@@ -236,7 +236,14 @@ function renderContent(kind){
   root.append(accordion(p.name,record?.description||p.description||'Registro inicial da ficha.',p.origin==='reference'?'Opção anotada como referência; não é uma aquisição confirmada.':'Conteúdo registrado na ficha.'));
   seen.add(p.name.toLocaleLowerCase('pt-BR'));
  }
- for(const p of acquired){
+ if(kind==='item'){
+  for(const owned of mySheet?.gmInventory||[]){
+   if(!owned?.name||Number(owned.quantity)<=0)continue;
+   const record=items.find(x=>x.category==='item'&&x.name.toLocaleLowerCase('pt-BR')===owned.name.toLocaleLowerCase('pt-BR'));
+   root.append(accordion(owned.name+' ×'+owned.quantity,record?.description||'Equipamento registrado no inventário oficial.',owned.source==='purchase'?'Comprado durante uma sessão.':'Concedido ou ajustado pelo mestre.'));
+   seen.add(owned.name.toLocaleLowerCase('pt-BR'));
+  }
+ }else for(const p of acquired){
   const record=byId(p.catalog_id);if(!record)continue;
   root.append(accordion(record.name,record.description,'Adquirido por '+p.amount+' '+(p.currency==='xp'?'XP':'moedas')+'.'));
   seen.add(record.name.toLocaleLowerCase('pt-BR'));

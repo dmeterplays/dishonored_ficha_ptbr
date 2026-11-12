@@ -128,19 +128,22 @@ async function refresh({side=false}={}){
   $('coins').textContent='Moedas: '+(mine?.character_id?fmt(mine.coins):'—');
   $('xp').textContent='XP: '+(mine?.character_id?fmt(mine.xp):'—');
   if(side||oldMode!==room.shop_open)renderSide();
-  if(!m.error&&mine?.character_id&&(!mySheet||side))await loadMySheet(false);
+  if(!m.error&&mine?.character_id)await loadMySheet(false);
  }catch(e){say('room-status',e.message,true)}finally{busy=false}
 }
 async function loadMySheet(redraw=true){
  if(!mine?.character_id){mySheet=null;rollerView();$('my-character').replaceChildren(node('p',gm()?'Você está como mestre. Clique em Abrir ficha de um participante ou inimigo no painel esquerdo.':'Vincule uma ficha à campanha pelo lobby.'));if(redraw)renderSide();return}
  const {data,error}=await db.from('dh_characters').select('id,name,sheet,creation_status').eq('id',mine.character_id).eq('owner_id',me.id).single();
  if(error){say('side-msg',error.message,true);return}
- mySheet=data.sheet;rollerView();
+ const changed=JSON.stringify(mySheet)!==JSON.stringify(data.sheet);
+ mySheet=data.sheet;
+ if(!changed&&!redraw)return;
+ rollerView();
  const root=$('my-character');root.replaceChildren();
  root.append(node('strong',mine.character_name));
  const edit=node('a','Abrir ficha completa','btn secondary');edit.href='personagem.html?id='+encodeURIComponent(mine.character_id);edit.style.marginTop='8px';
  root.append(edit);
- if(redraw)renderSide();
+ if(redraw||changed)renderSide();
 }
 function accordion(title,desc,secondary){
  const details=node('details');details.append(node('summary',title));

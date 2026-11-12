@@ -78,6 +78,18 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog}){
    stats.append(area);
   }
   root.append(stats);
+  const abilities=section('Focos, ataques e poderes');
+  const asText=(id,label,value)=>{
+   const labelElement=make('label',label);labelElement.htmlFor=id;
+   const field=make('textarea');field.id=id;field.rows=3;field.value=String(value||'');
+   abilities.append(labelElement,field);
+  };
+  asText('gm-focus-text','Focos e especialidades',sheet.focos||sheet.notas?.['nota-focos']||'');
+  asText('gm-attack-text','Ataques e ações especiais',sheet.ataques||'');
+  asText('gm-power-text','Poderes do Vazio',sheet.notas?.['nota-poderes']||'');
+  asText('gm-talent-text','Talentos e vantagens',sheet.notas?.['nota-talentos']||'');
+  asText('gm-special-text','Regras especiais e condições',sheet.regrasEspeciais||'');
+  root.append(abilities);
   const inventorySection=section('Itens e equipamentos');
   inventorySection.append(make('p',npc?'Equipamentos deste inimigo.':'Inventário oficial concedido pelo mestre — separado de itens apenas anotados para teste.','small'));
   const invRoot=make('div');invRoot.id='gm-inventory-list';inventorySection.append(invRoot);
@@ -139,6 +151,10 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog}){
     return {...(old||{}),label,value:readNum(input.id,0,12)};
    }).concat(original.filter(item=>!known.has(item.label)));
   }
+  sheet.focos=$('gm-focus-text').value;
+  sheet.ataques=$('gm-attack-text').value;
+  sheet.regrasEspeciais=$('gm-special-text').value;
+  sheet.notas={...(sheet.notas||{}),'nota-focos':sheet.focos,'nota-poderes':$('gm-power-text').value,'nota-talentos':$('gm-talent-text').value};
   if(npc){sheet.void=readNum('gm-void',0,20);sheet.momentum=readNum('gm-momentum',0,50);sheet.defeated_on_success=$('gm-tier').value==='menor';}
   else{sheet.arquetipo=$('gm-archetype').value.trim();sheet.gmInventory=structuredClone(inventory);}
   return {name,sheet};

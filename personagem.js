@@ -42,6 +42,7 @@ function renderPhoto(url){
 }
 function renderMain(){
  $('sheet').classList.remove('hidden');
+ const resume=$('resume-wizard');resume.classList.toggle('hidden',!(character.creation_status==='draft'&&character.sheet?.creation));resume.href='criar-personagem.html?id='+encodeURIComponent(character.id);
  $('name').value=character.sheet.nome??character.name;
  $('age').value=character.sheet.idade??'';
  $('archetype').value=character.sheet.arquetipo??character.archetype??'';

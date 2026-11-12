@@ -58,7 +58,7 @@ function enemyView(){
  for(const e of enemies){
   const card=node('div',null,'player-card');
   card.dataset.enemyId=e.id;
-  card.append(node('strong',e.name),node('p',(e.tier==='principal'?'Principal':e.tier==='notavel'?'Notável':'Menor')+(e.visible===false?' · Oculto':'')+' · '+(e.section==='nobreza'?'Nobreza':e.section==='selvagens'?'Selvagem':e.section==='notorios'?'Notório':'Povo Comum')));
+  card.append(node('strong',e.name),node('p',(e.tier==='principal'?'Principal':e.tier==='notavel'?'Notável':e.tier==='incidental'?'Incidental':'Menor')+(e.visible===false?' · Oculto':'')+' · '+(e.section==='nobreza'?'Nobreza':e.section==='selvagens'?'Selvagem':e.section==='notorios'?'Notório':'Povo Comum')));
   const now=Number(e.sheet?.stressAtual||0),max=Number(e.sheet?.stressMax||6);
   card.append(node('p',max===0?'Sem trilha de estresse · cai após ataque bem-sucedido':'Estresse '+now+'/'+max));
   const meter=node('div',null,'meter'),fill=node('span');

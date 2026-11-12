@@ -37,19 +37,6 @@ footer{border-top:1px solid var(--line);text-align:center;padding:24px;color:var
 <section class="workspace" id="mesa"><div class="panel"><h2>Área de jogadores</h2><p>Importe seu personagem, veja o Momentum individual e solicite avanços de personagem.</p><a href="campanha.html" class="btn">Acessar área da campanha</a></div><div class="panel"><h2>Área do mestre</h2><p>Caos e informações privadas não são exibidos na página pública. O acesso depende de login e permissão de mestre no banco.</p><a href="campanha.html" class="btn secondary">Entrar como mestre</a></div></section></main>
 <footer>Projeto de fã para uso pessoal • Dishonored RPG 2d20 • A ficha original foi preservada</footer>
 <script>
-const KEY='dishonored-portal-v1';
-const defaults={momentum:0,chaos:0,truths:[],alert:0,notes:''};
-let state={...defaults};
-try{const saved=JSON.parse(localStorage.getItem(KEY)||'null');if(saved&&typeof saved==='object')state={...defaults,...saved};}catch(e){}
-const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
-state.momentum=clamp(Number(state.momentum)||0,0,6);state.chaos=clamp(Number(state.chaos)||0,0,9999);state.alert=clamp(Number(state.alert)||0,0,8);
-if(!Array.isArray(state.truths))state.truths=[];
-function persist(){try{localStorage.setItem(KEY,JSON.stringify(state));document.getElementById('save-note').textContent='Salvo neste navegador';}catch(e){document.getElementById('save-note').textContent='Não foi possível salvar';}}
-function render(){document.getElementById('momentum-val').textContent=state.momentum;document.getElementById('chaos-val').textContent=state.chaos;const truths=document.getElementById('truth-list');truths.replaceChildren();state.truths.forEach((name,i)=>{const item=document.createElement('div');item.className='truth';const text=document.createElement('span');text.textContent=name;const del=document.createElement('button');del.type='button';del.textContent='×';del.title='Remover Verdade';del.addEventListener('click',()=>{state.truths.splice(i,1);persist();render()});item.append(text,del);truths.appendChild(item)});const track=document.getElementById('track');track.replaceChildren();for(let i=1;i<=8;i++){const b=document.createElement('button');b.type='button';b.textContent=i;b.className=i<=state.alert?'on':'';b.setAttribute('aria-label','Alerta '+i);b.setAttribute('aria-pressed',String(i<=state.alert));b.addEventListener('click',()=>{state.alert=state.alert===i?i-1:i;persist();render()});track.appendChild(b)}}
-document.querySelectorAll('[data-counter]').forEach(b=>b.addEventListener('click',()=>{const name=b.dataset.counter;state[name]=clamp(state[name]+Number(b.dataset.delta),0,name==='momentum'?6:9999);persist();render()}));
-document.getElementById('truth-form').addEventListener('submit',e=>{e.preventDefault();const field=document.getElementById('truth-input');const value=field.value.trim();if(!value)return;state.truths.push(value);field.value='';persist();render()});
-const notes=document.getElementById('session-notes');notes.value=String(state.notes||'');notes.addEventListener('input',()=>{state.notes=notes.value;persist()});render();
-
 const CHARACTER_STORE='dishonored-personagens-v1';
 const ORIGINAL_SHEET_STORE='dishonored-ficha-v1';
 let characters=[];

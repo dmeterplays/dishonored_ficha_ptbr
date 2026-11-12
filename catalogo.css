@@ -22,3 +22,13 @@ details{margin-top:12px;border-top:1px solid #425153;padding-top:12px}summary{cu
 .empty{padding:25px;border:1px solid var(--line)}
 footer{border-top:1px solid var(--line);text-align:center;padding:25px;color:var(--muted);font-size:14px}
 @media(max-width:690px){header .wrap{align-items:flex-start;flex-direction:column}nav{gap:0}nav a{padding:8px}main{padding-top:28px}.grid{grid-template-columns:1fr}.count{text-align:left}}
+
+/* Ajuda contextual de regras e atributos */
+.help-button{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;width:23px;height:23px;padding:0;margin:0 4px;vertical-align:middle;background:#31494a;color:#f5e4bb;border:1px solid #8a9d9a;font:700 13px 'Cinzel',serif;cursor:pointer;flex-shrink:0}
+.help-button:hover,.help-button:focus-visible{background:#566d6e;border-color:#eed3a3;color:white}
+.qualities{margin:12px 0 9px;display:flex;flex-wrap:wrap;align-items:center;gap:7px;font-size:15px}.qualities>strong{color:#eddbb9}
+.quality{display:inline-flex;align-items:center;background:#2b3d3f;border:1px solid #627476;border-radius:3px;padding:4px 5px 4px 9px;gap:5px}
+.glossary-dialog{max-width:min(92vw,570px);width:100%;padding:0;color:var(--ink);border:1px solid #9e8967;background:#19272b;box-shadow:0 20px 80px #000a}
+.glossary-dialog::backdrop{background:#050c0ddd}
+.glossary-body{padding:24px}.glossary-body p{font-size:18px}.glossary-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.glossary-top h2{margin:4px 0 12px}.glossary-top button{background:transparent;border:1px solid var(--line);color:var(--gold);font:13px 'Cinzel',serif;padding:7px 11px;cursor:pointer}
+.glossary-short{font-weight:700;color:#e0d6bd}

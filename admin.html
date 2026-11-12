@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Administração | Dishonored RPG</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Crimson+Text:wght@400;600&display=swap');
+:root{color-scheme:dark;--bg:#121b1e;--panel:#202b2e;--line:#455759;--gold:#d5b981;--ink:#eee8dc;--muted:#abb9b7}
+*{box-sizing:border-box}body{background:radial-gradient(circle at top right,#2c3c3d,var(--bg) 60%);color:var(--ink);font:19px 'Crimson Text',serif;margin:0;min-height:100vh}
+header{border-bottom:1px solid var(--line);background:#111a1d;padding:18px max(18px,calc((100vw - 1100px)/2));display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}
+a{color:var(--gold)}main{max-width:1100px;margin:auto;padding:35px 20px 90px}
+h1,h2,h3{font-family:Cinzel,serif;color:var(--gold)}h1{font-size:30px}h2{font-size:20px}h3{font-size:15px}p{color:var(--muted);line-height:1.45}
+.panel{border:1px solid var(--line);background:var(--panel);padding:20px;margin:16px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:13px}.setting{border:1px solid var(--line);padding:15px;background:#152124}
+label{display:block;font-size:15px;color:var(--gold);margin:8px 0}input,select,textarea{display:block;width:100%;padding:10px;background:#11191d;border:1px solid #667777;color:var(--ink);font:17px 'Crimson Text',serif}
+textarea{min-height:95px}button{background:var(--gold);border:1px solid var(--gold);color:#10191a;padding:11px 15px;font:12px Cinzel,serif;cursor:pointer}button.secondary{background:transparent;color:var(--gold)}
+button:disabled{opacity:.5;cursor:not-allowed}.hidden{display:none!important}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.row>*{flex:1}.entry{border-top:1px solid var(--line);padding:16px 0}.msg{min-height:20px}.error{color:#e7ada0}.ok{color:#9fd5c6}
+</style></head>
+<body><header><a href="campanha.html">← Voltar à campanha</a><a href="./">Portal Dishonored RPG</a></header>
+<main>
+<h1>Administração do sistema</h1>
+<p>Área exclusiva do administrador. Aqui você pode ajustar regras da campanha e gerenciar as entradas do catálogo. As alterações ficam registradas no banco de dados, protegidas por permissões do Supabase.</p>
+<div id="loading" class="panel">Verificando seu acesso...</div>
+<div id="denied" class="panel hidden"><h2>Acesso restrito</h2><p>Somente a conta com permissão de administrador pode usar esta página. Entre primeiro na área da campanha.</p><a href="campanha.html">Ir para login</a></div>
+<div id="admin" class="hidden">
+<section class="panel"><h2>Parâmetros do RPG</h2><p>Os valores iniciais seguem o livro; você pode modificá-los para adotar regras próprias. As mudanças nesta tela afetam as configurações armazenadas no banco, mas ainda não são aplicadas automaticamente às fichas antigas.</p>
+<div id="settings" class="grid"></div><p id="settings-msg" class="msg" role="status"></p></section>
+<section class="panel"><h2>Catálogo de conteúdos</h2><p>Cadastre ou ajuste arquétipos, talentos, poderes, amuletos de osso e itens. A publicação torna a entrada visível para os jogadores conectados.</p>
+<div class="grid">
+<div><label for="kind">Categoria</label><select id="kind"><option value="talent">Talento</option><option value="power">Poder</option><option value="bonecharm">Amuleto de osso</option><option value="item">Item da loja</option><option value="archetype">Arquétipo</option><option value="skill">Perícia</option><option value="style">Estilo</option><option value="focus">Foco</option></select></div>
+<div><label for="name">Nome</label><input id="name" maxlength="160" placeholder="Nome da habilidade ou item"></div>
+<div><label for="archetype">Arquétipo relacionado</label><input id="archetype" maxlength="100" placeholder="Opcional"></div>
+<div><label for="xp">Custo em XP</label><input id="xp" min="0" max="1000000" type="number" placeholder="Opcional"></div>
+<div><label for="coins">Custo em moedas</label><input id="coins" min="0" max="1000000" type="number" placeholder="Opcional"></div>
+<div><label for="published">Visibilidade</label><select id="published"><option value="false">Rascunho</option><option value="true">Publicado</option></select></div></div>
+<label for="description">Descrição, benefícios e condições</label><textarea id="description"></textarea>
+<div class="row" style="margin-top:15px"><button id="save-entry">Adicionar ao catálogo</button><button id="cancel-entry" class="secondary hidden">Cancelar edição</button></div>
+<p id="catalog-msg" role="status"></p>
+<h3>Entradas existentes</h3>
+<label for="filter">Filtrar por nome ou categoria</label><input id="filter" placeholder="Pesquisar catálogo">
+<div id="catalog-list"></div>
+</section></div>
+</main>
+<script type="module">
+import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.58.0';
+import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './supabase-config.js';
+const $=id=>document.getElementById(id),show=(id,on)=>$(id).classList.toggle('hidden',!on);
+const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+let catalog=[],editing=null;
+const msg=(id,text,error=false)=>{$(id).textContent=text;$(id).className=error?'error':'ok'};
+async function init(){
+ try{
+ const {data:{user},error:ue}=await db.auth.getUser();
+ if(ue||!user)throw Error('Faça login para continuar.');
+ const {data:profile,error:pe}=await db.from('dh_profiles').select('role').eq('id',user.id).single();
+ if(pe||profile?.role!=='admin')throw Error('Permissão de administrador necessária.');
+ show('loading',false);show('admin',true);
+ await Promise.all([loadSettings(),loadCatalog()]);
+ }catch(e){show('loading',false);show('denied',true);}
+}
+async function loadSettings(){
+ const {data,error}=await db.from('dh_settings').select('key,value,label,description').order('key');
+ const root=$('settings');root.replaceChildren();
+ if(error){msg('settings-msg',error.message,true);return}
+ for(const entry of data){
+ const card=document.createElement('div');card.className='setting';
+ const heading=document.createElement('label');heading.textContent=entry.label;
+ const desc=document.createElement('p');desc.textContent=entry.description;
+ const input=document.createElement('input');input.type='number';input.min='0';input.max='1000000';input.step='1';input.value=entry.value;input.setAttribute('aria-label',entry.label);
+ const button=document.createElement('button');button.textContent='Salvar valor';
+ button.addEventListener('click',async()=>{
+ const val=Number(input.value);
+ if(!Number.isSafeInteger(val)||val<0||val>1000000){msg('settings-msg','Informe um número inteiro entre 0 e 1.000.000.',true);return;}
+ button.disabled=true;
+ const {data:changed,error:err}=await db.from('dh_settings').update({value:val,updated_at:new Date().toISOString()}).eq('key',entry.key).select('key,value').single();
+ button.disabled=false;
+ if(err)msg('settings-msg','Erro ao salvar: '+err.message,true);
+ else{input.value=changed.value;msg('settings-msg',entry.label+' atualizado para '+changed.value+'.');}
+ });
+ card.append(heading,desc,input,button);root.appendChild(card);
+ }
+}
+function clearForm(){
+ editing=null;
+ ['name','archetype','xp','coins','description'].forEach(k=>$(k).value='');
+ $('kind').value='talent';$('published').value='false';$('save-entry').textContent='Adicionar ao catálogo';show('cancel-entry',false);
+}
+function renderCatalog(){
+ const root=$('catalog-list');root.replaceChildren();
+ const term=$('filter').value.toLowerCase().trim();
+ const matches=catalog.filter(item=>(item.name+' '+item.category+' '+(item.archetype||'')).toLowerCase().includes(term));
+ if(!matches.length){const p=document.createElement('p');p.textContent='Nenhuma entrada encontrada.';root.appendChild(p);}
+ matches.forEach(item=>{
+ const row=document.createElement('div');row.className='entry';
+ const title=document.createElement('strong');title.textContent=item.name;
+ const info=document.createElement('p');info.textContent=[item.category,item.archetype, item.xp_cost===null?'':item.xp_cost+' XP',item.published?'Publicado':'Rascunho'].filter(Boolean).join(' · ');
+ const actions=document.createElement('div');actions.className='row';
+ const edit=document.createElement('button');edit.textContent='Editar';edit.className='secondary';
+ edit.addEventListener('click',()=>{
+ editing=item.id;$('kind').value=item.category;$('name').value=item.name;$('archetype').value=item.archetype||'';$('xp').value=item.xp_cost??'';$('coins').value=item.coins_cost??'';$('published').value=String(item.published);$('description').value=item.description||'';$('save-entry').textContent='Salvar alterações';show('cancel-entry',true);$('name').scrollIntoView({behavior:'smooth',block:'center'});
+ });
+ const del=document.createElement('button');del.textContent='Excluir';del.className='secondary';
+ del.addEventListener('click',async()=>{
+ if(!confirm('Excluir permanentemente '+item.name+'?'))return;
+ const {error}=await db.from('dh_catalog').delete().eq('id',item.id);
+ if(error)msg('catalog-msg',error.message,true);else{msg('catalog-msg','Entrada removida.');await loadCatalog();}
+ });
+ actions.append(edit,del);row.append(title,info,actions);root.appendChild(row);
+ });
+}
+async function loadCatalog(){
+ const {data,error}=await db.from('dh_catalog').select('id,category,name,archetype,description,xp_cost,coins_cost,published').order('category').order('name').limit(1000);
+ if(error){msg('catalog-msg',error.message,true);return}
+ catalog=data||[];renderCatalog();
+}
+$('filter').addEventListener('input',renderCatalog);
+$('cancel-entry').addEventListener('click',clearForm);
+$('save-entry').addEventListener('click',async()=>{
+ const name=$('name').value.trim(), archetype=$('archetype').value.trim();
+ if(!name){msg('catalog-msg','Informe o nome da entrada.',true);return}
+ const numOrNull=id=>$(id).value.trim()===''?null:Number($(id).value);
+ const xp=numOrNull('xp'),coins=numOrNull('coins');
+ if([xp,coins].some(n=>n!==null&&(!Number.isSafeInteger(n)||n<0||n>1000000))){msg('catalog-msg','Os custos devem ser inteiros não negativos.',true);return;}
+ const payload={category:$('kind').value,name,archetype:archetype||null,description:$('description').value.trim(),xp_cost:xp,coins_cost:coins,published:$('published').value==='true'};
+ $('save-entry').disabled=true;
+ const result=editing?await db.from('dh_catalog').update(payload).eq('id',editing).select('id').single():await db.from('dh_catalog').insert(payload).select('id').single();
+ $('save-entry').disabled=false;
+ if(result.error){msg('catalog-msg','Erro ao salvar: '+result.error.message,true);return}
+ msg('catalog-msg','Catálogo atualizado com sucesso.');clearForm();await loadCatalog();
+});
+init();
+</script></body></html>

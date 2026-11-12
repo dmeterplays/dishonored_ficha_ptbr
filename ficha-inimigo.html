@@ -1,0 +1,40 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ficha de NPC | Dishonored RPG</title><link rel="stylesheet" href="./salas.css?v=npc-sheet2">
+<style>
+.npc-sheet{max-width:1100px;margin:0 auto}.npc-sheet-header{display:grid;grid-template-columns:160px 1fr;gap:24px;align-items:start}
+.npc-portrait{border:1px solid #aa946e;background:radial-gradient(circle,#435b5e,#17292e);height:190px;display:grid;place-items:center;color:var(--gold);font:700 58px Cinzel,serif}
+.npc-badges{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.npc-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}
+.npc-stat{background:#122328;border:1px solid var(--line);padding:12px}
+.npc-stat strong{display:block;color:var(--gold);font:600 24px Cinzel,serif;margin:4px 0}
+.npc-stat span{font-size:14px;color:var(--muted)}
+.npc-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.npc-sheet h2{font-size:19px}.npc-text{white-space:pre-wrap;overflow-wrap:anywhere;color:#d8dfda}
+.npc-ability{padding:10px;border-bottom:1px solid var(--line)}.npc-ability:last-child{border:0}
+.npc-sheet .panel{margin:13px 0}
+.npc-ability h3{color:var(--gold);margin:0 0 5px}.npc-ability p{margin:4px 0}
+@media(max-width:700px){.npc-fields,.npc-sheet-header{grid-template-columns:1fr}.npc-portrait{width:125px;height:145px}.npc-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style></head>
+<body><header><div class="wrap"><a class="brand" id="back-bestiary" href="bestiario.html">← BESTIÁRIO</a><nav><a id="back-table" href="salas.html">Salas</a></nav></div></header>
+<main class="wrap npc-sheet"><span class="eyebrow">Compêndio • Capítulo 11</span><h1 id="npc-name">Ficha de NPC</h1><p id="npc-status" class="status" role="status"></p>
+<div id="npc-sheet" class="hidden">
+<section class="panel npc-sheet-header">
+<div class="npc-portrait" id="npc-portrait">✧</div>
+<div><div class="npc-badges"><span id="npc-section" class="tag"></span><span id="npc-tier" class="tag"></span><span id="npc-page" class="tag"></span></div>
+<h2 id="npc-subtitle"></h2><p id="npc-description"></p>
+<div class="row"><button id="add-to-table" type="button" class="hidden">Adicionar este NPC à mesa</button><a id="return-to-bestiary" class="btn secondary" href="bestiario.html">Voltar ao bestiário</a></div></div>
+</section>
+<section class="panel"><h2>Condição e Verdades</h2><div class="npc-stats"><div class="npc-stat"><span>Estresse</span><strong id="npc-stress">—</strong></div><div class="npc-stat"><span>Pontos do Vazio</span><strong id="npc-void">—</strong></div><div class="npc-stat"><span>Importância</span><strong id="npc-importance">—</strong></div></div><h3>Verdades e características</h3><p id="npc-truth" class="npc-text"></p><h3>Histórico</h3><p id="npc-background" class="npc-text"></p></section>
+<div class="npc-fields">
+<section class="panel"><h2>Perícias</h2><div id="npc-skills"></div></section>
+<section class="panel"><h2>Estilos</h2><div id="npc-styles"></div></section>
+</div>
+<div class="npc-fields">
+<section class="panel"><h2>Focos e especialidades</h2><p id="npc-focus" class="npc-text"></p></section>
+<section class="panel"><h2>Equipamentos</h2><p id="npc-items" class="npc-text"></p></section>
+</div>
+<div class="npc-fields">
+<section class="panel"><h2>Ações e ataques</h2><div id="npc-attacks"></div></section>
+<section class="panel"><h2>Poderes e regras especiais</h2><p id="npc-powers" class="npc-text"></p><p id="npc-special" class="npc-text"></p></section>
+</div>
+</div></main><script type="module" src="./ficha-inimigo.js"></script></body></html>

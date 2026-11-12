@@ -38,3 +38,17 @@ label{display:block;font-size:15px;color:var(--gold);margin:9px 0 5px}
 .help-tip{font-size:14px;color:#b1c6c0}
 hr{border:0;border-top:1px solid var(--line);margin:20px 0}
 @media(max-width:650px){.two,.three{grid-template-columns:1fr}.sheet-hero{grid-template-columns:1fr}.hero-photo{width:150px;height:185px}.grid{grid-template-columns:repeat(auto-fill,minmax(165px,1fr))}.portrait{height:170px}}
+
+/* Criação guiada de personagens */
+.wizard-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:22px 0}
+.wizard-steps button{padding:15px 10px;min-height:53px;text-align:center;background:#1c2a2d;color:#b5c4c0;border:1px solid var(--line);font-size:11px}
+.wizard-steps button.on{border-color:var(--gold);background:#4b4537;color:#fff4dc}
+.wizard-summary{background:#17282b;border-left:3px solid var(--gold);padding:15px 20px;margin:16px 0}
+.wizard-summary p{margin:7px 0;font-size:16px}
+.wizard-talent{display:block;background:#182529;border:1px solid var(--line);padding:13px 15px;margin:10px 0;cursor:pointer}
+.wizard-talent:has(input:checked){border-color:var(--gold);background:#293733}
+.wizard-talent input{width:auto;display:inline-block;margin:0 12px 0 0;accent-color:var(--gold)}
+.wizard-talent strong{color:#f0ddb5;font:600 15px Cinzel,serif}
+.wizard-talent p{margin:8px 0 2px 26px;color:#c5d0ca;font-size:16px}
+.wizard-step>h3{margin-top:28px}
+@media(max-width:650px){.wizard-steps{gap:5px}.wizard-steps button{font-size:10px;padding:10px 4px}}

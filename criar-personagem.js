@@ -74,11 +74,9 @@ function updateArchetype(){
  options($('bonus-skill'),bonus);options($('first-style'),styleOptions);options($('second-style'),styleOptions);
  if(styleOptions.length>1)$('second-style').value=styleOptions[1];
  const benefits=$('archetype-benefits');benefits.replaceChildren();
- for(const [label,value] of [['Perícias',a.pericias],['Estilos',a.estilos.replaceAll('Inteligentemente','Habilmente')],['Focos sugeridos',a.focos],['Equipamento inicial',a.pertences],['Contatos',a.contatos]]){
+ for(const [label,value] of [['Perícias',a.pericias],['Estilos',a.estilos.replaceAll('Inteligentemente','Habilmente')],['Exemplos de focos (opcionais)',a.focos],['Equipamento inicial',a.pertences],['Contatos',a.contatos]]){
  const p=document.createElement('p');const strong=document.createElement('strong');strong.textContent=label+': ';p.append(strong,document.createTextNode(value));benefits.append(p);
  }
- const d=$('focus-suggestions');d.replaceChildren();
- for(const f of a.focos.split(',').map(x=>x.trim())){const o=document.createElement('option');o.value=f;d.append(o)}
  const talents=talentGroups[a.nome]||[];
  const root=$('talent-options');root.replaceChildren();
  talents.forEach(([name,description],i)=>{

@@ -28,4 +28,4 @@ $('import').addEventListener('click',async()=>{
  }catch(e){$('status').textContent=e.message;$('status').className='error';}
  finally{btn.disabled=false}
 });
-try{user=await getAuth();await load()}catch(e){$('status').textContent=e.message}
+try{user=await getAuth();await load();if(new URLSearchParams(location.search).get('deleted')==='1'){$('status').textContent='Ficha excluída com sucesso.';$('status').className='status';history.replaceState(null,'',location.pathname)}}catch(e){$('status').textContent=e.message}

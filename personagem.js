@@ -23,7 +23,7 @@ function renderStats(){
  (character.sheet[key]||[]).forEach((entry,i)=>{
  const box=el('div',null,'stat-box');
  const label=el('label',entry.label);label.htmlFor=key+'-'+i;
- const input=el('input');input.type='number';input.min='4';input.max='8';input.step='1';input.id=key+'-'+i;input.value=entry.value;input.dataset.group=key;input.dataset.index=i;
+ const input=el('input');input.type='number';input.min='4';input.max='8';input.step='1';input.id=key+'-'+i;input.value=entry.value;input.disabled=!!character.progression_locked;input.title=character.progression_locked?'Evolua esta característica com XP na mesa da campanha.':'Você pode editar enquanto estiver em rascunho.';input.dataset.group=key;input.dataset.index=i;
  box.append(label,input);root.append(box);
  });
  }
@@ -239,7 +239,7 @@ $('roll').addEventListener('click',()=>{
 async function init(){
  if(!uuid.test(id||'')){status('Endereço da ficha inválido.',true);return}
  user=await getAuth();
- const {data,error}=await db.from('dh_characters').select('id,name,owner_id,archetype,xp,momentum,void_points,sheet,portrait_path,creation_status').eq('id',id).eq('owner_id',user.id).single();
+ const {data,error}=await db.from('dh_characters').select('id,name,owner_id,archetype,xp,momentum,void_points,sheet,portrait_path,creation_status,progression_locked').eq('id',id).eq('owner_id',user.id).single();
  if(error||!data){status('Esta ficha não foi encontrada na sua conta.',true);return}
  character=data;if(!validSheet(character.sheet)){status('Os dados desta ficha estão incompletos; reimporte o JSON original.',true);return}
  renderMain();collections=initCharacterCollections({db,sheet:character.sheet,onChange:setDirty});await loadCatalogOverrides();

@@ -47,10 +47,11 @@ function renderMain(){
  $('archetype').value=character.sheet.arquetipo??character.archetype??'';
  $('truth1').value=character.sheet.verdade1??'';
  $('truth2').value=character.sheet.verdade2??'';
+ $('background').value=character.sheet.background??'';
  $('stress-now').value=character.sheet.stressAtual??0;
  $('stress-max').value=character.sheet.stressMax??12;
  $('resources').textContent='XP: '+character.xp+' • Momentum: '+character.momentum+' • Vazio: '+character.void_points;
- updateHero();renderStats();renderNotes();renderPhoto(null);
+ updateHero();renderStats();renderNotes();renderPhoto(null);renderReadiness();
  if(character.portrait_path)portraitURL(character.portrait_path).then(renderPhoto);
  renderCatalog();
 }
@@ -61,6 +62,7 @@ function gather(){
  data.arquetipo=$('archetype').value.trim();
  data.verdade1=$('truth1').value;
  data.verdade2=$('truth2').value;
+ data.background=$('background').value.trim();
  const stressMax=Number($('stress-max').value),stressNow=Number($('stress-now').value);
  if(!Number.isInteger(stressMax)||stressMax<1||stressMax>20)throw Error('O estresse máximo deve estar entre 1 e 20.');
  if(!Number.isInteger(stressNow)||stressNow<0||stressNow>stressMax)throw Error('O estresse atual deve estar entre 0 e o máximo.');
@@ -76,19 +78,23 @@ function gather(){
  for(const [key] of noteKeys)data.notas[key]=$(key).value;
  return data;
 }
-async function save(){
+function ready(data){return !!(data.nome?.trim()&&data.arquetipo?.trim()&&data.verdade1?.trim()&&data.verdade2?.trim()&&data.background?.trim());}
+function renderReadiness(){const done=character.creation_status==='ready';$('creation-status').textContent=done?'✓ Personagem pronto para a campanha.':'◷ Rascunho — conclua nome, Verdades e background para ficar pronto.';$('ready-button').disabled=done;}
+async function save(markReady=false){
  if(saving)return;
- saving=true;$('save-top').disabled=true;$('save-bottom').disabled=true;
+ saving=true;$('save-top').disabled=true;$('save-bottom').disabled=true;$('ready-button').disabled=true;
  try{
  const data=gather();if(!validSheet(data))throw Error('A ficha não possui valores válidos.');
- const payload={name:data.nome||'Sem nome',archetype:data.arquetipo||null,sheet:data};
- const {data:updated,error}=await db.from('dh_characters').update(payload).eq('id',id).eq('owner_id',user.id).select('id,name,archetype,sheet').single();
+ if(markReady&&!ready(data))throw Error('Para ficar pronto, preencha nome, arquétipo, as duas Verdades e o background.');
+ const nextStatus=markReady?'ready':(character.creation_status==='ready'&&ready(data)?'ready':'draft');
+ const payload={name:data.nome||'Sem nome',archetype:data.arquetipo||null,sheet:data,creation_status:nextStatus};
+ const {data:updated,error}=await db.from('dh_characters').update(payload).eq('id',id).eq('owner_id',user.id).select('id,name,archetype,sheet,creation_status').single();
  if(error)throw Error(error.message);
- character={...character,...updated};dirty=false;$('save-indicator').textContent='Ficha salva na sua conta ✓';$('save-indicator').className='status';status('Ficha salva no Supabase.');updateHero();renderCatalog();
+ character={...character,...updated};dirty=false;$('save-indicator').textContent='Ficha salva na sua conta ✓';$('save-indicator').className='status';status(markReady?'Personagem pronto para jogar!':'Ficha salva no Supabase.');updateHero();renderReadiness();renderCatalog();
  }catch(e){status('Erro ao salvar: '+e.message,true)}
- finally{saving=false;$('save-top').disabled=false;$('save-bottom').disabled=false}
+ finally{saving=false;$('save-top').disabled=false;$('save-bottom').disabled=false;renderReadiness()}
 }
-$('save-top').addEventListener('click',save);$('save-bottom').addEventListener('click',save);
+$('save-top').addEventListener('click',()=>save());$('save-bottom').addEventListener('click',()=>save());$('ready-button').addEventListener('click',()=>save(true));
 $('sheet').addEventListener('input',event=>{
  if(event.target.matches('input,textarea,select')&&event.target.id!=='catalog-search'&&!event.target.id.startsWith('test-')&&event.target.id!=='portrait-upload')setDirty();
  if(event.target.id==='name')updateHero();
@@ -192,7 +198,7 @@ $('roll').addEventListener('click',()=>{
 async function init(){
  if(!uuid.test(id||'')){status('Endereço da ficha inválido.',true);return}
  user=await getAuth();
- const {data,error}=await db.from('dh_characters').select('id,name,owner_id,archetype,xp,momentum,void_points,sheet,portrait_path').eq('id',id).eq('owner_id',user.id).single();
+ const {data,error}=await db.from('dh_characters').select('id,name,owner_id,archetype,xp,momentum,void_points,sheet,portrait_path,creation_status').eq('id',id).eq('owner_id',user.id).single();
  if(error||!data){status('Esta ficha não foi encontrada na sua conta.',true);return}
  character=data;if(!validSheet(character.sheet)){status('Os dados desta ficha estão incompletos; reimporte o JSON original.',true);return}
  renderMain();await loadCatalogOverrides();

@@ -55,7 +55,7 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog}){
   paired(ident,put('gm-truth','Verdade / característica',sheet.verdade1||''),put('gm-truth2','Segunda Verdade',sheet.verdade2||''));
   const story=make('textarea');story.id='gm-background';story.value=sheet.background||'';const storyLabel=make('label','Histórico e observações');storyLabel.htmlFor=story.id;ident.append(storyLabel,story);root.append(ident);
   const resources=section('Estresse e recursos');
-  paired(resources,put('gm-stress','Estresse atual',sheet.stressAtual??0,'number',1000),put('gm-stressmax','Estresse máximo',sheet.stressMax??12,'number',1000));
+  paired(resources,put('gm-stress','Estresse atual',sheet.stressAtual??0,'number',1000),put('gm-stressmax',npc&&working.tier==='menor'?'Trilha (0 = derrotado com ataque)':'Estresse máximo',sheet.stressMax??12,'number',1000));
   if(npc){
    paired(resources,put('gm-void','Pontos do Vazio',sheet.void??0,'number',20),put('gm-momentum','Momentum',sheet.momentum??0,'number',50));
   }else{
@@ -128,7 +128,7 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog}){
   if(!name||name.length>150)throw Error('Informe um nome válido.');
   sheet.nome=name;
   sheet.verdade1=$('gm-truth').value;sheet.verdade2=$('gm-truth2').value;sheet.background=$('gm-background').value;
-  sheet.stressAtual=readNum('gm-stress',0,1000);sheet.stressMax=readNum('gm-stressmax',1,1000);
+  sheet.stressAtual=readNum('gm-stress',0,1000);sheet.stressMax=readNum('gm-stressmax',npc?0:1,1000);
   if(sheet.stressAtual>sheet.stressMax)throw Error('Estresse atual não pode superar o máximo.');
   for(const key of ['skills','styles']){
    const original=Array.isArray(sheet[key])?sheet[key]:[];
@@ -139,7 +139,7 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog}){
     return {...(old||{}),label,value:readNum(input.id,0,12)};
    }).concat(original.filter(item=>!known.has(item.label)));
   }
-  if(npc){sheet.void=readNum('gm-void',0,20);sheet.momentum=readNum('gm-momentum',0,50);}
+  if(npc){sheet.void=readNum('gm-void',0,20);sheet.momentum=readNum('gm-momentum',0,50);sheet.defeated_on_success=$('gm-tier').value==='menor';}
   else{sheet.arquetipo=$('gm-archetype').value.trim();sheet.gmInventory=structuredClone(inventory);}
   return {name,sheet};
  }

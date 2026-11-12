@@ -385,24 +385,41 @@ function stockView(){
  if(!gm())return;
  const root=$('stock-items');root.replaceChildren();
  const query=$('stock-search').value.trim().toLocaleLowerCase('pt-BR');
- for(const item of items.filter(x=>x.category==='item'&&(!query||x.name.toLocaleLowerCase('pt-BR').includes(query))).slice(0,50)){
-  const s=storeRecord(item);
-  const div=node('div',null,'item-row');
-  div.append(node('strong',item.name),node('p',s?statusText(item):'Sem restrição: disponível sem limite'));
-  const row=node('div',null,'row');
-  const qty=node('input');qty.type='number';qty.min='0';qty.placeholder='∞';qty.style.width='70px';qty.value=s?.quantity??'';
-  qty.setAttribute('aria-label','Limite de '+item.name);
-  const allow=node('button','Liberar','secondary');allow.type='button';
-  const block=node('button','Bloquear','secondary');block.type='button';
-  const set=async flag=>{
-   const count=qty.value.trim()===''?null:Number(qty.value);
-   if(count!==null&&(!Number.isSafeInteger(count)||count<0)){say('gm-msg','Estoque inválido.',true);return}
-   const {error}=await db.rpc('dh_room_set_stock',{p_room:roomId,p_catalog:item.id,p_available:flag,p_quantity:count});
-   if(error)say('gm-msg',error.message,true);else{say('gm-msg','Disponibilidade de '+item.name+' atualizada.');await refresh({side:true});stockView()}
-  };
-  allow.addEventListener('click',()=>set(true));block.addEventListener('click',()=>set(false));
-  row.append(qty,allow,block);div.append(row);root.append(div);
+ const filtered=items.filter(x=>x.category==='item'&&(!query||(x.name+' '+(x.description||'')).toLocaleLowerCase('pt-BR').includes(query)));
+ const blocked=items.filter(x=>x.category==='item'&&!available(x)).length;
+ const heading=node('p',blocked+' item(ns) indisponível(is) nesta campanha.','small');
+ root.append(heading);
+ for(const item of filtered){
+  const label=node('label',null,'gm-stock-check');
+  const input=node('input');input.type='checkbox';
+  input.checked=!available(item);
+  input.setAttribute('aria-label','Indisponível: '+item.name);
+  const title=node('span',item.name,'gm-stock-name');
+  const state=node('small',input.checked?'Indisponível':'Disponível','gm-stock-state');
+  label.append(input,title,state);root.append(label);
+  input.addEventListener('change',async()=>{
+   const chosen=input.checked;
+   input.disabled=true;
+   const {error}=await db.rpc('dh_room_set_stock',{
+    p_room:roomId,p_catalog:item.id,p_available:!chosen,p_quantity:null
+   });
+   if(error){
+    input.checked=!chosen;
+    state.textContent='Erro ao salvar';
+    say('gm-msg','Não foi possível atualizar '+item.name+': '+error.message,true);
+    input.disabled=false;return;
+   }
+   const previous=stock.findIndex(s=>s.catalog_id===item.id);
+   const next={catalog_id:item.id,available:!chosen,quantity:null};
+   if(previous>=0)stock[previous]=next;else stock.push(next);
+   state.textContent=chosen?'Indisponível':'Disponível';
+   heading.textContent=items.filter(x=>x.category==='item'&&!available(x)).length+' item(ns) indisponível(is) nesta campanha.';
+   input.disabled=false;
+   if(tab==='shop')renderSide();
+   requestRoomRefresh();
+  });
  }
+ if(!filtered.length)root.append(node('p','Nenhum item encontrado.','small'));
 }
 async function loadCatalog(){
  const [{data,error},{data:settings}]=await Promise.all([db.from('dh_catalog').select('id,category,name,archetype,description,xp_cost,coins_cost,rules,published').in('category',['item','talent','power','bonecharm','focus']).eq('published',true).order('name').limit(400),db.from('dh_settings').select('key,value')]);

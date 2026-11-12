@@ -139,7 +139,10 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog}){
    custom.value='';drawInventory();
   });
   manual.append(custom,addCustom);inventorySection.append(manual);
-  if(!npc){const initial=sheet.notas?.['nota-pertences'];if(initial)inventorySection.append(make('p','Equipamento inicial informado na criação: '+initial,'small'));}
+  const baseGearLabel=make('label','Equipamento inicial / itens descritos na ficha');baseGearLabel.htmlFor='gm-initial-gear';
+  const baseGear=make('textarea');baseGear.id='gm-initial-gear';baseGear.rows=3;
+  baseGear.value=sheet.notas?.['nota-pertences']||'';
+  inventorySection.append(baseGearLabel,baseGear,make('p','Você pode editar ou apagar o equipamento inicial. Os itens concedidos pelo mestre ficam na lista acima.','small'));
   root.append(inventorySection);drawInventory();
   const actions=make('div',null,'gm-actions');
   const save=make('button','Salvar alterações da ficha');save.type='button';save.id='gm-editor-save';
@@ -182,7 +185,7 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog}){
   sheet.focos=$('gm-focus-text').value;
   sheet.ataques=$('gm-attack-text').value;
   sheet.regrasEspeciais=$('gm-special-text').value;
-  sheet.notas={...(sheet.notas||{}),'nota-focos':sheet.focos,'nota-poderes':$('gm-power-text').value,'nota-talentos':$('gm-talent-text').value};
+  sheet.notas={...(sheet.notas||{}),'nota-focos':sheet.focos,'nota-poderes':$('gm-power-text').value,'nota-talentos':$('gm-talent-text').value,'nota-pertences':$('gm-initial-gear').value};
   if(npc){sheet.void=readNum('gm-void',0,20);sheet.momentum=readNum('gm-momentum',0,50);sheet.defeated_on_success=['menor','incidental'].includes($('gm-tier').value);}
   else{sheet.arquetipo=$('gm-archetype').value.trim();sheet.gmInventory=structuredClone(inventory);}
   return {name,sheet};

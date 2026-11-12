@@ -57,12 +57,12 @@ $('import-btn').addEventListener('click',async()=>{
 });
 function addText(el,tag,text){const child=document.createElement(tag);child.textContent=text;el.appendChild(child);return child}
 async function loadCharacters(){
- const {data,error}=await client.from('dh_characters').select('id,name,archetype,xp,momentum,void_points,sheet').eq('owner_id',user.id).order('created_at',{ascending:false});
+ const {data,error}=await client.from('dh_characters').select('id,name,archetype,xp,momentum,void_points,sheet,creation_status').eq('owner_id',user.id).order('created_at',{ascending:false});
  const list=$('character-list');list.replaceChildren();if(error){addText(list,'p',error.message);return;}
  myCharacters=data||[];if(!myCharacters.length)addText(list,'p','Você ainda não importou nenhum personagem. Use a importação acima ou abra a galeria.');
  myCharacters.forEach(ch=>{
  const card=document.createElement('div');card.className='panel';
- addText(card,'h3',ch.name);addText(card,'p','Arquétipo: '+(ch.archetype||'Não definido'));
+ addText(card,'h3',ch.name);addText(card,'p',ch.creation_status==='ready'?'✓ Pronto para jogar':'◷ Rascunho — complete o background e os dados essenciais');addText(card,'p','Arquétipo: '+(ch.archetype||'Não definido'));
  addText(card,'div','XP: '+ch.xp+' · Momentum: '+ch.momentum+' · Vazio: '+ch.void_points);
  const controls=document.createElement('div');controls.className='actions';
  const less=document.createElement('button');less.className='secondary';less.textContent='− Momentum';less.addEventListener('click',()=>adjustMomentum(ch,-1));
@@ -102,10 +102,10 @@ $('chaos-minus').addEventListener('click',()=>adjustChaos(-1));
 $('chaos-plus').addEventListener('click',()=>adjustChaos(1));
 async function loadMaster(){
  const [{data:all,error:ae},{data:req,error:re}]=await Promise.all([
- client.from('dh_characters').select('name,archetype,xp,momentum,owner_id').order('created_at',{ascending:false}),
+ client.from('dh_characters').select('name,archetype,xp,momentum,owner_id,creation_status').order('created_at',{ascending:false}),
  client.from('dh_requests').select('id,status,request_type,details,character_id,created_at').order('created_at',{ascending:false}).limit(50)]);
  $('master-list').replaceChildren();$('request-list').replaceChildren();
- if(ae)addText($('master-list'),'p',ae.message);else (all||[]).forEach(c=>addText($('master-list'),'div',c.name+' · '+(c.archetype||'Sem arquétipo')+' · XP '+c.xp+' · Momentum '+c.momentum));
+ if(ae)addText($('master-list'),'p',ae.message);else (all||[]).forEach(c=>addText($('master-list'),'div',c.name+' · '+(c.archetype||'Sem arquétipo')+' · '+(c.creation_status==='ready'?'Pronto':'Rascunho')+' · XP '+c.xp+' · Momentum '+c.momentum));
  if(re)addText($('request-list'),'p',re.message);else (req||[]).forEach(r=>addText($('request-list'),'div',(r.details?.description||r.request_type)+' · '+r.status));
 }
 </script></body></html>

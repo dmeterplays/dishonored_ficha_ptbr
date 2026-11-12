@@ -2,7 +2,7 @@ import {db,getAuth} from './personagens-common.js';
 const $=id=>document.getElementById(id),roomId=new URLSearchParams(location.search).get('id');
 const isUuid=x=>/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(x||'');
 const node=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined&&txt!==null)e.textContent=String(txt);if(cls)e.className=cls;return e};
-let me,room,roster=[],mine=null,mySheet=null,items=[],stock=[],purchases=[],tab='sheet',busy=false;
+let me,room,roster=[],mine=null,mySheet=null,items=[],stock=[],purchases=[],tab='sheet',busy=false,costs={};
 const gm=()=>room?.owner_id===me?.id;
 const say=(id,msg,bad=false)=>{$(id).textContent=msg;$(id).className=bad?'error':'status'};
 const clip=x=>String(x??'').slice(0,5000);
@@ -18,6 +18,7 @@ function roomView(){
  $('shop-indicator').textContent=room.shop_open?'Loja aberta':'Loja fechada';
  $('shop-toggle').textContent=room.shop_open?'Fechar loja':'Abrir loja';
  $('adventure-number').textContent='Aventura '+room.adventure_number;
+ $('chaos-current').textContent=String(room.chaos??0);
  $('gm-tools').classList.toggle('hidden',!gm());
 }
 function rosterView(){
@@ -123,7 +124,7 @@ function statusText(product){
 }
 function purchaseButtons(product,wrap){
  const owned=owns(product);
- const isItem=product.category==='item',price=isItem?product.coins_cost:(product.archetype===mySheet?.arquetipo?10:15);
+ const isItem=product.category==='item',price=isItem?product.coins_cost:(product.archetype===mySheet?.arquetipo?(costs.xp_talent_own??10):(costs.xp_talent_other??15));
  const type=isItem?'moedas':'XP';
  const row=node('div',null,'row');
  row.append(node('span',price===null?'Preço não definido':fmt(price)+' '+type,'small'));
@@ -183,10 +184,44 @@ function renderContent(kind){
  if(!seen.size)root.append(node('p','Nenhum conteúdo registrado nesta categoria.'));
  const link=node('a','Gerenciar minhas abas na ficha','btn secondary');link.href='personagem.html?id='+encodeURIComponent(mine.character_id);root.append(link);
 }
+
+function renderUpgrade(){
+ const root=$('side-content');root.replaceChildren();
+ root.append(node('p','Aprimore uma perícia, estilo ou foco usando XP. O mestre precisa abrir a loja. As alterações e o gasto são aplicados de forma conjunta no servidor.','info'));
+ if(!mySheet||!mine?.character_id){root.append(node('p','Escolha um personagem para evoluir.'));return}
+ const kind=node('select');
+ option(kind,'skill','Perícias');option(kind,'style','Estilos');option(kind,'focus','Focos');
+ const target=node('select');const current=node('p',null,'small');const message=node('p',null,'small');
+ const choose=()=>{
+  target.replaceChildren();
+  const type=kind.value;
+  const sources=type==='skill'?(mySheet.skills||[]):type==='style'?(mySheet.styles||[]):(mySheet.creation?.focus||[]).map(x=>({label:x.nome,value:x.valor}));
+  for(const x of sources)option(target,x.label,x.label+' ('+x.value+')');
+  const key=type==='skill'?'xp_skill':type==='style'?'xp_style':'xp_focus';
+  current.textContent='Custo por avanço: '+(costs[key]??(type==='focus'?5:10))+' XP. O sistema respeita o limite de avanços por aventura ('+(costs.max_advances??1)+').';
+ };
+ const action=node('button','Comprar aprimoramento');action.type='button';action.disabled=!room.shop_open;
+ const go=async()=>{
+  if(!room.shop_open)return say('side-msg','O mestre ainda não abriu o modo loja.',true);
+  if(!target.value)return say('side-msg','Escolha uma característica.',true);
+  if(!confirm('Gastar XP para aumentar '+target.value+' em +1?'))return;
+  action.disabled=true;
+  const {error}=await db.rpc('dh_room_advance',{p_room:roomId,p_kind:kind.value,p_target:target.value});
+  if(error){say('side-msg','Avanço recusado: '+error.message,true);action.disabled=false;return}
+  say('side-msg','Aprimoramento aplicado! XP descontado e característica atualizada.');
+  await refresh({side:false});await loadMySheet(false);renderSide();
+ };
+ kind.addEventListener('change',choose);action.addEventListener('click',go);
+ root.append(node('label','Tipo de aprimoramento'),kind,node('label','Aumentar em +1'),target,current,action,message);
+ if(!room.shop_open)root.append(node('p','Modo consulta: o mestre precisa abrir a loja.','small'));
+ choose();
+}
+
 function renderSide(){
  const root=$('side-content');root.replaceChildren();
  for(const b of document.querySelectorAll('[data-tab]'))b.setAttribute('aria-selected',String(b.dataset.tab===tab));
  if(tab==='shop'){renderShop();return}
+ if(tab==='upgrade'){renderUpgrade();return}
  if(tab==='sheet'){
   if(!mine?.character_id){root.append(node('p','Nenhum personagem vinculado. Use a página Salas para vincular uma ficha.'));return}
   root.append(node('p','Personagem: '+mine.character_name));
@@ -236,7 +271,8 @@ function stockView(){
  }
 }
 async function loadCatalog(){
- const {data,error}=await db.from('dh_catalog').select('id,category,name,archetype,description,xp_cost,coins_cost,rules,published').in('category',['item','talent','power','bonecharm','focus']).eq('published',true).order('name').limit(400);
+ const [{data,error},{data:settings}]=await Promise.all([db.from('dh_catalog').select('id,category,name,archetype,description,xp_cost,coins_cost,rules,published').in('category',['item','talent','power','bonecharm','focus']).eq('published',true).order('name').limit(400),db.from('dh_settings').select('key,value')]);
+ for(const item of settings||[])costs[item.key]=item.value;
  if(error){say('side-msg','Erro no catálogo: '+error.message,true);return}
  items=data||[];stockView();renderSide();
 }
@@ -272,6 +308,12 @@ $('gm-next').addEventListener('click',async()=>{
  const {error}=await db.rpc('dh_room_next_adventure',{p_room:roomId});
  if(error)say('gm-msg',error.message,true);else{say('gm-msg','Próxima aventura iniciada!');await refresh({side:true})}
 });
+for(const [buttonId,delta] of [['chaos-less',-1],['chaos-more',1]]){
+ $(buttonId).addEventListener('click',async()=>{
+  const {error}=await db.rpc('dh_room_adjust_chaos',{p_room:roomId,p_delta:delta});
+  if(error)say('gm-msg',error.message,true);else await refresh();
+ });
+}
 $('stock-search').addEventListener('input',stockView);
 async function boot(){
  if(!isUuid(roomId))throw Error('Endereço de sala inválido.');

@@ -124,3 +124,6 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
  .collection-choice>button{align-self:flex-start}
  .collection-open{font-size:12px}
 }
+
+.danger-button{background:transparent;color:#f3aaa0;border:1px solid #bc6f69}
+.danger-button:hover,.danger-button:focus-visible{background:#5a292b;color:#fff}

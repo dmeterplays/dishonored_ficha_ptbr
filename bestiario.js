@@ -18,12 +18,10 @@ function render(){
    total++;
    const card=create('article',null,'bestiary-card');
    card.append(create('span',tiers[t.tier]+' · Livro p. '+t.book_page,'tag'),create('h3',t.name),create('p',t.description));
-   const details=create('details'),sum=create('summary','Ver atributos e ficha de referência');details.append(sum);
-   const stats=t.sheet?.skills||[],styles=t.sheet?.styles||[];
-   const content=create('div');
-   content.append(create('p','Perícias: '+stats.map(x=>x.label+' '+x.value).join(' · ')),create('p','Estilos: '+styles.map(x=>x.label+' '+x.value).join(' · ')),create('p',t.sheet?.defeated_on_success?'NPC menor: sem trilha de estresse; derrotado por ataque bem-sucedido.':'Trilha de estresse: '+(t.sheet?.stressMax??'Conforme o livro')));
-   for(const [title,value] of [['Verdade',t.sheet?.verdade1],['Focos',t.sheet?.focos],['Equipamento',t.sheet?.notas?.['nota-pertences']],['Ataques',t.sheet?.ataques],['Regras especiais',t.sheet?.regrasEspeciais]])if(value)content.append(create('p',title+': '+value));
-   details.append(content);card.append(details);
+   const open=create('a','Abrir ficha completa','btn secondary');
+   open.href='ficha-inimigo.html?id='+encodeURIComponent(t.id)+(room?'&room='+encodeURIComponent(roomId):'');
+   open.style.marginTop='10px';open.style.display='inline-block';
+   card.append(open);
    if(room){
     const add=create('button','Adicionar à mesa','secondary');add.type='button';
     add.addEventListener('click',async()=>{

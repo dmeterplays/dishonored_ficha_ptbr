@@ -7,11 +7,11 @@ async function load(){
  $('count').textContent=(data||[]).length+' personagem(ns)';
  if(!data?.length){root.append(el('p','Nenhuma ficha ainda. Importe seu JSON acima.'));return}
  for(const ch of data){
-  const card=el('article',null,'preview');
+  const card=el('a',null,'preview');card.href='personagem.html?id='+encodeURIComponent(ch.id);card.style.textDecoration='none';card.style.color='inherit';
   card.append(imageFor(ch));
   const body=el('div',null,'preview-content');
-  body.append(el('h3',ch.name||'Personagem'),el('p','Arquétipo: '+(ch.archetype||'Não definido')),el('p','XP: '+ch.xp+' • Momentum: '+ch.momentum+' • Vazio: '+ch.void_points));
-  const open=el('a','Abrir ficha →','btn');open.href='personagem.html?id='+encodeURIComponent(ch.id);
+  body.append(el('h3',ch.name||'Personagem'),el('p','Arquétipo: '+(ch.archetype||'Não definido')),el('p','Estresse: '+(ch.sheet?.stressAtual??0)+' / '+(ch.sheet?.stressMax??12)),el('p','XP: '+ch.xp+' • Momentum: '+ch.momentum+' • Vazio: '+ch.void_points));
+  const open=el('span','Abrir ficha →','btn');
   body.append(open);card.append(body);root.append(card);
  }
 }

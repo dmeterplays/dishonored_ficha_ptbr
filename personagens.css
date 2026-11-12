@@ -65,3 +65,17 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
 .focus-popover>strong{color:var(--gold);font-family:Cinzel,serif;font-size:14px}
 .focus-popover p{font-size:16px;margin:10px 0 0;color:#d1dbd7}
 .focus-popover p strong{color:#f1ddaf}
+
+/* Lista completa e pesquisável dos focos do livro */
+.focus-field{position:relative}
+.focus-field input{padding-right:48px}
+.focus-list-toggle{position:absolute;right:0;top:0;bottom:0;min-width:42px;background:#293d40;border:1px solid #596c6d;color:var(--gold);padding:0 10px;font-size:20px}
+.focus-list-toggle:hover,.focus-list-toggle[aria-expanded="true"]{background:#3b5555}
+.focus-options{position:absolute;top:calc(100% + 3px);left:0;right:0;max-height:300px;overflow-y:auto;z-index:20;border:1px solid #b39c77;background:#17262a;box-shadow:0 12px 32px #000b}
+.focus-options[hidden]{display:none}
+.focus-option{display:block;width:100%;text-align:left;padding:9px 12px;background:transparent;border:0;border-bottom:1px solid #36494b;color:var(--ink);font:16px 'Crimson Text',serif}
+.focus-option:hover,.focus-option:focus-visible{background:#344649}
+.focus-option strong{display:block;color:var(--gold);font-weight:600}
+.focus-option small{display:block;color:var(--muted);font-size:13px;padding-top:2px}
+.focus-option-empty{padding:12px;color:var(--muted);font-size:14px}
+.focus-explanation{font-size:14px;color:var(--aqua);min-height:0;margin:5px 0 0}

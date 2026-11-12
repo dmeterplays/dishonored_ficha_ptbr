@@ -111,7 +111,7 @@ $('portrait-upload').addEventListener('change',async event=>{
  const file=event.target.files?.[0];if(!file)return;
  try{
  if(!['image/png','image/jpeg','image/webp'].includes(file.type))throw Error('Escolha PNG, JPG ou WebP.');
- if(file.size>2*1024*1024)throw Error('Imagem acima de 2 MB.');
+ if(file.size>15*1024*1024)throw Error('Imagem acima de 15 MB.');
  const ext={'image/png':'png','image/jpeg':'jpg','image/webp':'webp'}[file.type];
  const path=user.id+'/'+id+'/'+Date.now()+'.'+ext;
  status('Enviando retrato...');
@@ -119,10 +119,47 @@ $('portrait-upload').addEventListener('change',async event=>{
  if(uploadError)throw Error(uploadError.message);
  const {error:updateError}=await db.from('dh_characters').update({portrait_path:path}).eq('id',id).eq('owner_id',user.id);
  if(updateError){await db.storage.from('dh-portraits').remove([path]);throw Error(updateError.message)}
- character.portrait_path=path;const url=await portraitURL(path);renderPhoto(url);status('Retrato salvo! Ele aparecerá também na galeria.');
+ const previousPath=character.portrait_path;
+ character.portrait_path=path;const url=await portraitURL(path);renderPhoto(url);
+ if(previousPath&&previousPath!==path&&previousPath.startsWith(user.id+'/'+id+'/')){
+  const {error:removeError}=await db.storage.from('dh-portraits').remove([previousPath]);
+  if(removeError){status('Retrato salvo, mas a foto anterior não pôde ser removida: '+removeError.message,true);return}
+ }
+ status('Retrato salvo! Ele aparecerá também na galeria.');
  }catch(e){status('Falha ao enviar retrato: '+e.message,true)}
  finally{event.target.value=''}
 });
+$('delete-character').addEventListener('click',async()=>{
+ if(!character||!user||saving)return;
+ const displayName=character.name||'Personagem sem nome';
+ const typed=prompt('Excluir a ficha de “'+displayName+'” permanentemente?\\n\\nIsso também apagará os pedidos de avanço ligados a ela. Digite EXCLUIR para confirmar:');
+ if(typed!== 'EXCLUIR')return;
+ if(!confirm('Última confirmação: esta ação não pode ser desfeita. Recomenda-se exportar o JSON antes. Deseja excluir a ficha “'+displayName+'”?'))return;
+ const button=$('delete-character');button.disabled=true;
+ status('Excluindo ficha...');
+ try{
+  // A política do banco restringe esta exclusão ao dono da ficha.
+  const {data:deleted,error:deleteError}=await db.from('dh_characters').delete().eq('id',id).eq('owner_id',user.id).select('id').single();
+  if(deleteError||!deleted)throw Error(deleteError?.message||'A ficha não foi excluída.');
+  // Remover todos os retratos associados, inclusive versões anteriores eventualmente órfãs.
+  const folder=user.id+'/'+id;
+  let cleanupWarning='';
+  const {data:files,error:listError}=await db.storage.from('dh-portraits').list(folder,{limit:1000});
+  if(listError)cleanupWarning='Não foi possível listar os retratos para limpeza: '+listError.message;
+  else{
+   const paths=(files||[]).filter(f=>f.name&&f.id).map(f=>folder+'/'+f.name);
+   if(character.portrait_path&&!paths.includes(character.portrait_path))paths.push(character.portrait_path);
+   if(paths.length){
+    const {error:removeError}=await db.storage.from('dh-portraits').remove(paths);
+    if(removeError)cleanupWarning='Não foi possível excluir todos os retratos: '+removeError.message;
+   }
+  }
+  dirty=false;
+  if(cleanupWarning)alert('Ficha excluída, mas houve problema na limpeza das imagens. '+cleanupWarning);
+  location.href='fichas.html?deleted=1';
+ }catch(e){status('Falha ao excluir ficha: '+e.message,true);button.disabled=false}
+});
+
 const catalogs={item:items.map(x=>({...x})),power:powers.map(x=>({...x})),bonecharm:bonecharms.map(x=>({...x}))};
 async function loadCatalogOverrides(){
  try{

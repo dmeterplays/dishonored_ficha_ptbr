@@ -3,7 +3,7 @@ import {initMasterEditor} from './mesa-mestre.js?v=removefast1';
 const $=id=>document.getElementById(id),roomId=new URLSearchParams(location.search).get('id');
 const isUuid=x=>/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(x||'');
 const node=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined&&txt!==null)e.textContent=String(txt);if(cls)e.className=cls;return e};
-let me,room,roster=[],enemies=[],mine=null,mySheet=null,items=[],stock=[],purchases=[],tab='sheet',busy=false,costs={},gmEditor=null;
+let me,room,roster=[],enemies=[],mine=null,mySheet=null,items=[],stock=[],purchases=[],tab='sheet',busy=false,costs={},gmEditor=null,realtimeChannel=null,roomRefreshTimer=null,rollRefreshTimer=null,rollsSnapshot='',queuedRoomRefresh=false;
 const gm=()=>room?.owner_id===me?.id;
 const say=(id,msg,bad=false)=>{$(id).textContent=msg;$(id).className=bad?'error':'status'};
 const clip=x=>String(x??'').slice(0,5000);
@@ -116,27 +116,84 @@ function rollerView(){
  for(const item of focusOptions())option(focus,item.name,item.name+' ('+item.rank+')');
  if([...focus.options].some(o=>o.value===old))focus.value=old;
 }
+const fingerprint=value=>JSON.stringify(value??null);
+function requestRoomRefresh(){
+ if(roomRefreshTimer!==null)clearTimeout(roomRefreshTimer);
+ roomRefreshTimer=setTimeout(()=>{roomRefreshTimer=null;if(document.visibilityState==='visible')refresh();},170);
+}
+function requestRollRefresh(){
+ if(rollRefreshTimer!==null)clearTimeout(rollRefreshTimer);
+ rollRefreshTimer=setTimeout(()=>{rollRefreshTimer=null;if(document.visibilityState==='visible')refreshRolls();},120);
+}
+async function refreshRolls(){
+ const {data,error}=await db.from('dh_room_rolls')
+  .select('id,user_id,character_id,enemy_id,action_label,skill,style,focus,focus_value,difficulty,dice,rolls,target,successes,complications,visibility,created_at')
+  .eq('room_id',roomId).order('created_at',{ascending:false}).limit(65);
+ if(error){say('room-status','Erro ao buscar rolagens: '+error.message,true);return}
+ const next=fingerprint(data||[]);
+ if(next===rollsSnapshot)return;
+ rollsSnapshot=next;
+ const root=$('rolls'),atTop=root.scrollTop<30;
+ diceView(data||[]);
+ if(!atTop)root.scrollTop=Math.min(root.scrollTop,root.scrollHeight);
+}
 async function refresh({side=false}={}){
- if(busy)return;busy=true;
+ if(busy){queuedRoomRefresh=true;return}
+ busy=true;
  try{
-  const [r,m,rr,st,pu,enemyResponse]=await Promise.all([
-   db.from('dh_rooms').select('id,code,name,owner_id,shop_open,chaos,adventure_number,active').eq('id',roomId).single(),
+  const [r,m,st,pu,enemyResponse]=await Promise.all([
+   db.from('dh_rooms').select('id,code,name,owner_id,shop_open,chaos,adventure_number,active,revision').eq('id',roomId).single(),
    db.rpc('dh_room_roster',{p_room:roomId}),
-   db.from('dh_room_rolls').select('id,user_id,character_id,enemy_id,action_label,skill,style,focus,focus_value,difficulty,dice,rolls,target,successes,complications,visibility,created_at').eq('room_id',roomId).order('created_at',{ascending:false}).limit(75),
    db.from('dh_room_stock').select('catalog_id,available,quantity').eq('room_id',roomId),
    db.from('dh_room_purchases').select('id,room_id,character_id,catalog_id,amount,currency,created_at').eq('room_id',roomId).order('created_at',{ascending:false}).limit(200),
    db.rpc('dh_room_enemies_roster',{p_room:roomId})
   ]);
   if(r.error)throw Error('Sala não encontrada ou sem acesso. '+r.error.message);
+  const roomChanged=fingerprint(room)!==fingerprint(r.data);
+  const rosterChanged=fingerprint(roster)!==fingerprint(m.data||[]);
+  const stockChanged=fingerprint(stock)!==fingerprint(st.data||[]);
+  const purchasesChanged=fingerprint(purchases)!==fingerprint(pu.data||[]);
+  const enemiesChanged=fingerprint(enemies)!==fingerprint(enemyResponse.data||[]);
+  const oldCharacterId=mine?.character_id;
   const oldMode=room?.shop_open;
-  room=r.data;roster=m.error?[]:m.data||[];stock=st.error?[]:st.data||[];purchases=pu.error?[]:pu.data||[];enemies=enemyResponse.error?[]:enemyResponse.data||[];
+  room=r.data;roster=m.error?roster:m.data||[];stock=st.error?stock:st.data||[];
+  purchases=pu.error?purchases:pu.data||[];enemies=enemyResponse.error?enemies:enemyResponse.data||[];
   mine=roster.find(x=>x.user_id===me.id)||null;
-  roomView();rosterView();enemyView();diceView(rr.data||[]);
+  if(roomChanged)roomView();
+  if(rosterChanged)rosterView();
+  if(enemiesChanged)enemyView();
+  if(stockChanged&&gm())stockView();
   $('coins').textContent='Moedas: '+(mine?.character_id?fmt(mine.coins):'—');
   $('xp').textContent='XP: '+(mine?.character_id?fmt(mine.xp):'—');
-  if(side||oldMode!==room.shop_open)renderSide();
+  if(side||oldMode!==room.shop_open||purchasesChanged||stockChanged||oldCharacterId!==mine?.character_id)renderSide();
   if(!m.error&&mine?.character_id)await loadMySheet(false);
- }catch(e){say('room-status',e.message,true)}finally{busy=false}
+  if(!mine?.character_id&&oldCharacterId)await loadMySheet(false);
+  if(roomChanged||rosterChanged||enemiesChanged)say('room-status','');
+ }catch(e){say('room-status',e.message,true)}
+ finally{
+  busy=false;
+  if(queuedRoomRefresh){queuedRoomRefresh=false;requestRoomRefresh()}
+ }
+}
+function startLiveUpdates(){
+ // O Supabase envia apenas linhas permitidas pelas políticas RLS.
+ // Uma mudança de recursos, estoque, NPC ou participante incrementa revision da sala.
+ realtimeChannel=db.channel('dishonored-mesa-'+roomId)
+ .on('postgres_changes',{event:'UPDATE',schema:'public',table:'dh_rooms',filter:'id=eq.'+roomId},requestRoomRefresh)
+ .on('postgres_changes',{event:'INSERT',schema:'public',table:'dh_room_rolls',filter:'room_id=eq.'+roomId},requestRollRefresh)
+ .subscribe(status=>{
+  if(status==='SUBSCRIBED'){requestRoomRefresh();requestRollRefresh()}
+  if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')say('room-status','Conexão em tempo real instável. A mesa continuará sincronizando periodicamente.',true);
+ });
+ setInterval(()=>{
+  if(document.visibilityState!=='visible')return;
+  refresh();
+  refreshRolls();
+ },30000);
+ document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'){requestRoomRefresh();requestRollRefresh()}
+ });
+ window.addEventListener('pagehide',()=>{if(realtimeChannel)db.removeChannel(realtimeChannel)});
 }
 async function loadMySheet(redraw=true){
  if(!mine?.character_id){mySheet=null;rollerView();$('my-character').replaceChildren(node('p',gm()?'Você está como mestre. Clique em Abrir ficha de um participante ou inimigo no painel esquerdo.':'Vincule uma ficha à campanha pelo lobby.'));if(redraw)renderSide();return}
@@ -178,7 +235,7 @@ function purchaseButtons(product,wrap){
   const {error}=await db.rpc('dh_room_buy',{p_room:roomId,p_catalog:product.id});
   if(error){say('side-msg','Compra recusada: '+error.message,true);btn.disabled=false;return}
   say('side-msg','Aquisição realizada! O registro foi salvo e os recursos foram descontados.');
-  await refresh({side:true});await loadMySheet(true);
+  await refresh({side:true});
  });
  row.append(btn);wrap.append(row);
  if(!room.shop_open)wrap.append(node('p','Somente consulta: o mestre ainda não abriu a loja.','small'));
@@ -286,7 +343,7 @@ function renderUpgrade(){
   const {error}=await db.rpc('dh_room_advance',{p_room:roomId,p_kind:kind.value,p_target:target.value});
   if(error){say('side-msg','Avanço recusado: '+error.message,true);action.disabled=false;return}
   say('side-msg','Aprimoramento aplicado! XP descontado e característica atualizada.');
-  await refresh({side:false});await loadMySheet(false);renderSide();
+  await refresh({side:true});
  };
  kind.addEventListener('change',choose);action.addEventListener('click',go);
  root.append(node('label','Tipo de aprimoramento'),kind,node('label','Aumentar em +1'),target,current,action,message);
@@ -364,7 +421,7 @@ $('roll-submit').addEventListener('click',async()=>{
  const payload={p_room:roomId,p_skill:$('roll-skill').value,p_style:$('roll-style').value,p_focus:$('roll-focus').value||null,p_dice:Number($('roll-dice').value),p_difficulty:Number($('roll-difficulty').value),p_visibility:$('roll-visibility').value};
  const {error}=await db.rpc('dh_roll_room',payload);if(error)throw Error(error.message);
  say('roll-msg',payload.p_visibility==='gm_only'?'Rolagem enviada somente ao mestre.':'Rolagem registrada na mesa!');
- await refresh();
+ await refreshRolls();
  }catch(e){say('roll-msg',e.message,true)}finally{b.disabled=!mySheet}
 });
 $('shop-toggle').addEventListener('click',async()=>{
@@ -395,13 +452,13 @@ $('stock-search').addEventListener('input',stockView);
 async function boot(){
  if(!isUuid(roomId))throw Error('Endereço de sala inválido.');
  me=await getAuth();
- gmEditor=initMasterEditor({db,roomId,getCatalog:()=>items,onSaved:async()=>{await refresh({side:true});await loadMySheet(true)}});
+ gmEditor=initMasterEditor({db,roomId,getCatalog:()=>items,onSaved:async()=>{await refresh()}});
  await refresh({side:false});
  if(!room)return;
  $('table').classList.remove('hidden');
- await loadCatalog();await loadMySheet(true);
+ await loadCatalog();await loadMySheet(true);await refreshRolls();
  const selectedEnemy=new URLSearchParams(location.search).get('enemy');
  if(selectedEnemy&&gm()&&enemies.some(e=>e.id===selectedEnemy)){await gmEditor.chooseEnemy(selectedEnemy);history.replaceState(null,'','mesa.html?id='+encodeURIComponent(roomId));}
- setInterval(()=>refresh(),4500);
+ startLiveUpdates();
 }
 try{await boot()}catch(e){say('room-status',e.message,true)}

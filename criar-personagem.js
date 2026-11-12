@@ -52,15 +52,15 @@ function setupFocusPicker(id){
    const title=document.createElement('strong');title.textContent=focus.nome;
    const desc=document.createElement('small');desc.textContent=focus.descricao;
    button.append(title,desc);
-   button.addEventListener('click',()=>{field.value=focus.nome;updateDescription();close();field.focus();});
+   button.addEventListener('click',()=>{field.value=focus.nome;updateDescription();close();field.dispatchEvent(new Event('change',{bubbles:true}));});
    popup.append(button);
   }
   open();
  }
- field.addEventListener('focus',showOptions);
+ field.addEventListener('focus',()=>{if(popup.hidden)showOptions()});
  field.addEventListener('input',()=>{updateDescription();showOptions()});
  field.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
- toggle.addEventListener('click',()=>{if(!popup.hidden){close();return}showOptions();field.focus()});
+ toggle.addEventListener('click',event=>{event.preventDefault();event.stopPropagation();if(!popup.hidden){close();return}field.value=field.value;showOptions();});
  document.addEventListener('click',e=>{if(!field.parentElement.contains(e.target))close()});
  return updateDescription;
 }

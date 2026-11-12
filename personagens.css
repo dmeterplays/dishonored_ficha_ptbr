@@ -79,3 +79,9 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
 .focus-option small{display:block;color:var(--muted);font-size:13px;padding-top:2px}
 .focus-option-empty{padding:12px;color:var(--muted);font-size:14px}
 .focus-explanation{font-size:14px;color:var(--aqua);min-height:0;margin:5px 0 0}
+
+/* Correção do seletor: campo e seta sempre na mesma linha. */
+.focus-field{display:grid;grid-template-columns:minmax(0,1fr) 44px;align-items:stretch;position:relative;width:100%}
+.focus-field>input{grid-column:1;min-width:0;width:100%;margin:0;padding-right:10px;border-right:0}
+.focus-field>.focus-list-toggle{grid-column:2;position:static;display:grid;place-items:center;min-width:0;width:44px;height:auto;margin:0;padding:0;background:#293d40;color:var(--gold);border:1px solid #596c6d;font:700 19px Cinzel,serif}
+.focus-field>.focus-options{grid-column:1/-1;top:calc(100% + 3px);left:0;right:0}

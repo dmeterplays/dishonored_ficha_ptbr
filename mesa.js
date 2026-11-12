@@ -60,9 +60,9 @@ function enemyView(){
   card.dataset.enemyId=e.id;
   card.append(node('strong',e.name),node('p',(e.tier==='principal'?'Principal':e.tier==='notavel'?'Notável':'Menor')+(e.visible===false?' · Oculto':'')+' · '+(e.section==='nobreza'?'Nobreza':e.section==='selvagens'?'Selvagem':e.section==='notorios'?'Notório':'Povo Comum')));
   const now=Number(e.sheet?.stressAtual||0),max=Number(e.sheet?.stressMax||6);
-  card.append(node('p','Estresse '+now+'/'+max));
+  card.append(node('p',max===0?'Sem trilha de estresse · cai após ataque bem-sucedido':'Estresse '+now+'/'+max));
   const meter=node('div',null,'meter'),fill=node('span');
-  fill.style.width=Math.min(100,Math.max(0,now/Math.max(1,max)*100))+'%';meter.append(fill);card.append(meter);
+  fill.style.width=Math.min(100,Math.max(0,now/Math.max(1,max)*100))+'%';meter.append(fill);if(max>0)card.append(meter);
   card.append(node('p','Pontos do Vazio: '+(e.sheet?.void||0)));
   if(gm()){
    const open=node('button','Abrir ficha de inimigo','secondary');open.type='button';open.className='gm-open';

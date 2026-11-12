@@ -69,3 +69,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .danger-button{background:transparent;border-color:#ce7c73;color:#f0a89e}
 #gm-selected>.row{margin:10px 0 15px}
 #gm-selected .tag{color:var(--gold)}
+
+.gm-focus-entry{display:grid;grid-template-columns:minmax(0,1fr) 64px auto;gap:7px;align-items:center;margin:7px 0}
+.gm-focus-entry input[type=number]{text-align:center;padding:7px}
+.gm-focus-entry button{padding:8px;font-size:10px}
+@media(max-width:560px){.gm-focus-entry{grid-template-columns:minmax(0,1fr) 55px auto}.gm-focus-entry button{padding:7px 5px}}

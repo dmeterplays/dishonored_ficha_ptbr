@@ -85,3 +85,42 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
 .focus-field>input{grid-column:1;min-width:0;width:100%;margin:0;padding-right:10px;border-right:0}
 .focus-field>.focus-list-toggle{grid-column:2;position:static;display:grid;place-items:center;min-width:0;width:44px;height:auto;margin:0;padding:0;background:#293d40;color:var(--gold);border:1px solid #596c6d;font:700 19px Cinzel,serif}
 .focus-field>.focus-options{grid-column:1/-1;top:calc(100% + 3px);left:0;right:0}
+
+/* Abas compactas de talentos, focos, poderes, amuletos e inventário */
+.collection-tabs{display:flex;flex-wrap:wrap;gap:8px;margin:20px 0 12px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+.collection-tabs button{padding:10px 13px;display:inline-flex;align-items:center;gap:8px;background:#162528;border:1px solid #4d6565;color:#c8d4d0;white-space:nowrap;font-size:12px}
+.collection-tabs button[aria-selected="true"]{background:#4c493d;border-color:var(--gold);color:#fff1ce}
+.collection-tabs [data-count]{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 5px;border-radius:20px;background:#35494a;color:#ecdfbf;font:600 13px 'Crimson Text',serif}
+.collection-actions{margin-bottom:13px}
+.collection-actions p{margin:0}
+.collection-cards{display:flex;flex-direction:column;gap:9px}
+.collection-card{background:#172529;border:1px solid #4d6363;margin:0;overflow:visible}
+.collection-card[open]{border-color:#94805f;background:#1b2b30}
+.collection-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;list-style:none;cursor:pointer}
+.collection-summary::-webkit-details-marker{display:none}
+.collection-summary:hover{background:#2c3d3d}
+.collection-main{display:flex;align-items:center;gap:11px;flex-wrap:wrap;min-width:0}
+.collection-main>strong{font:600 15px Cinzel,serif;color:#eed6a7;overflow-wrap:anywhere}
+.collection-tag{font:12px 'Crimson Text',serif;color:#a7c7be;background:#273b3e;border:1px solid #476667;padding:3px 8px}
+.collection-rank{font-size:13px;color:#d7d6c9}
+.collection-open{color:var(--gold);font:13px 'Crimson Text',serif;white-space:nowrap;flex-shrink:0}
+.collection-open::after{content:' ⌄'}
+.collection-card[open] .collection-open::after{content:' ⌃'}
+.collection-details{border-top:1px solid #43595a;padding:12px 17px 18px}
+.collection-details p{margin:9px 0;font-size:17px;color:#cfd8d4;white-space:pre-line}
+.collection-browser{margin:17px 0;padding:17px;border:1px solid #907a5d;background:#152428}
+.collection-browser h3{margin:0}
+.collection-options{display:flex;flex-direction:column;gap:8px;max-height:450px;overflow-y:auto;margin-top:12px}
+.collection-choice{display:flex;align-items:center;justify-content:space-between;gap:15px;background:#1e3133;border:1px solid #3c5659;padding:12px 14px}
+.collection-choice-info{min-width:0;flex:1}
+.collection-choice-info strong{display:block;font-size:17px;color:var(--gold)}
+.collection-choice-info p{font-size:15px;color:#c2cdca;margin:5px 0;line-height:1.3}
+.collection-choice-info small{font-size:12px}
+.collection-choice>button{flex-shrink:0;min-width:95px}
+@media(max-width:600px){
+ .collection-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .collection-tabs button{justify-content:center;font-size:10px;padding:10px 5px}
+ .collection-choice{align-items:stretch;flex-direction:column}
+ .collection-choice>button{align-self:flex-start}
+ .collection-open{font-size:12px}
+}

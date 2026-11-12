@@ -143,6 +143,34 @@ function purchaseButtons(product,wrap){
  if(isItem&&!available(product))wrap.append(node('p','Item bloqueado pelo mestre.','error'));
  if(!isItem&&owned.length)wrap.append(node('p','Talento já adquirido nesta campanha.','small'));
 }
+
+function trialCard(product){
+ const details=node('details');
+ const summary=node('summary','Testar sem comprar');details.append(summary);
+ const wrap=node('div');
+ wrap.append(node('p','Simulação independente: não gasta recursos nem publica resultados na mesa. O efeito específico do item ou talento deve ser interpretado conforme a regra.','small'));
+ if(!mySheet){wrap.append(node('p','Escolha um personagem para simular.'));details.append(wrap);return details}
+ const skill=node('select'),style=node('select'),difficulty=node('select');
+ for(const x of mySheet.skills||[])option(skill,x.label,x.label+' ('+x.value+')');
+ for(const x of mySheet.styles||[])option(style,x.label,x.label+' ('+x.value+')');
+ for(let d=0;d<=5;d++)option(difficulty,d,d);
+ difficulty.value='1';
+ const label=(text,control)=>{const l=node('label',text);wrap.append(l,control)};
+ label('Perícia',skill);label('Estilo',style);label('Dificuldade',difficulty);
+ const action=node('button','Rolar 2d20','secondary'),out=node('p',null,'status');
+ action.type='button';
+ action.addEventListener('click',()=>{
+  const sv=Number(mySheet.skills.find(x=>x.label===skill.value)?.value||4);
+  const tv=Number(mySheet.styles.find(x=>x.label===style.value)?.value||4);
+  const rand=()=>{const b=new Uint32Array(1);crypto.getRandomValues(b);return b[0]%20+1};
+  const dice=[rand(),rand()],target=sv+tv;
+  const successes=dice.reduce((n,d)=>n+(d===1?2:d<=target?1:0),0);
+  const complications=dice.filter(x=>x===20).length;
+  out.textContent='Dados: '+dice.join(', ')+' · Alvo '+target+' · '+successes+' sucesso(s) · '+complications+' complicação(ões). '+(successes>=Number(difficulty.value)?'Sucesso!':'Falha.')+' Nenhum recurso foi gasto.';
+ });
+ wrap.append(action,out);details.append(wrap);return details;
+}
+
 function renderShop(){
  const root=$('side-content');root.replaceChildren();
  root.append(node('p','Modo loja: '+(room.shop_open?'ABERTO':'FECHADO')+'. Itens sem restrição explícita têm estoque livre. O mestre controla os itens limitados.','info'));
@@ -158,7 +186,7 @@ function renderShop(){
    const card=node('div',null,'item-row');
    card.append(node('strong',x.name),node('p',x.description||'Sem descrição.'));
    if(x.category==='item')card.append(node('p',statusText(x)));
-   purchaseButtons(x,card);list.append(card);
+   card.append(trialCard(x));purchaseButtons(x,card);list.append(card);
   }
   if(!choices.length)list.append(node('p','Nenhum resultado.'));
  };

@@ -75,10 +75,19 @@ export function initCharacterCollections({db,sheet,onChange}){
   for(const btn of document.querySelectorAll('[data-collection]')){
    const selected=btn.dataset.collection===kind;btn.setAttribute('aria-selected',String(selected));
   }
-  for(const count of document.querySelectorAll('[data-count]'))count.textContent=values[count.dataset.count]?.length??0;
+  for(const count of document.querySelectorAll('[data-count]'))count.textContent=(values[count.dataset.count]?.length??0)+(count.dataset.count==='item'?(sheet?.gmInventory||[]).filter(x=>x&&x.quantity>0).length:0);
   $('collection-hint').textContent=categories[kind].hint;
   list.replaceChildren();
-  if(!current().length)list.append(node('p','Nada registrado nesta aba. Clique em “Adicionar do catálogo” para explorar opções.','small'));
+  const official=kind==='item'&&Array.isArray(sheet?.gmInventory)?sheet.gmInventory.filter(x=>x&&x.quantity>0):[];
+  if(!current().length&&!official.length)list.append(node('p','Nada registrado nesta aba. Clique em “Adicionar do catálogo” para explorar opções.','small'));
+  for(const owned of official){
+    const record=catalog.find(x=>x.category==='item'&&normalize(x.name)===normalize(owned.name));
+    const card=node('details',null,'collection-card');const summary=node('summary',null,'collection-summary');
+    const title=node('div',null,'collection-main');title.append(node('strong',owned.name+' ×'+owned.quantity),node('span','Inventário oficial • mestre','collection-tag'));
+    summary.append(title,node('span','Ver detalhes','collection-open'));card.append(summary);
+    card.append(details({name:owned.name,description:record?.description||'Item adquirido ou concedido pelo mestre.'},record));
+    list.append(card);
+  }
   for(const entry of current()){
    const record=findRecord(entry);
    const card=node('details',null,'collection-card');

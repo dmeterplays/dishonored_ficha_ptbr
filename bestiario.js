@@ -21,7 +21,7 @@ function render(){
    const details=create('details'),sum=create('summary','Ver atributos e ficha de referência');details.append(sum);
    const stats=t.sheet?.skills||[],styles=t.sheet?.styles||[];
    const content=create('div');
-   content.append(create('p','Perícias: '+stats.map(x=>x.label+' '+x.value).join(' · ')),create('p','Estilos: '+styles.map(x=>x.label+' '+x.value).join(' · ')),create('p','Trilha de estresse: '+(t.sheet?.stressMax??'Conforme o livro')));
+   content.append(create('p','Perícias: '+stats.map(x=>x.label+' '+x.value).join(' · ')),create('p','Estilos: '+styles.map(x=>x.label+' '+x.value).join(' · ')),create('p',t.sheet?.defeated_on_success?'NPC menor: sem trilha de estresse; derrotado por ataque bem-sucedido.':'Trilha de estresse: '+(t.sheet?.stressMax??'Conforme o livro')));
    details.append(content);card.append(details);
    if(room){
     const add=create('button','Adicionar à mesa','secondary');add.type='button';

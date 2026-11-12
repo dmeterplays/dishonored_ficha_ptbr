@@ -172,7 +172,7 @@ function buildSheet(){
  return {
  nome:$('name').value.trim(),idade:$('age').value.trim(),arquetipo:a.nome,verdade1:$('truth-one').value.trim(),verdade2:$('truth-two').value.trim(),
  background:$('background').value.trim(),creation:{stage:step,bonusSkill:bonus,styles:[s1,s2],talent,focus:[{nome:f1,valor:r1},{nome:f2,valor:r2}],contacts},
- stressAtual:'0',stressMax:String(skills.find(x=>x.label==='Sobreviver').value),
+ stressAtual:'0',stressMax:'12',
  momentum:'0',void:'3',skills,styles,notas:notes
  };
 }

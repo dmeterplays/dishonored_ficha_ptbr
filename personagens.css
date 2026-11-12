@@ -52,3 +52,16 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
 .wizard-talent p{margin:8px 0 2px 26px;color:#c5d0ca;font-size:16px}
 .wizard-step>h3{margin-top:28px}
 @media(max-width:650px){.wizard-steps{gap:5px}.wizard-steps button{font-size:10px;padding:10px 4px}}
+
+/* Explicação compacta dos focos, acessível por clique e teclado */
+.focus-heading{display:flex;align-items:center;gap:10px;margin-top:28px;position:relative}
+.focus-heading h3{margin:0}
+.focus-help{position:relative;border:0;margin:0;padding:0;flex-shrink:0}
+.focus-help summary{display:grid;place-items:center;list-style:none;cursor:pointer;border:1px solid #a2b5ad;border-radius:50%;background:#30484a;color:#f8e7bb;width:28px;height:28px;font:700 15px Cinzel,serif}
+.focus-help summary::-webkit-details-marker{display:none}
+.focus-help summary:hover,.focus-help[open] summary{background:#58736f}
+.focus-help summary:focus-visible{outline:2px solid var(--aqua);outline-offset:2px}
+.focus-popover{position:absolute;z-index:10;top:38px;left:-12px;width:min(350px,calc(100vw - 54px));max-height:65vh;overflow:auto;background:#152428;border:1px solid #ae9469;box-shadow:0 15px 35px #000b;padding:16px;line-height:1.4;font-size:16px}
+.focus-popover>strong{color:var(--gold);font-family:Cinzel,serif;font-size:14px}
+.focus-popover p{font-size:16px;margin:10px 0 0;color:#d1dbd7}
+.focus-popover p strong{color:#f1ddaf}

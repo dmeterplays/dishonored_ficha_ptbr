@@ -1,0 +1,29 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Criar personagem | Dishonored RPG</title><link rel="stylesheet" href="./personagens.css"></head><body>
+<header><div class="wrap"><a class="brand" href="fichas.html">← MINHAS FICHAS</a><nav><a href="catalogo.html">Catálogo</a><a href="campanha.html">Campanha</a></nav></div></header>
+<main class="wrap"><span class="eyebrow">Criação de personagem • 2d20</span><h1>Uma nova história começa</h1><p>Crie seu personagem em três etapas. Você pode salvar um rascunho e completar a história posteriormente; somente personagens com histórico preenchido ficam prontos para entrar na campanha.</p>
+<div class="wizard-steps" aria-label="Etapas de criação"><button type="button" data-step="1" class="on">1. Arquétipo e talentos</button><button type="button" data-step="2">2. Verdades e contatos</button><button type="button" data-step="3">3. História</button></div>
+<div id="step-1" class="panel wizard-step">
+<h2>Etapa 1 — Arquétipo, talento e perícias</h2>
+<label for="archetype">Escolha seu arquétipo</label><select id="archetype"></select>
+<div id="archetype-benefits" class="wizard-summary"></div>
+<div class="two"><div><label for="bonus-skill">Escolha a perícia que recebe +1 adicional</label><select id="bonus-skill"></select></div><div><label for="first-style">Primeiro estilo com +1</label><select id="first-style"></select><label for="second-style">Segundo estilo com +1</label><select id="second-style"></select></div></div>
+<h3>Perícias após os bônus</h3><div id="skill-preview" class="stat-grid"></div><h3>Estilos após os bônus</h3><div id="style-preview" class="stat-grid"></div>
+<h3>Escolha um talento inicial</h3><div id="talent-options"></div>
+<h3>Escolha dois focos (8 pontos no total)</h3><p class="small">Cada foco deve ter de 2 a 6 pontos. Você pode escolher os focos sugeridos ou escrever outros adequados ao seu personagem.</p>
+<div class="two"><div><label for="focus-one">Primeiro foco</label><input id="focus-one" list="focus-suggestions" placeholder="Ex.: Furtividade"><label for="rank-one">Classificação</label><input id="rank-one" type="number" min="2" max="6" value="4"></div><div><label for="focus-two">Segundo foco</label><input id="focus-two" list="focus-suggestions" placeholder="Ex.: Espadas"><label for="rank-two">Classificação</label><input id="rank-two" type="number" min="2" max="6" value="4"></div></div><datalist id="focus-suggestions"></datalist><p id="focus-total" class="small">8/8 pontos distribuídos</p>
+</div>
+<div id="step-2" class="panel wizard-step hidden">
+<h2>Etapa 2 — Identidade, Verdades e contatos</h2>
+<div class="two"><div><label for="name">Nome do personagem</label><input id="name" maxlength="150" placeholder="Nome completo"></div><div><label for="age">Idade</label><input id="age" placeholder="Ex.: 28"></div></div>
+<label for="truth-one">Primeira Verdade pessoal</label><input id="truth-one" placeholder="Ex.: Nunca mata uma pessoa inocente">
+<label for="truth-two">Segunda Verdade pessoal</label><input id="truth-two" placeholder="Ex.: Ex-guarda da cidade">
+<h3>Contatos</h3><p class="small" id="contact-help"></p><div id="contacts"></div>
+</div>
+<div id="step-3" class="panel wizard-step hidden">
+<h2>Etapa 3 — Background do personagem</h2>
+<p>Conte de onde seu personagem veio, o que o marcou, seus objetivos e por que deseja se envolver na história. Não é necessário terminar agora.</p>
+<label for="background">História e motivações</label><textarea id="background" rows="10" placeholder="Nasci em Karnaca..."></textarea>
+<div class="wizard-summary"><strong id="ready-check">Rascunho</strong><p id="ready-help">É possível salvar sem escrever o background, mas só personagens completos podem entrar na campanha.</p></div>
+</div>
+<div class="panel"><p id="message" class="status" role="status"></p><div class="row between"><button id="previous" class="secondary" disabled>Voltar</button><div class="row"><button id="draft" type="button" class="secondary">Salvar rascunho</button><button id="next" type="button">Próxima etapa →</button><button id="finish" class="hidden" type="button">Concluir personagem</button></div></div></div>
+</main><script type="module" src="./criar-personagem.js"></script></body></html>

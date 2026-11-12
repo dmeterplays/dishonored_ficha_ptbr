@@ -19,6 +19,12 @@ create table if not exists public.dh_characters (
  created_at timestamptz not null default now(),
  updated_at timestamptz not null default now()
 );
+create table if not exists public.dh_master_state (
+ id integer primary key default 1 check (id=1),
+ chaos integer not null default 0 check (chaos>=0),
+ updated_at timestamptz not null default now()
+);
+insert into public.dh_master_state(id,chaos) values(1,0) on conflict(id) do nothing;
 create table if not exists public.dh_catalog (
  id uuid primary key default gen_random_uuid(),
  category text not null check (category in ('archetype','talent','power','bonecharm','item','skill','style','focus')),
@@ -68,12 +74,18 @@ on conflict(id) do nothing;
 alter table public.dh_profiles enable row level security;
 alter table public.dh_characters enable row level security;
 alter table public.dh_catalog enable row level security;
+alter table public.dh_master_state enable row level security;
 alter table public.dh_requests enable row level security;
-revoke all on public.dh_profiles,public.dh_characters,public.dh_catalog,public.dh_requests from anon,authenticated;
+revoke all on public.dh_profiles,public.dh_characters,public.dh_catalog,public.dh_requests,public.dh_master_state from anon,authenticated;
 grant select on public.dh_profiles to authenticated;
 grant select,insert,update,delete on public.dh_characters to authenticated;
 grant select on public.dh_catalog to authenticated;
+grant select,update(chaos,updated_at) on public.dh_master_state to authenticated;
 grant insert,select on public.dh_requests to authenticated;
+create policy "dh master state read master" on public.dh_master_state for select to authenticated
+using ((select private.dh_is_master()));
+create policy "dh master state update master" on public.dh_master_state for update to authenticated
+using ((select private.dh_is_master())) with check ((select private.dh_is_master()));
 -- Profile edits and permissions are server-admin only (no public update grant).
 create policy "dh profiles self or master read" on public.dh_profiles for select to authenticated
 using (id=(select auth.uid()) or (select private.dh_is_master()));
@@ -82,7 +94,7 @@ using (owner_id=(select auth.uid()) or (select private.dh_is_master()));
 -- Restrict sensitive character columns: grant players write only sheet/name/archetype
 revoke insert,update on public.dh_characters from authenticated;
 grant insert(owner_id,name,archetype,sheet) on public.dh_characters to authenticated;
-grant update(name,archetype,sheet) on public.dh_characters to authenticated;
+grant update(name,archetype,sheet,momentum,void_points) on public.dh_characters to authenticated;
 create policy "dh characters insert own" on public.dh_characters for insert to authenticated
 with check (owner_id=(select auth.uid()));
 create policy "dh characters update own" on public.dh_characters for update to authenticated

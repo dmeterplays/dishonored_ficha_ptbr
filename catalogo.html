@@ -1,0 +1,25 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Catálogo | Dishonored RPG</title><style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Crimson+Text:wght@400;600&display=swap');
+:root{color-scheme:dark}*{box-sizing:border-box}body{background:radial-gradient(circle at 70% 0,#304142,#10191d 65%);color:#e8e2d8;margin:0;font:19px 'Crimson Text',serif}header{padding:22px max(20px,calc((100vw - 1050px)/2));background:#111c20;border-bottom:1px solid #3e4b4c}a{color:#d1b78a}main{max-width:1050px;padding:30px 20px 90px;margin:auto}h1,h2,h3{font-family:Cinzel,serif;color:#d1b78a}h1{font-size:30px}h2{font-size:22px;margin-top:38px}h3{font-size:16px}p{color:#acbcb9;line-height:1.5}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:13px}.card{background:#1c272c;border:1px solid #46585b;padding:19px}.card p{font-size:16px}.cost{font:700 23px Cinzel,serif;color:#e0ca9f}input{background:#111b20;border:1px solid #697577;padding:12px;color:white;font:19px 'Crimson Text',serif;width:100%;max-width:460px}small{color:#a2b1ae}.note{border-left:3px solid #9c6454;padding:10px 20px;background:#192529}.pill{font-size:13px;color:#91c1b8;letter-spacing:.07em;text-transform:uppercase}button{background:transparent;color:#d1b78a;border:1px solid #ab956b;padding:9px 14px;cursor:pointer;font:12px Cinzel,serif}
+</style></head><body><header><a href="./">← Portal Dishonored</a> · <a href="campanha.html">Área da campanha</a></header><main>
+<div class="pill">Compêndio de jogador • 2d20</div><h1>Catálogo e progressão</h1><p>Lista de arquétipos e custos conforme o livro Dishonored RPG PT-BR fornecido para a campanha. Talentos, poderes e amuletos serão cadastrados individualmente e associados a requisitos, sem inventar efeitos ou preços.</p>
+<h2>Avanços entre aventuras</h2><div id="advances" class="grid"></div><p class="note">Regra de progressão: apenas <strong>um avanço por aventura</strong>. Comprar talentos fora do arquétipo tem custo maior. Talentos sobrenaturais dependem das regras e da permissão do mestre.</p>
+<h2>Arquétipos</h2><label for="filter"><small>Pesquisar arquétipo</small></label><div><input id="filter" placeholder="Ex.: Duelista, Inventor, Assassino"></div><div id="archetypes" class="grid" style="margin-top:17px"></div>
+<h2>Talentos, poderes e amuletos de osso</h2><div class="grid"><div class="card"><h3>Talentos</h3><p>O banco está preparado para relacionar talentos ao arquétipo, suas condições e benefícios. O registro completo será feito a partir das páginas de cada arquétipo.</p><span class="pill">Cadastro pendente</span></div><div class="card"><h3>Poderes do Vazio</h3><p>Disponibilidade conforme a Marca do Estranho, avanço e autorização do mestre; os efeitos serão extraídos do capítulo 7.</p><span class="pill">Cadastro pendente</span></div><div class="card"><h3>Amuletos de osso</h3><p>O limite inicial de amuletos ativos acompanha o máximo de Pontos de Vazio, normalmente 3, sujeito a evolução.</p><span class="pill">Cadastro pendente</span></div></div>
+<h2>Loja de itens</h2><div class="note"><p>A estrutura está reservada para equipamentos, estoque, preços, solicitações e interações com o mestre. As regras da loja serão definidas posteriormente.</p></div>
+</main><script>
+const advances=[
+['Aumentar perícia','+1 em uma perícia, máximo 8',10],
+['Aumentar estilo','+1 em um estilo, máximo 8',10],
+['Aumentar foco','+1 no valor de um foco',5],
+['Talento do arquétipo','Adquirir um talento do próprio arquétipo',10],
+['Talento de outro arquétipo','Adquirir talento de arquétipo diferente',15],
+['Aumentar máximo de Vazio','+1 no máximo de Pontos do Vazio; também altera a capacidade de amuletos',10]
+];
+const archetypes=['Assassino','Comandante','Mensageiro','Duelista','Empreendedor','Explorador','Guia','Caçador','Inventor','Atirador de Elite','Estudioso','Batedor','Malfeitor'];
+const advancesEl=document.getElementById('advances');
+for(const [title,desc,cost] of advances){const card=document.createElement('div');card.className='card';const h=document.createElement('h3');h.textContent=title;const p=document.createElement('p');p.textContent=desc;const num=document.createElement('div');num.className='cost';num.textContent=cost+' XP';card.append(h,p,num);advancesEl.appendChild(card)}
+const list=document.getElementById('archetypes');
+function render(term=''){list.replaceChildren();for(const name of archetypes.filter(n=>n.toLowerCase().includes(term.toLowerCase()))){const div=document.createElement('div');div.className='card';const h=document.createElement('h3');h.textContent=name;div.appendChild(h);const p=document.createElement('p');p.textContent='Talentos e benefícios específicos: cadastro detalhado a partir do livro.';div.appendChild(p);list.appendChild(div)}}
+document.getElementById('filter').addEventListener('input',e=>render(e.target.value));render();
+</script></body></html>

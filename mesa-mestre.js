@@ -53,12 +53,78 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog}){
    row.append(title,remove);root.append(row);
   });
  }
+
+ function renderEnemyQuick(){
+  const sh=working.sheet||{},root=$('gm-editor');root.replaceChildren();
+  root.append(make('h3',working.name),make('p','Ações e rolagens rápidas deste adversário. As alterações na ficha ficam fora da mesa.','small'));
+  const tier=working.tier==='incidental'?'Incidental':working.tier==='menor'?'Menor':working.tier==='notavel'?'Notável':'Principal';
+  root.append(make('p','NPC '+tier+' · '+(working.section==='selvagens'?'O Selvagem':working.section==='nobreza'?'A Nobreza':working.section==='notorios'?'O Notório':'O Povo Comum'),'small'));
+  const stress=Number(sh.stressMax??0);
+  const stressText=make('p',stress===0?'Sem trilha de estresse.':'Estresse: '+(sh.stressAtual??0)+' / '+stress,'small');
+  const visibility=make('label','Mostrar barra de estresse aos jogadores','gm-stress-toggle');
+  const checkbox=make('input');checkbox.type='checkbox';checkbox.checked=working.stress_visible!==false;
+  checkbox.style.width='auto';checkbox.setAttribute('aria-label','Exibir estresse do inimigo aos jogadores');
+  visibility.prepend(checkbox);
+  const toggleStatus=make('span',checkbox.checked?'Visível':'Oculta','small');visibility.append(toggleStatus);
+  checkbox.addEventListener('change',async()=>{
+   checkbox.disabled=true;
+   const {error}=await db.rpc('dh_room_enemy_set_stress_visibility',{p_room:roomId,p_enemy:selected.id,p_visible:checkbox.checked});
+   if(error){checkbox.checked=!checkbox.checked;message(error.message,true)}
+   else{working.stress_visible=checkbox.checked;toggleStatus.textContent=checkbox.checked?'Visível':'Oculta';await onSaved();message('Visibilidade atualizada para os jogadores.')}
+   checkbox.disabled=false;
+  });
+  root.append(stressText,visibility);
+  const skills=Array.isArray(sh.skills)?sh.skills:[],styles=Array.isArray(sh.styles)?sh.styles:[];
+  const controls=make('div',null,'gm-quick-roll');
+  const dice=make('select');dice.id='gm-enemy-dice';for(let n=2;n<=5;n++){const opt=make('option',n+'d20');opt.value=n;dice.append(opt)}
+  const difficulty=make('select');difficulty.id='gm-enemy-difficulty';for(let n=0;n<=5;n++){const opt=make('option','Dificuldade '+n);opt.value=n;difficulty.append(opt)}difficulty.value='1';
+  const visibilityRoll=make('select');visibilityRoll.id='gm-enemy-roll-visibility';
+  for(const [value,label] of [['public','Pública'],['gm_only','Somente mestre']]){const opt=make('option',label);opt.value=value;visibilityRoll.append(opt)}
+  const skillSelect=make('select');skillSelect.id='gm-enemy-skill';
+  for(const item of skills){const opt=make('option',item.label+' ('+item.value+')');opt.value=item.label;skillSelect.append(opt)}
+  const styleSelect=make('select');styleSelect.id='gm-enemy-style';
+  for(const item of styles){const opt=make('option',item.label+' ('+item.value+')');opt.value=item.label;styleSelect.append(opt)}
+  const grid=make('div',null,'form-grid');
+  for(const [label,el] of [['Perícia',skillSelect],['Estilo',styleSelect],['Dados',dice],['Dificuldade',difficulty],['Privacidade',visibilityRoll]]){
+   const box=make('div');const l=make('label',label);box.append(l,el);grid.append(box)
+  }
+  controls.append(make('h3','Rolagens do inimigo'),grid);
+  const abilities=make('div',null,'gm-enemy-actions');
+  const attacks=String(sh.ataques||'').split(';').map(x=>x.trim()).filter(Boolean);
+  controls.append(make('h4','Ações da ficha'));
+  if(sh.regrasEspeciais)controls.append(make('p',sh.regrasEspeciais,'small'));
+  const act=async(label,button)=>{
+   if(!skillSelect.value||!styleSelect.value)return message('Esta ficha não possui perícia ou estilo para rolar.',true);
+   button.disabled=true;message('Rolando '+label+'...');
+   const {error}=await db.rpc('dh_room_enemy_roll',{
+    p_room:roomId,p_enemy:selected.id,p_skill:skillSelect.value,p_style:styleSelect.value,
+    p_action:label,p_dice:Number(dice.value),p_difficulty:Number(difficulty.value),p_visibility:visibilityRoll.value
+   });
+   if(error){message('Falha na rolagem: '+error.message,true);button.disabled=false;return}
+   await onSaved();message('Rolagem de '+label+' registrada no painel central.');button.disabled=false;
+  };
+  const makeAction=label=>{
+   const row=make('div',null,'gm-enemy-action-row');
+   row.append(make('span',label));
+   const btn=make('button','Rolar ação','secondary');btn.type='button';btn.addEventListener('click',()=>act(label,btn));
+   row.append(btn);abilities.append(row);
+  };
+  for(const attack of attacks)makeAction(attack);
+  makeAction('Teste livre');
+  controls.append(abilities);
+  root.append(controls);
+  const link=make('a','Consultar ficha do bestiário','btn secondary');
+  if(working.template_id){link.href='ficha-inimigo.html?id='+encodeURIComponent(working.template_id)+'&room='+encodeURIComponent(roomId);root.append(link)}
+  message('');
+ }
+
  function render(){
   if(!selected||!working)return;
   const npc=selected.kind==='enemy',sheet=working.sheet||{};
   $('gm-selected').classList.remove('hidden');$('player-side').classList.add('hidden');
   $('right-title').textContent=npc?'Ficha de inimigo':'Ficha de jogador';
   const root=$('gm-editor');root.replaceChildren();message('');
+  if(npc){renderEnemyQuick();return}
   const desc=make('p',npc?'NPC sob seu controle. Edite livremente atributos, histórico, condições e itens.':'Você está editando a ficha de um participante como mestre. As alterações serão salvas na conta dele.','small');
   root.append(desc);
   const ident=section('Identificação');
@@ -228,7 +294,7 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog}){
   render();highlight();
  }
  async function chooseEnemy(id){
-  const {data,error}=await db.from('dh_room_enemies').select('id,room_id,name,tier,section,sheet,inventory,visible').eq('room_id',roomId).eq('id',id).single();
+  const {data,error}=await db.from('dh_room_enemies').select('id,room_id,name,tier,section,sheet,inventory,visible,stress_visible,template_id').eq('room_id',roomId).eq('id',id).single();
   if(error)return message(error.message,true);
   selected={kind:'enemy',id};working=data;inventory=Array.isArray(data.inventory)?structuredClone(data.inventory):[];focusEntries=[];
   render();highlight();

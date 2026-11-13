@@ -221,3 +221,102 @@ label{color:#C6AF89}
  body::before,body::after{display:none!important}
  .mobile-table-nav,.global-site-nav{display:none!important}
 }
+
+
+/* HOTFIX DE LEGIBILIDADE: alto contraste nas superfícies de fuligem.
+   Não se aplica indiscriminadamente ao pergaminho, que usa tinta escura. */
+body{--muted:#CEC8BB}
+:is(.panel,.table-panel,.subpanel,.player-card,.roll-card,.item-row,.room-entry,
+ .bestiary-card,.gm-panel,.gm-dashboard,.hero-card,.character-card,.tile,
+ .mobile-more-panel,.side-content,.gm-sheet-section){
+  color:#E9E4D9;
+}
+:is(.panel,.table-panel,.subpanel,.player-card,.roll-card,.item-row,.room-entry,
+ .bestiary-card,.gm-panel,.gm-dashboard,.hero-card,.character-card,.tile) :is(p,.small,.hint,.muted){
+  color:#CBC5BA;
+}
+:is(.panel,.table-panel,.subpanel,.player-card,.roll-card,.item-row,.room-entry,
+ .bestiary-card,.gm-panel,.gm-dashboard,.hero-card,.character-card,.tile) :is(h2,h3,h4,strong){
+  color:#EDD4A6;
+}
+:is(.panel,.table-panel,.subpanel) :is(label,summary){color:#DFC59B}
+:is(.panel,.table-panel,.subpanel) :is(input,select,textarea){color:#F2EDE3;background-color:#151A21}
+:is(.panel,.table-panel,.subpanel) :is(input,select,textarea)::placeholder{color:#BAB5A9}
+.side-content details,.side-content details>div{background:#1C2328;color:#E2DCD0}
+.side-content details>summary{color:#E8CC9B}
+.side-content details p,.gm-inventory-entry span,.gm-enemy-action-row>span,.item-row p{color:#D9D1C4}
+.roll-card h4,.player-card>strong{color:#F3D6A2}
+.roll-card p{color:#DAD3C6}
+.roll-card .dice{color:#F5D59A}
+.roll-card .success{color:#A6E8C5!important}
+.roll-card .fail{color:#FFB5A6!important}
+.gm-stock-check{background:#24292C;color:#F2E5D1}
+.gm-stock-check .gm-stock-name{color:#F3E1C0}
+.gm-stock-check .gm-stock-state{color:#D4CEBF}
+.gm-stock-check:has(input:checked){background:#422C2B}
+.gm-stock-check:has(input:checked) .gm-stock-state{color:#FFD0C5}
+.stress-widget-header strong,.stress-value{color:#F0D2A1}
+.hero-stat small{color:#DBD2C2}
+.hero-stat strong{color:#F0D1A0}
+#table-actions .side-tabs button:not([aria-selected="true"]){
+ color:#F0D5A8!important;background:#20252A!important;
+ border-color:#776245!important;
+}
+#table-actions .side-tabs button[aria-selected="true"]{color:#17191B!important;background:#D5BA88!important}
+.mobile-table-nav .mobile-nav-btn,
+.mobile-table-nav .mobile-nav-btn:disabled{
+  color:#E5DCCF!important;
+  background:transparent!important;
+  opacity:1;
+}
+.mobile-table-nav .mobile-nav-btn[aria-pressed="true"]{
+  color:#7DE8DA!important;
+  background:#26383A!important;
+  border-color:#4FD1C5!important;
+}
+.mobile-table-nav .mobile-nav-btn>span{color:inherit}
+:is(button.secondary,.btn.secondary):not(:disabled){color:#F1D8A9}
+#gm-tools>.gm-tools-summary{background:#23292D;color:#F4D49E}
+.global-site-summary span{color:#E9E3D8}
+.global-site-links a{color:#EDE3D5}
+.global-site-links a[aria-current="page"]{color:#81E9DC}
+.eyebrow,.connection-indicator[data-status="live"]{color:#7DE8DA}
+.diary-entry-body :is(p,small,li,h3,h4,strong),.diary-latest :is(p,small,li,h2,h3,strong),
+.diary-extras[open] :is(label,summary),.card-tooltip :is(p,small,h3,h4,strong,li){
+ color:#241D16!important;
+}
+.diary-extras[open] :is(input,select,textarea){background:#F3EBD9!important;color:#241D16!important}
+.diary-extras[open] :is(input,textarea)::placeholder{color:#675849!important}
+/* Lista de usuários da sala: a inscrição independe de estar online. */
+.participants-panel{
+ border:3px double #8C6D3F;background:#1C2228;
+ padding:13px 17px 15px;margin:0 0 14px;color:#E2DCD0;
+ box-shadow:inset 0 0 0 1px #8C6D3F38,0 10px 22px #0005;
+}
+.participants-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.participants-header h2{font:600 15px var(--wh-font-title);letter-spacing:.08em;color:#EED1A1;margin:0 0 3px}
+.participants-count{font:12px var(--wh-font-mono)!important;color:#C9C7BD;margin:0}
+.participants-header button{min-height:39px;font-size:11px}
+.participants-list{display:flex;gap:8px;flex-wrap:wrap}
+.participant-chip{
+ display:flex;align-items:center;gap:9px;flex:1 1 210px;max-width:380px;min-width:0;
+ border:1px solid #715D40;background:#262A2E;padding:9px 11px;color:#E2DCD0;
+}
+.participant-dot{
+ width:10px;height:10px;flex:0 0 10px;display:inline-block;
+ border:1px solid #B3A088;background:#6B6C67;
+}
+.participant-dot.is-online{background:#4FD1C5;border-color:#A3F3E8;box-shadow:0 0 8px #4FD1C571}
+.participant-chip-info{display:flex;flex-direction:column;gap:2px;flex:1;min-width:0}
+.participant-chip-info strong{font:600 15px var(--wh-font-body);color:#F2E4CD;overflow-wrap:anywhere}
+.participant-character{font:13px var(--wh-font-body);color:#D3C9B9;overflow-wrap:anywhere}
+.participant-state{font:10px var(--wh-font-mono);color:#C6C0B5;white-space:nowrap}
+.participant-state.is-online{color:#85EADB}
+.roster-count{font:12px var(--wh-font-mono);color:#CDBD9F;white-space:nowrap}
+@media(max-width:760px){
+ .participants-panel{padding:11px 12px;margin:0 0 12px;border-width:2px}
+ .participants-header h2{font-size:13px}
+ .participants-list{flex-wrap:nowrap;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;padding-bottom:4px}
+ .participant-chip{min-width:202px;flex:0 0 202px;max-width:240px;padding:10px}
+ .participants-header button{font-size:10px}
+}

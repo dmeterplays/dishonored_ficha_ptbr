@@ -136,7 +136,10 @@ input,select,textarea{
 input::placeholder,textarea::placeholder{color:#A9A398;opacity:1}
 input:focus,select:focus,textarea:focus{border-color:#4FD1C5}
 label{color:#C6AF89}
-:is(.tag,.pill){background:#24282D;color:#DCC69E;border:1px solid #786344;padding:4px 7px}
+:is(.tag,.pill){background:#24282D;color:#DCC69E;border:1px solid #786344;padding:4px 14px 4px 8px;
+  clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%);
+}
+.room-code{padding-right:15px;clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%)}
 .money span,.roll-difficulty-readonly,.room-code{background:#11171B;color:#DED0AF;border-color:#8C6D3F}
 :is(.side-tabs,.collection-tabs,.wizard-steps) button[aria-selected="true"],
 :is(.side-tabs,.collection-tabs,.wizard-steps) button.on{

@@ -18,3 +18,18 @@
  .global-site-links a{min-height:47px;padding:11px 7px;border:1px solid #415658;background:#1f3032;text-align:center;font-size:15px}
 }
 @media(max-width:360px){.global-site-links{grid-template-columns:1fr}}
+
+/* Fluxos antigos continuam acessíveis, sem competir com a navegação online. */
+.legacy-import{border:1px solid #485c59;margin:18px 0;background:#172628}
+.legacy-import>summary{cursor:pointer;list-style:none;padding:16px 20px;color:#dbc399;font:600 14px Cinzel,Georgia,serif;line-height:1.5}
+.legacy-import>summary::-webkit-details-marker{display:none}
+.legacy-import>summary:after{content:' +';float:right}
+.legacy-import[open]>summary:after{content:' −'}
+.legacy-import>summary:focus-visible{outline:2px solid #91beb2;outline-offset:2px}
+.legacy-import>div,.legacy-import>.panel{margin:12px}
+.legacy-import.panel{padding:0!important}
+.legacy-import.panel>.row,.legacy-import.panel>#status{margin:16px}
+@media(max-width:760px){
+ .legacy-import>summary{min-height:50px;padding:14px;font-size:12px}
+ .global-site-links a{font-family:'Crimson Text',Georgia,serif!important}
+}

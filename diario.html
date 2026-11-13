@@ -1,0 +1,16 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Diário de Bordo | Dishonored RPG</title><link rel="stylesheet" href="./salas.css?v=diary1"><link rel="stylesheet" href="./site-nav.css?v=2"><link rel="stylesheet" href="./diario.css?v=1"></head><body>
+<header><div class="wrap"><a class="brand" href="salas.html">DISHONORED RPG</a><nav><a href="salas.html">Campanhas</a><a href="fichas.html">Personagens</a><a href="catalogo.html">Compêndio</a></nav></div></header>
+<main class="wrap diary-page"><span class="eyebrow">Memórias da campanha</span><div class="row between"><div><h1>Diário de Bordo</h1><p id="diary-room-name" class="small">Carregando campanha...</p></div><a id="diary-back" class="btn secondary" href="salas.html">Voltar à mesa</a></div>
+<p class="info">O mestre registra o que aconteceu em cada sessão. Todos os participantes podem consultar o histórico para retomar a aventura.</p>
+<p id="diary-status" class="status" role="status"></p>
+<div class="diary-summary" id="diary-summary"></div>
+<section id="diary-editor" class="panel hidden"><div class="row between"><h2 id="diary-form-title">Registrar sessão</h2><button id="diary-cancel" type="button" class="secondary hidden">Cancelar edição</button></div>
+<form id="diary-form">
+<div class="diary-grid"><div><label for="diary-number">Número da sessão</label><input id="diary-number" type="number" min="1" max="9999" required></div><div><label for="diary-date">Data da sessão</label><input id="diary-date" type="date" required></div><div><label for="diary-duration">Duração (minutos)</label><input id="diary-duration" type="number" min="1" max="1440" value="180" required></div></div>
+<label for="diary-title">Título da sessão</label><input id="diary-title" maxlength="150" placeholder="Ex.: Ecos de Karnaca" required>
+<label for="diary-text">O que aconteceu?</label><textarea id="diary-text" rows="7" maxlength="20000" required placeholder="Registre os acontecimentos que os personagens já conhecem."></textarea>
+<details class="diary-extras"><summary>Detalhes adicionais (opcionais)</summary><label for="diary-clues">Pistas e descobertas</label><textarea id="diary-clues" rows="3" maxlength="6000"></textarea><label for="diary-npcs">NPCs importantes</label><textarea id="diary-npcs" rows="3" maxlength="6000"></textarea><label for="diary-next">Pendências para a próxima sessão</label><textarea id="diary-next" rows="3" maxlength="6000"></textarea></details>
+<div class="row"><button id="diary-save" type="submit">Publicar resumo</button><span id="diary-form-status" role="status" class="status"></span></div>
+</form></section>
+<section class="diary-history"><div class="row between"><h2>Histórico de sessões</h2><span id="diary-count" class="small"></span></div><div id="diary-list"><p>Carregando histórico...</p></div></section>
+</main><script type="module" src="./diario.js?v=1"></script><script src="./site-nav.js?v=2" defer></script></body></html>

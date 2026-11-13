@@ -1,24 +1,29 @@
-/* Menu único acessível em todas as páginas, sem interferir nos controles do jogo. */
-.global-site-nav{display:block;position:relative;z-index:20;background:#172528;border-bottom:1px solid #405658;color:#e8d5aa;font-family:'Crimson Text',Georgia,serif}
-.global-site-menu{max-width:1160px;margin:0 auto}
-.global-site-summary{display:none}
-.global-site-links{display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;flex-wrap:wrap}
-.global-site-links a{display:flex;align-items:center;justify-content:center;min-height:38px;padding:8px 13px;text-decoration:none;color:#c8d3cb;border:1px solid transparent;font-size:15px}
-.global-site-links a[aria-current=page]{border-color:#8e7b57;color:#edd4a6;background:#293631}
-.global-site-links a:hover,.global-site-links a:focus-visible{color:#efd6a8;border-color:#8e7b57;background:#253739}
-@media(max-width:760px){
- .global-site-nav{display:block}
- .global-nav-ready header nav{display:none!important}
- .global-site-nav{position:sticky;top:0;z-index:39;box-shadow:0 3px 9px #0005}
- .global-site-summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 17px;min-height:48px;cursor:pointer;list-style:none}
- .global-site-summary::-webkit-details-marker{display:none}
- .global-site-summary span{font-size:15px;color:#d3dbd1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
- .global-site-summary strong{font:600 12px Cinzel,Georgia,serif;color:#e8cca0;white-space:nowrap}
- .global-site-menu:not([open]) .global-site-links{display:none}
- .global-site-links{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:12px 14px 16px;max-height:min(65vh,500px);overflow-y:auto}
- .global-site-links a{min-height:47px;padding:11px 7px;border:1px solid #415658;background:#1f3032;text-align:center;font-size:15px}
+/* Navegação principal compacta e retrátil, com acesso no canto superior direito. */
+.global-nav-ready header nav:not(.mobile-bottom-nav){display:none!important}
+.global-site-nav{position:fixed!important;top:12px;right:max(16px,env(safe-area-inset-right));z-index:10000!important;display:block!important;width:min(320px,calc(100vw - 32px));max-width:calc(100vw - 32px);background:transparent!important;border:0!important;box-shadow:none!important;color:#f1e2c1;font-family:'Crimson Text',Georgia,serif;line-height:1.35}
+.global-site-menu{position:relative;width:100%;margin:0;padding:0}
+.global-site-summary{box-sizing:border-box;list-style:none;cursor:pointer;display:flex!important;align-items:center;justify-content:space-between;gap:10px;min-height:46px;padding:10px 14px;background:#192729;border:1px solid #9e8559;box-shadow:0 5px 18px #0009;color:#f1ddb2}
+.global-site-summary::-webkit-details-marker{display:none}
+.global-site-summary:focus-visible{outline:2px solid #a6d3cb;outline-offset:3px}
+.global-site-summary .global-site-current{color:#f3e8d6;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;min-width:0;font:600 14px 'Crimson Text',Georgia,serif}
+.global-site-summary strong{font:600 12px 'Cinzel',Georgia,serif;color:#f1cfa0;white-space:nowrap}
+.global-site-menu[open] .global-site-summary{background:#273a3b;border-color:#d5b981}
+.global-site-menu:not([open]) .global-site-links{display:none!important}
+.global-site-links{box-sizing:border-box;position:absolute;right:0;top:calc(100% + 5px);display:flex!important;flex-direction:column;gap:5px;width:100%;max-height:min(74vh,610px);overflow-y:auto;padding:10px;background:#142225;border:1px solid #827452;box-shadow:0 14px 30px #000b}
+.global-site-menu:not([open]) .global-site-links{display:none!important}
+.global-site-links a{display:block;box-sizing:border-box;width:100%;min-height:43px;padding:11px 13px!important;background:#203134!important;border:1px solid #455a58!important;color:#e7e3d7!important;text-decoration:none!important;text-align:left!important;font:600 15px 'Crimson Text',Georgia,serif!important}
+.global-site-links a[aria-current=page]{color:#162022!important;background:#d5b981!important;border-color:#d5b981!important}
+.global-site-links a:hover,.global-site-links a:focus-visible{color:#f9e8c5!important;background:#344a49!important;border-color:#c4a36d!important}
+.global-site-links a[aria-current=page]:hover{color:#162022!important;background:#e6c997!important}
+@media(max-width:600px){
+ .global-site-nav{top:8px;right:10px;width:min(230px,calc(100vw - 20px))}
+ .global-site-summary{min-height:43px;padding:9px 11px}
+ .global-site-summary .global-site-current{font-size:12px}
+ .global-site-summary strong{font-size:11px}
+ .global-site-links{max-height:min(72vh,520px)}
 }
-@media(max-width:360px){.global-site-links{grid-template-columns:1fr}}
+/* Evita esconder a navegação inferior própria da mesa. */
+.global-nav-ready .mobile-bottom-nav{display:flex!important}
 
 /* Fluxos antigos continuam acessíveis, sem competir com a navegação online. */
 .legacy-import{border:1px solid #485c59;margin:18px 0;background:#172628}

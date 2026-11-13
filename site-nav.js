@@ -64,5 +64,5 @@
   if(builtInMenu?.open&&!builtInMenu.contains(event.target))builtInMenu.open=false});
  // Atualiza a folha compartilhada após deploy para evitar CSS antigo em cache.
  const css=document.querySelector('link[href*="site-nav.css"]');
- if(css)css.href=new URL('./site-nav.css?v=menu-header-20261113d',location.href).href;
+ if(css)css.href=new URL('./site-nav.css?v=gear-style-20261113',location.href).href;
 })();

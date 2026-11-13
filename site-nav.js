@@ -11,7 +11,7 @@
  const path=location.pathname.split('/').pop()||'index.html';
  const current=links.find(x=>x[0]===path)?.[1]||({
   'personagem.html':'Ficha completa','bestiario.html':'Bestiário',
-  'mesa.html':'Mesa de jogo','arquetipos.html':'Arquétipos',
+  'mesa.html':'Mesa de jogo','diario.html':'Diário de Bordo','arquetipos.html':'Arquétipos',
   'poderes.html':'Poderes','amuletos.html':'Amuletos',
   'loja.html':'Itens','pericias.html':'Perícias e estilos',
   'admin.html':'Administração','ficha-inimigo.html':'Ficha do NPC'
@@ -25,7 +25,7 @@
  const list=document.createElement('div');list.className='global-site-links';
  const params=new URLSearchParams(location.search);
  const room=params.get('room')||(path==='mesa.html'?params.get('id'):null);
- const all=room?[...links.slice(0,2),['mesa.html?id='+encodeURIComponent(room),'Mesa atual','Voltar à campanha'],...links.slice(2)]:links;
+ const all=room?[...links.slice(0,2),['mesa.html?id='+encodeURIComponent(room),'Mesa atual','Voltar à campanha'],['diario.html?room='+encodeURIComponent(room),'Diário de Bordo','Resumos das sessões'],...links.slice(2)]:links;
  for(const [href,title,help] of all){
   const a=document.createElement('a');a.href=href;a.textContent=title;a.title=help;
   const dest=href.split('?')[0];if(dest===path){a.setAttribute('aria-current','page');}

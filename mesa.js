@@ -111,8 +111,10 @@ function diceView(rolls){
  for(const r of rolls){
   const actor=roster.find(x=>x.user_id===r.user_id);
   const npc=enemies.find(x=>x.id===r.enemy_id);
+  const character=roster.find(x=>x.character_id&&x.character_id===r.character_id);
+  const actorName=r.actor_name||character?.character_name||npc?.name||(r.enemy_id?'Inimigo':r.character_id?'Personagem':r.action_label?'Inimigo':'Participante');
   const div=node('article',null,'roll-card'+(r.visibility==='public'?'':' private'));
-  const h=node('h4',(npc?.name||actor?.character_name||actor?.display_name||'Inimigo')+' · '+(r.action_label&&r.action_label!=='Teste livre'?r.action_label+' · ':'')+r.skill+' + '+r.style);
+  const h=node('h4',actorName+' · '+(r.action_label&&r.action_label!=='Teste livre'?r.action_label+' · ':'')+r.skill+' + '+r.style);
   const vis=r.visibility==='public'?'Pública':r.visibility==='private'?'Privada':'Somente mestre';
   const date=new Date(r.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   div.append(h,node('p',date+' · '+vis+' · Dificuldade '+r.difficulty));
@@ -211,7 +213,7 @@ function requestRollRefresh(){
 }
 async function refreshRolls(){
  const {data,error}=await db.from('dh_room_rolls')
-  .select('id,user_id,character_id,enemy_id,action_label,skill,style,focus,focus_value,difficulty,dice,rolls,target,successes,complications,visibility,created_at')
+  .select('id,user_id,character_id,enemy_id,actor_name,action_label,skill,style,focus,focus_value,difficulty,dice,rolls,target,successes,complications,visibility,created_at')
   .eq('room_id',roomId).order('created_at',{ascending:false}).limit(65);
  if(error){say('room-status','Erro ao buscar rolagens: '+error.message,true);return}
  const next=fingerprint(data||[]);

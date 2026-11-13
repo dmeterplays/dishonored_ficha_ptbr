@@ -42,6 +42,22 @@ function renderPhoto(url){
  if(url){const img=el('img');img.alt='Retrato de '+character.name;img.src=url;img.className='hero-photo';root.append(img);}
  else root.append(el('span',placeholder(character.name),'placeholder'));
 }
+function paintSheetStress(){
+ const max=Math.max(1,Math.min(20,Number($('stress-max').value)||12));
+ const current=Math.max(0,Math.min(max,Number($('stress-now').value)||0));
+ $('sheet-stress-value').textContent=current+' / '+max;
+ $('sheet-stress-fill').style.width=(current/max*100)+'%';
+ $('sheet-stress-track').setAttribute('aria-valuemax',String(max));
+ $('sheet-stress-track').setAttribute('aria-valuenow',String(current));
+ $('sheet-stress-less').disabled=current<=0;
+ $('sheet-stress-more').disabled=current>=max;
+}
+for(const [id,delta] of [['sheet-stress-less',-1],['sheet-stress-more',1]])$(id).addEventListener('click',()=>{
+ const max=Number($('stress-max').value)||12,current=Number($('stress-now').value)||0;
+ $('stress-now').value=Math.max(0,Math.min(max,current+delta));
+ paintSheetStress();setDirty();
+});
+for(const id of ['stress-now','stress-max'])$(id).addEventListener('input',paintSheetStress);
 function renderMain(){
  $('sheet').classList.remove('hidden');
  const resume=$('resume-wizard');resume.classList.toggle('hidden',!(character.creation_status==='draft'&&character.sheet?.creation));resume.href='criar-personagem.html?id='+encodeURIComponent(character.id);
@@ -53,6 +69,7 @@ function renderMain(){
  $('background').value=character.sheet.background??'';
  $('stress-now').value=character.sheet.stressAtual??0;
  $('stress-max').value=character.sheet.stressMax??12;
+ paintSheetStress();
  $('resources').textContent='XP: '+character.xp+' • Momentum: '+character.momentum+' • Vazio: '+character.void_points;
  updateHero();renderStats();renderNotes();renderPhoto(null);renderReadiness();
  if(character.portrait_path)portraitURL(character.portrait_path).then(renderPhoto);

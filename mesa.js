@@ -586,7 +586,7 @@ async function boot(){
  await refresh({side:false});
  if(!room)return;
  $('table').classList.remove('hidden');
- await loadCatalog();await loadMySheet(true);await refreshRolls();setRollMode('quick');mobileNavigate('character',false);
+ await loadCatalog();await loadMySheet(true);await refreshRolls();setRollMode('quick');mobileNavigate(gm()&&!mine?.character_id?'more':'character',false);
  const selectedEnemy=new URLSearchParams(location.search).get('enemy');
  if(selectedEnemy&&gm()&&enemies.some(e=>e.id===selectedEnemy)){await gmEditor.chooseEnemy(selectedEnemy);history.replaceState(null,'','mesa.html?id='+encodeURIComponent(roomId));}
  startLiveUpdates();

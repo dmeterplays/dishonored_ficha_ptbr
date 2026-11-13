@@ -1396,7 +1396,34 @@ const WIKI_UPGRADES=[
   "source": "wiki"
  }
 ];
-export const UPGRADES=[...WIKI_UPGRADES,...LEGACY_UPGRADES];
+// Projetos exigidos nos jogos quando explicitamente documentados pela wiki.
+const BLUEPRINTS={
+'d1-pistol-explosive':'Small-Scale Combustion Refinement','d1-crossbow-fire':'Incandescent Paste',
+'d1-grenade-sticky':'Spiked Grenade Housing','d1-mask-optics2':'Lens Magnification',
+'d1-armor-improved':'Bonded Galvani Weave','d1-boot-stealth1':'Folded Galvani Resin',
+'dlc-armor':'Bonded Galvani Weave','dlc-boot1':'Folded Galvani Resin','dlc-chokedust':'Baffle Dust',
+'dlc-arc-cap':'Compact Arc Amplifier','dlc-stun-cap':'Compact Arc Amplifier','dlc-arc-charge':'Compact Arc Amplifier','dlc-stun-charge':'Compact Arc Amplifier',
+'d2-crossbow-harden':'Fire Hardening Treatment','d2-crossbow-sleep':'Combat Sleep Dart','d2-crossbow-fire':'Dispersed Incendiary Release','d2-crossbow-combustion':'Dispersed Incendiary Release','d2-crossbow-sting':'Mercury Vapor Distillation','d2-crossbow-howl':'Pyro-Sonic Casing',
+'d2-pistol-explosive':'Small-Scale Combustion Refinement','d2-pistol-cluster':'Small-Scale Combustion Refinement','d2-pistol-magnetic':'Alloy Polarization','d2-pistol-armor':'Slug Splintering Wedges',
+'d2-silent-run':'Folded Galvani Resin','d2-silent-sprint':'Folded Galvani Resin','d2-grenade-impact':'Triggered Housing','d2-grenade-sticky':'Spiked Grenade Housing','d2-mine-chain':'Conductive Filaments','d2-razor-double':'Secondary Coiling',
+'d2-master-coffin':'Configurable Grooving','d2-master-dealer':'Configurable Grooving','d2-master-pierce':'Configurable Grooving','d2-master-long':'Configurable Grooving',
+'d2-master-howl1':'Reverberation Tubing','d2-master-howl2':'Reverberation Tubing',
+'d2-master-traveler':'Firing Chamber Pivot','d2-master-painter':'Firing Chamber Pivot','d2-master-siblings':'Firing Chamber Pivot','d2-master-gentleman':'Firing Chamber Pivot',
+'d2-master-carapace':'Dual-Layered Galvani Weave','d2-master-wrappings':'Dual-Layered Galvani Weave',
+'d2-master-wrench':'Blade Conversion','d2-master-kiss':'Blade Conversion','d2-master-expansive':'Counter-Blast Inversion','d2-master-discreet':'Counter-Blast Inversion'
+};
+const MASTERWORK_PAIRS=[
+['d2-master-coffin','d2-master-dealer'],
+['d2-master-pierce','d2-master-long'],
+['d2-master-howl1','d2-master-howl2'],
+['d2-master-traveler','d2-master-painter'],
+['d2-master-siblings','d2-master-gentleman'],
+['d2-master-carapace','d2-master-wrappings'],
+['d2-master-wrench','d2-master-kiss'],
+['d2-master-expansive','d2-master-discreet']
+];
+export function conflictingMasterwork(id,installed){return MASTERWORK_PAIRS.some(pair=>pair.includes(id)&&pair.some(other=>other!==id&&installed.has(other)))}
+export const UPGRADES=[...WIKI_UPGRADES.map(u=>({...u,blueprint:BLUEPRINTS[u.id]||null})),...LEGACY_UPGRADES];
 const groupLabels={pistol:'Pistola',crossbow:'Besta',wristbow:'Besta de pulso',sword:'Espada',armor:'Armadura/vestimentas',optic:'Óptica',bonecharm:'Amuletos',grenade:'Granadas',trap:'Navalhas/armadilhas',mine:'Minas',voltaic:'Arma voltaica',gear:'Equipamento'};
 export const UPGRADE_GROUPS=groupLabels;
 export const GAME_LABELS={D1:'Dishonored',DLC:'The Knife of Dunwall / Brigmore Witches',D2:'Dishonored 2',DOTO:'Death of the Outsider',Casa:'Regras opcionais'};

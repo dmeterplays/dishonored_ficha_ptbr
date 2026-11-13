@@ -9,7 +9,7 @@ const dateText=value=>{const [y,m,d]=value.split('-');return d+'/'+m+'/'+y};
 function clearForm(){
  editing=null;$('diary-form-title').textContent='Registrar sessão';$('diary-save').textContent='Publicar resumo';$('diary-cancel').classList.add('hidden');
  $('diary-form').reset();$('diary-number').value=records.reduce((n,r)=>Math.max(n,r.session_number),0)+1;
- $('diary-date').value=new Date().toLocaleDateString('en-CA');$('diary-duration').value='180';$('diary-form-status').textContent='';
+ const today=new Date();$('diary-date').value=[today.getFullYear(),String(today.getMonth()+1).padStart(2,'0'),String(today.getDate()).padStart(2,'0')].join('-');$('diary-duration').value='180';$('diary-form-status').textContent='';
 }
 function detailsBlock(root,title,value){
  if(!value?.trim())return;

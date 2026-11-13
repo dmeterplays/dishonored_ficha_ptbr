@@ -1,4 +1,4 @@
-import {UPGRADES,GAME_LABELS,UPGRADE_GROUPS} from './equipment-upgrades.js?v=wiki2';
+import {UPGRADES,GAME_LABELS,UPGRADE_GROUPS} from './equipment-upgrades.js?v=wiki3';
 const $=id=>document.getElementById(id);
 const filtered=()=>UPGRADES.filter(u=>!u.legacy && (!$('upgrade-game').value||u.game===$('upgrade-game').value) && (!$('upgrade-group').value||u.type===$('upgrade-group').value) && [u.name,u.effect,GAME_LABELS[u.game]||''].join(' ').toLocaleLowerCase('pt-BR').includes($('upgrade-search').value.toLocaleLowerCase('pt-BR').trim()));
 function render(){
@@ -19,6 +19,7 @@ function render(){
    const req=document.createElement('p');req.className='upgrade-requirements';
    req.textContent='Melhorias pré-requisito: '+u.requires.map(id=>UPGRADES.find(x=>x.id===id)?.name||id).join(', ');card.append(req);
   }
+  if(u.blueprint){const blueprint=document.createElement('p');blueprint.className='upgrade-requirements';blueprint.textContent='Projeto do jogo: '+u.blueprint;card.append(blueprint)}
   if(u.name.startsWith('Obra-prima:')){const x=document.createElement('small');x.textContent='Obra-prima: variante exclusiva, escolha uma por família de equipamento. Alguns modelos pertencem a Corvo ou Emily.';card.append(x)}
   root.append(card);
  }

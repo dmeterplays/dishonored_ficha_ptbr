@@ -5,7 +5,7 @@ const sections={povo_comum:'O Povo Comum',nobreza:'A Nobreza',selvagens:'O Selva
 const tiers={incidental:'Incidental',menor:'Menor',notavel:'Notável',principal:'Principal'};
 const skills=['Lutar','Mover','Estudar','Sobreviver','Falar','Consertar'];
 const styles=['Ousadamente','Cuidadosamente','Habilmente','Forçosamente','Silenciosamente','Rapidamente'];
-export function initMasterEditor({db,roomId,onSaved,getCatalog}){
+export function initMasterEditor({db,roomId,onSaved,getCatalog,onSelect=()=>{}}){
  let selected=null,working=null,inventory=[],focusEntries=[],saving=false;
  const message=(text,bad=false)=>{$('gm-editor-status').textContent=text;$('gm-editor-status').className=bad?'error':'status'};
  const put=(id,label,value,type='text',max)=>{
@@ -305,13 +305,13 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog}){
   const {data,error}=await db.rpc('dh_room_gm_sheet',{p_room:roomId,p_character:id});
   if(error)return message(error.message,true);
   selected={kind:'player',id};working=data;inventory=Array.isArray(data.sheet?.gmInventory)?structuredClone(data.sheet.gmInventory):[];focusEntries=Array.isArray(data.sheet?.creation?.focus)?structuredClone(data.sheet.creation.focus):[];
-  render();highlight();
+  render();highlight();onSelect();
  }
  async function chooseEnemy(id){
   const {data,error}=await db.from('dh_room_enemies').select('id,room_id,name,tier,section,sheet,inventory,visible,stress_visible,template_id').eq('room_id',roomId).eq('id',id).single();
   if(error)return message(error.message,true);
   selected={kind:'enemy',id};working=data;inventory=Array.isArray(data.inventory)?structuredClone(data.inventory):[];focusEntries=[];
-  render();highlight();
+  render();highlight();onSelect();
  }
  function highlight(){
   for(const card of document.querySelectorAll('[data-character-id],[data-enemy-id]')){

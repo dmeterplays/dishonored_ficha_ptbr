@@ -1,4 +1,4 @@
-import {UPGRADES,itemType} from './equipment-upgrades.js?v=wiki3';
+import {UPGRADES,itemType} from './equipment-upgrades.js?v=wiki4';
 const baseMap=new Map(UPGRADES.map(x=>[x.id,x]));
 // Valores base para melhorias com expansão explícita de munição.
 // São efeitos de inventário do RPG, não alterações automáticas de rolagens.
@@ -16,11 +16,11 @@ const defaultCapacityBonus=(u)=>{
 export function mergedUpgrade(id,configs=[]){
  const base=baseMap.get(id);if(!base)return null;
  const config=Array.isArray(configs)?configs.find(x=>x.upgrade_id===id):configs[id];
- return {...base,...(config?{name:config.name,effect:config.effect,cost:config.price,capacity_bonus:config.capacity_bonus||0,rule_note:config.rule_note||'',item_ids:config.item_ids,enabled:config.enabled}:{}),
-  capacity_bonus:config?.capacity_bonus??defaultCapacityBonus(base),rule_note:config?.rule_note||'',item_ids:config?.item_ids??null,enabled:config?.enabled??true};
+ return {...base,...(config?{name:config.name,effect:config.effect,cost:config.price,capacity_bonus:config.capacity_bonus||0,rule_note:config.rule_note||'',item_ids:config.item_ids,enabled:config.enabled,bonus_skill:config.bonus_skill,bonus_value:config.bonus_value}:{}),
+  capacity_bonus:config?.capacity_bonus??defaultCapacityBonus(base),rule_note:config?.rule_note||'',item_ids:config?.item_ids??null,enabled:config?.enabled??true,bonus_skill:config?.bonus_skill||'',bonus_value:config?.bonus_value||0};
 }
 export function compatibleUpgrade(item,upgrade){
- if(!upgrade||upgrade.enabled===false)return false;
+ if(!upgrade||upgrade.enabled===false||upgrade.hidden)return false;
  if(Array.isArray(upgrade.item_ids))return !!item.catalog_id&&upgrade.item_ids.includes(item.catalog_id);
  return itemType(item.name)===upgrade.type;
 }
@@ -31,5 +31,5 @@ export function activeUpgradeEffects(item,activeRows,configs){
  const installed=new Set(installedUpgradeIds(item));
  const active=(activeRows||[]).filter(row=>row.item_id===item.id&&row.active&&installed.has(row.upgrade_id));
  const upgrades=active.map(row=>mergedUpgrade(row.upgrade_id,configs)).filter(u=>u&&compatibleUpgrade(item,u));
- return {upgrades,capacityBonus:upgrades.reduce((sum,u)=>sum+Number(u.capacity_bonus||0),0)};
+ return {upgrades,capacityBonus:upgrades.reduce((sum,u)=>sum+Number(u.capacity_bonus||0),0),testBonuses:upgrades.filter(u=>u.bonus_skill&&u.bonus_value).map(u=>({skill:u.bonus_skill,value:u.bonus_value,name:u.name}))};
 }

@@ -1,7 +1,7 @@
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './supabase-config.js';
 import {UPGRADES,optionsFor,GAME_LABELS,conflictingMasterwork} from './equipment-upgrades.js?v=wiki3';
-import {mergedUpgrade,compatibleUpgrade} from './upgrade-config.js?v=1';
+import {mergedUpgrade,compatibleUpgrade} from './upgrade-config.js?v=2';
 const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 const el=id=>document.getElementById(id);
 let chars=[],items=[],catalog=[],upgradeConfigs=[],selected=null,uid=null;

@@ -14,6 +14,7 @@ textarea{min-height:95px}button{background:var(--gold);border:1px solid var(--go
 button:disabled{opacity:.5;cursor:not-allowed}.hidden{display:none!important}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.row>*{flex:1}.entry{border-top:1px solid var(--line);padding:16px 0}.msg{min-height:20px}.error{color:#e7ada0}.ok{color:#9fd5c6}
 .admin-tabs{display:flex;gap:8px;overflow-x:auto;padding:5px 2px 12px;margin:22px 0 12px;scrollbar-width:thin}.admin-tabs button{flex:0 0 auto;white-space:nowrap;background:#172629;color:#e9d9b8;border:1px solid #526663;padding:12px 16px;min-height:46px}.admin-tabs button[aria-selected="true"]{background:var(--gold);color:#121b1e;border-color:var(--gold)}.admin-tabs button:focus-visible{outline:2px solid #a5d2c5;outline-offset:2px}.admin-tab-panel[hidden]{display:none!important}.admin-tab-panel{margin-top:10px}.tab-heading{margin-top:0}.admin-category-note{font-size:16px}.admin-tabs button:hover{border-color:#d5b981}.setting input:disabled{opacity:.65}
 .granted-card{border:1px solid #52625f;background:#172629;margin:10px 0;padding:14px}.granted-card summary{cursor:pointer;color:var(--gold);font-weight:bold}.granted-card h4{color:var(--gold);margin-bottom:8px}.upgrade-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:9px;margin-bottom:14px}.upgrade-choice{display:flex;align-items:flex-start;gap:10px;border:1px solid #405859;padding:10px;margin:0;background:#112022;color:var(--ink)}.upgrade-choice input{width:18px;height:18px;flex:0 0 18px;accent-color:var(--gold)}.upgrade-choice span{display:block}.upgrade-choice small{display:block;color:#c1cdc8;line-height:1.5;margin-top:5px}.grant-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}.grant-grid label{margin-bottom:4px}.grant-grid [hidden]{display:none!important}
+.upgrade-catalog-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px}.upgrade-catalog-card{background:#152326;border:1px solid #50625e;padding:15px;overflow-wrap:anywhere}.upgrade-catalog-card h3{font-size:15px;margin:0 0 9px}.upgrade-catalog-card p{font-size:16px;color:#d4ddd7;margin:10px 0}.upgrade-catalog-meta{display:flex;flex-wrap:wrap;gap:6px}.upgrade-catalog-meta span{font:12px 'Cinzel',serif;color:#f1d7aa;border:1px solid #526561;padding:5px 7px}.upgrade-requirements{color:#e0bcb0!important;font-size:14px!important}.upgrade-catalog-card small{color:#c4d1cd;line-height:1.45}
 @media(max-width:650px){.admin-tabs{margin:16px -8px 10px;padding:5px 8px 12px}.admin-tabs button{font-size:11px;padding:12px 11px}}
 </style><link rel="stylesheet" href="./auth-improvements.css?v=1"><link rel="stylesheet" href="./site-nav.css?v=1"><link rel="stylesheet" href="./whalepunk-theme.css?v=contrast2"></head>
 <body><header><a href="campanha.html">← Voltar à campanha</a><a href="./">Portal Dishonored RPG</a></header>
@@ -30,9 +31,22 @@ button:disabled{opacity:.5;cursor:not-allowed}.hidden{display:none!important}.ro
 <button type="button" role="tab" id="tab-power" data-tab="power" aria-controls="panel-catalog" aria-selected="false">◈ Poderes</button>
 <button type="button" role="tab" id="tab-item" data-tab="item" aria-controls="panel-catalog" aria-selected="false">▣ Itens</button>
 <button type="button" role="tab" id="tab-other" data-tab="other" aria-controls="panel-catalog" aria-selected="false">☷ Outros conteúdos</button>
+<button type="button" role="tab" id="tab-upgrades" data-tab="upgrades" aria-controls="panel-upgrades" aria-selected="false">🔧 Melhorias</button>
 <button type="button" role="tab" id="tab-inventory" data-tab="inventory" aria-controls="panel-inventory" aria-selected="false">🎒 Entregar itens</button>
 <button type="button" role="tab" id="tab-users" data-tab="users" aria-controls="admin-users-section" aria-selected="false">♟ Usuários</button>
 </nav>
+<section class="panel admin-tab-panel" id="panel-upgrades" role="tabpanel" aria-labelledby="tab-upgrades" hidden>
+<h2>🔧 Catálogo de melhorias</h2>
+<p>Melhorias de equipamentos de Dishonored, The Knife of Dunwall / The Brigmore Witches, Dishonored 2 e Death of the Outsider. Preços e requisitos são referências dos videogames. Para instalar uma melhoria em um personagem, abra a aba <strong>Entregar itens</strong>, selecione sua ficha e expanda o equipamento recebido.</p>
+<div class="grant-grid">
+<div><label for="upgrade-game">Jogo</label><select id="upgrade-game"><option value="">Todos os jogos</option></select></div>
+<div><label for="upgrade-group">Equipamento</label><select id="upgrade-group"><option value="">Todos os equipamentos</option></select></div>
+<div><label for="upgrade-search">Pesquisar melhoria</label><input id="upgrade-search" type="search" placeholder="Ex.: precisão, tambor, silêncio..."></div>
+</div>
+<div class="row" style="margin:12px 0"><span id="upgrade-count" class="small" role="status">Carregando melhorias...</span><button class="secondary" id="upgrade-clear" type="button">Limpar filtros</button></div>
+<div id="upgrade-catalog-list" class="upgrade-catalog-grid"></div>
+<p class="admin-category-note">Alguns aprimoramentos exigem projetos encontrados no jogo ou são exclusivos de determinado personagem. O uso no RPG deve ser validado pelo mestre; este catálogo não altera automaticamente os dados de combate.</p>
+</section>
 <section class="panel admin-tab-panel" id="panel-inventory" role="tabpanel" aria-labelledby="tab-inventory" hidden>
 <h2>Inventário e entrega de itens</h2><p>Escolha uma ficha para entregar itens do catálogo ou criar itens exclusivos. Abra um item entregue para aplicar melhorias inspiradas em Dishonored. Os efeitos são adaptações narrativas para 2d20 e não modificam rolagens automaticamente.</p>
 <label for="grant-character">Personagem destinatário</label><select id="grant-character"></select>
@@ -93,11 +107,12 @@ $('name').addEventListener('input',renderUpgradePreview);
 const categoryTabs={talent:'Talentos',bonecharm:'Amuletos de osso',power:'Poderes',item:'Itens'};
 const otherCategories=new Set(['archetype','skill','style','focus']);
 function switchTab(tab,updateHash=true){
- const valid=['mechanics','talent','bonecharm','power','item','other','inventory','users'];
+ const valid=['mechanics','talent','bonecharm','power','item','other','upgrades','inventory','users'];
  activeTab=valid.includes(tab)?tab:'mechanics';
- const isCatalog=!['mechanics','users','inventory'].includes(activeTab);
+ const isCatalog=!['mechanics','users','inventory','upgrades'].includes(activeTab);
  $('panel-mechanics').hidden=activeTab!=='mechanics';
  $('panel-inventory').hidden=activeTab!=='inventory';
+ $('panel-upgrades').hidden=activeTab!=='upgrades';
  $('admin-users-section').hidden=activeTab!=='users';
  $('panel-catalog').hidden=!isCatalog;
  for(const button of document.querySelectorAll('.admin-tabs [role="tab"]')){
@@ -293,4 +308,4 @@ $('save-entry').addEventListener('click',async()=>{
  msg('catalog-msg','Catálogo atualizado com sucesso.');clearForm();await loadCatalog();
 });
 init();
-</script><script type="module" src="./inventory-admin.js?v=1"></script><script src="./site-nav.js?v=admin3" defer></script></body></html>
+</script><script type="module" src="./inventory-admin.js?v=2"></script><script type="module" src="./upgrades-admin.js?v=1"></script><script src="./site-nav.js?v=admin3" defer></script></body></html>

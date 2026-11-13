@@ -320,3 +320,51 @@ body{--muted:#CEC8BB}
  .participant-chip{min-width:202px;flex:0 0 202px;max-width:240px;padding:10px}
  .participants-header button{font-size:10px}
 }
+
+/* Correção de contraste mobile: botões escuros sempre têm texto e símbolos claros.
+   Especificidade intencional para prevalecer sobre regras globais de button. */
+@media (max-width:760px){
+ body .mobile-table-nav button.mobile-nav-btn,
+ body .mobile-table-nav button.mobile-nav-btn:not(:disabled),
+ body .mobile-table-nav button.mobile-nav-btn:hover:not(:disabled){
+   background-color:#151B20!important;
+   color:#F4E8D4!important;
+   border-color:#61543F!important;
+   -webkit-text-fill-color:#F4E8D4;
+   opacity:1!important;
+ }
+ body .mobile-table-nav button.mobile-nav-btn[aria-pressed="true"],
+ body .mobile-table-nav button.mobile-nav-btn[aria-pressed="true"]:hover{
+   background-color:#243C3D!important;
+   color:#8FFFF0!important;
+   border-color:#4FD1C5!important;
+   -webkit-text-fill-color:#8FFFF0;
+ }
+ body .mobile-table-nav button.mobile-nav-btn span{
+   color:inherit!important;
+   -webkit-text-fill-color:inherit!important;
+   opacity:1!important;
+   text-shadow:none;
+ }
+ body .gm-dashboard-grid button,
+ body .quick-actions button.quick-action-btn[aria-pressed="true"],
+ body .roll-mode button[aria-pressed="true"]{
+   background:#26373A!important;
+   color:#F1E4D0!important;
+   -webkit-text-fill-color:#F1E4D0;
+   border-color:#4FD1C5!important;
+ }
+ body .gm-dashboard-grid button:hover,
+ body .quick-actions button.quick-action-btn[aria-pressed="true"]:hover,
+ body .roll-mode button[aria-pressed="true"]:hover{
+   background:#354C4D!important;
+   color:#FFFFFF!important;
+   -webkit-text-fill-color:#FFFFFF;
+ }
+ body .mobile-more-links a.btn.secondary{
+   background:#20272B!important;
+   color:#F1E4D0!important;
+   border-color:#8C6D3F!important;
+   -webkit-text-fill-color:#F1E4D0;
+ }
+}

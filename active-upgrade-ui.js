@@ -1,7 +1,7 @@
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './supabase-config.js';
-import {UPGRADES} from './equipment-upgrades.js?v=wiki3';
-import {mergedUpgrade,compatibleUpgrade,installedUpgradeIds,activeUpgradeEffects} from './upgrade-config.js?v=2';
+import {UPGRADES} from './equipment-upgrades.js?v=wiki4';
+import {mergedUpgrade,compatibleUpgrade,installedUpgradeIds,activeUpgradeEffects} from './upgrade-config.js?v=4';
 const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 const el=(tag,value)=>{const x=document.createElement(tag);if(value!==undefined)x.textContent=value;return x};
 let lastKey='',busy=false;
@@ -32,6 +32,7 @@ export async function renderOwnedGear(container,characterId){
   const effective=activeUpgradeEffects(item,active||[],config||[]);
   const summary=el('p','Melhorias ativas: '+effective.upgrades.length+' · Bônus de capacidade: +'+effective.capacityBonus);
   summary.className='gear-effect-total';details.append(summary);
+  for(const b of effective.testBonuses){details.append(el('p','Bônus de ação: '+(b.value>0?'+':'')+b.value+' em '+(b.skill||'qualquer perícia')+' + '+(b.style||'qualquer estilo')+' ('+b.name+')'))}
   const installedIds=new Set(installed);
   for(const id of installed){
    const upgrade=mergedUpgrade(id,config||[]);if(!upgrade)continue;
@@ -42,6 +43,7 @@ export async function renderOwnedGear(container,characterId){
    const info=el('span');info.append(el('strong',upgrade.name),el('small',upgrade.effect));
    if(upgrade.capacity_bonus)info.append(el('small','Capacidade extra quando ativa: +'+upgrade.capacity_bonus));
    if(upgrade.rule_note)info.append(el('small','Regra da mesa: '+upgrade.rule_note));
+   if(upgrade.bonus_value&&(upgrade.bonus_skill||upgrade.bonus_style))info.append(el('small','Bônus automático: '+(upgrade.bonus_value>0?'+':'')+upgrade.bonus_value+' ao alvo do teste '+(upgrade.bonus_skill||'qualquer perícia')+' + '+(upgrade.bonus_style||'qualquer estilo')));
    if(!compatible)info.append(el('small','Melhoria desabilitada ou incompatível com o equipamento atual.'));
    checkbox.addEventListener('change',async()=>{
     const enable=checkbox.checked;

@@ -19,7 +19,7 @@
  const root=document.createElement('nav');root.className='global-site-nav';root.setAttribute('aria-label','Navegação principal do site');
  const details=document.createElement('details');details.className='global-site-menu';
  const summary=document.createElement('summary');summary.className='global-site-summary';
- const label=document.createElement('span');label.textContent='Você está em: '+current;
+ const label=document.createElement('span');label.className='global-site-current';label.textContent=current;
  const toggle=document.createElement('strong');toggle.textContent='☰ Menu';
  summary.append(label,toggle);details.append(summary);
  const list=document.createElement('div');list.className='global-site-links';
@@ -52,4 +52,8 @@
  document.body.classList.add('global-nav-ready');
  list.addEventListener('click',event=>{if(event.target.closest('a'))details.open=false});
  document.addEventListener('keydown',event=>{if(event.key==='Escape')details.open=false});
+ document.addEventListener('click',event=>{if(details.open&&!root.contains(event.target))details.open=false});
+ // Atualiza a folha compartilhada após deploy para evitar CSS antigo em cache.
+ const css=document.querySelector('link[href*="site-nav.css"]');
+ if(css)css.href=new URL('./site-nav.css?v=compact-menu-4',location.href).href;
 })();

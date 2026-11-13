@@ -12,6 +12,8 @@ h1,h2,h3{font-family:Cinzel,serif;color:var(--gold)}h1{font-size:30px}h2{font-si
 label{display:block;font-size:15px;color:var(--gold);margin:8px 0}input,select,textarea{display:block;width:100%;padding:10px;background:#11191d;border:1px solid #667777;color:var(--ink);font:17px 'Crimson Text',serif}
 textarea{min-height:95px}button{background:var(--gold);border:1px solid var(--gold);color:#10191a;padding:11px 15px;font:12px Cinzel,serif;cursor:pointer}button.secondary{background:transparent;color:var(--gold)}
 button:disabled{opacity:.5;cursor:not-allowed}.hidden{display:none!important}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.row>*{flex:1}.entry{border-top:1px solid var(--line);padding:16px 0}.msg{min-height:20px}.error{color:#e7ada0}.ok{color:#9fd5c6}
+.admin-tabs{display:flex;gap:8px;overflow-x:auto;padding:5px 2px 12px;margin:22px 0 12px;scrollbar-width:thin}.admin-tabs button{flex:0 0 auto;white-space:nowrap;background:#172629;color:#e9d9b8;border:1px solid #526663;padding:12px 16px;min-height:46px}.admin-tabs button[aria-selected="true"]{background:var(--gold);color:#121b1e;border-color:var(--gold)}.admin-tabs button:focus-visible{outline:2px solid #a5d2c5;outline-offset:2px}.admin-tab-panel[hidden]{display:none!important}.admin-tab-panel{margin-top:10px}.tab-heading{margin-top:0}.admin-category-note{font-size:16px}.admin-tabs button:hover{border-color:#d5b981}.setting input:disabled{opacity:.65}
+@media(max-width:650px){.admin-tabs{margin:16px -8px 10px;padding:5px 8px 12px}.admin-tabs button{font-size:11px;padding:12px 11px}}
 </style><link rel="stylesheet" href="./auth-improvements.css?v=1"><link rel="stylesheet" href="./site-nav.css?v=1"><link rel="stylesheet" href="./whalepunk-theme.css?v=contrast2"></head>
 <body><header><a href="campanha.html">← Voltar à campanha</a><a href="./">Portal Dishonored RPG</a></header>
 <main>
@@ -20,16 +22,25 @@ button:disabled{opacity:.5;cursor:not-allowed}.hidden{display:none!important}.ro
 <div id="loading" class="panel">Verificando seu acesso...</div>
 <div id="denied" class="panel hidden"><h2>Acesso restrito</h2><p>Somente a conta com permissão de administrador pode usar esta página. Entre primeiro na área da campanha.</p><a href="campanha.html">Ir para login</a></div>
 <div id="admin" class="hidden">
-<section class="panel" id="admin-users-section"><h2>Usuários e personagens cadastrados</h2>
+<nav class="admin-tabs" role="tablist" aria-label="Seções da administração">
+<button type="button" role="tab" id="tab-mechanics" data-tab="mechanics" aria-controls="panel-mechanics" aria-selected="true">⚙ Mecânicas</button>
+<button type="button" role="tab" id="tab-talent" data-tab="talent" aria-controls="panel-catalog" aria-selected="false">✦ Talentos</button>
+<button type="button" role="tab" id="tab-bonecharm" data-tab="bonecharm" aria-controls="panel-catalog" aria-selected="false">◇ Amuletos de osso</button>
+<button type="button" role="tab" id="tab-power" data-tab="power" aria-controls="panel-catalog" aria-selected="false">◈ Poderes</button>
+<button type="button" role="tab" id="tab-item" data-tab="item" aria-controls="panel-catalog" aria-selected="false">▣ Itens</button>
+<button type="button" role="tab" id="tab-other" data-tab="other" aria-controls="panel-catalog" aria-selected="false">☷ Outros conteúdos</button>
+<button type="button" role="tab" id="tab-users" data-tab="users" aria-controls="admin-users-section" aria-selected="false">♟ Usuários</button>
+</nav>
+<section class="panel admin-tab-panel" id="admin-users-section" role="tabpanel" aria-labelledby="tab-users" hidden><h2>Usuários e personagens cadastrados</h2>
 <p>Visualização administrativa das contas, suas fichas, recursos e campanhas. Esta área é somente de consulta: não altera as fichas dos jogadores.</p>
 <div class="admin-users-toolbar"><label for="admin-user-search">Buscar jogador ou personagem<input id="admin-user-search" type="search" placeholder="Nome, personagem, arquétipo ou campanha"></label><button id="admin-user-refresh" type="button" class="secondary">Atualizar lista</button></div>
 <p id="admin-users-status" class="msg" role="status">Carregando usuários...</p>
 <div id="admin-users-list"></div></section>
-<section class="panel"><h2>Parâmetros do RPG</h2><p>Os valores iniciais seguem o livro; você pode modificá-los para adotar regras próprias. As mudanças nesta tela afetam as configurações armazenadas no banco, mas ainda não são aplicadas automaticamente às fichas antigas.</p>
+<section class="panel admin-tab-panel" id="panel-mechanics" role="tabpanel" aria-labelledby="tab-mechanics"><h2>Parâmetros do RPG</h2><p>Os valores iniciais seguem o livro; você pode modificá-los para adotar regras próprias. As mudanças nesta tela afetam as configurações armazenadas no banco, mas ainda não são aplicadas automaticamente às fichas antigas.</p>
 <div id="settings" class="grid"></div><p id="settings-msg" class="msg" role="status"></p></section>
-<section class="panel"><h2>Catálogo de conteúdos</h2><p>Cadastre ou ajuste arquétipos, talentos, poderes, amuletos de osso e itens. A publicação torna a entrada visível para os jogadores conectados.</p>
+<section class="panel admin-tab-panel" id="panel-catalog" role="tabpanel" aria-label="Editar categoria do catálogo" hidden><h2 id="catalog-heading" class="tab-heading">Talentos</h2><p id="catalog-intro" class="admin-category-note">Cadastre e ajuste conteúdos desta categoria. Os itens publicados ficam visíveis aos jogadores conectados.</p>
 <div class="grid">
-<div><label for="kind">Categoria</label><select id="kind"><option value="talent">Talento</option><option value="power">Poder</option><option value="bonecharm">Amuleto de osso</option><option value="item">Item da loja</option><option value="archetype">Arquétipo</option><option value="skill">Perícia</option><option value="style">Estilo</option><option value="focus">Foco</option></select></div>
+<div id="kind-field"><label for="kind">Categoria</label><select id="kind"><option value="talent">Talento</option><option value="power">Poder</option><option value="bonecharm">Amuleto de osso</option><option value="item">Item da loja</option><option value="archetype">Arquétipo</option><option value="skill">Perícia</option><option value="style">Estilo</option><option value="focus">Foco</option></select></div>
 <div><label for="name">Nome</label><input id="name" maxlength="160" placeholder="Nome da habilidade ou item"></div>
 <div><label for="archetype">Arquétipo relacionado</label><input id="archetype" maxlength="100" placeholder="Opcional"></div>
 <div><label for="xp">Custo em XP</label><input id="xp" min="0" max="1000000" type="number" placeholder="Opcional"></div>
@@ -48,7 +59,41 @@ import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './supabase-config.js';
 const $=id=>document.getElementById(id),show=(id,on)=>$(id).classList.toggle('hidden',!on);
 const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
-let catalog=[],editing=null;
+let catalog=[],editing=null,activeTab='mechanics';
+const categoryTabs={talent:'Talentos',bonecharm:'Amuletos de osso',power:'Poderes',item:'Itens'};
+const otherCategories=new Set(['archetype','skill','style','focus']);
+function switchTab(tab,updateHash=true){
+ const valid=['mechanics','talent','bonecharm','power','item','other','users'];
+ activeTab=valid.includes(tab)?tab:'mechanics';
+ const isCatalog=!['mechanics','users'].includes(activeTab);
+ $('panel-mechanics').hidden=activeTab!=='mechanics';
+ $('admin-users-section').hidden=activeTab!=='users';
+ $('panel-catalog').hidden=!isCatalog;
+ for(const button of document.querySelectorAll('.admin-tabs [role="tab"]')){
+  const selected=button.dataset.tab===activeTab;button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;
+ }
+ if(isCatalog){
+  $('catalog-heading').textContent=categoryTabs[activeTab]||'Outros conteúdos';
+  $('kind-field').hidden=activeTab!=='other';
+  if(activeTab!=='other')$('kind').value=activeTab;
+  else if(!otherCategories.has($('kind').value))$('kind').value='archetype';
+  $('filter').value='';clearForm();renderCatalog();
+ }
+ if(updateHash)history.replaceState(null,'','#'+(activeTab==='users'?'admin-users-section':'tab-'+activeTab));
+}
+document.querySelectorAll('.admin-tabs [role="tab"]').forEach(button=>{
+ button.addEventListener('click',()=>switchTab(button.dataset.tab));
+ button.addEventListener('keydown',e=>{
+  if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+  e.preventDefault();const buttons=[...document.querySelectorAll('.admin-tabs [role="tab"]')];
+  const ix=buttons.indexOf(button);const target=e.key==='Home'?0:e.key==='End'?buttons.length-1:(ix+(e.key==='ArrowRight'?1:-1)+buttons.length)%buttons.length;
+  buttons[target].focus();switchTab(buttons[target].dataset.tab);
+ });
+});
+window.addEventListener('hashchange',()=>{
+ const hash=location.hash.slice(1);
+ switchTab(hash==='admin-users-section'?'users':hash.startsWith('tab-')?hash.slice(4):'mechanics',false);
+});
 const msg=(id,text,error=false)=>{$(id).textContent=text;$(id).className=error?'error':'ok'};
 async function init(){
  try{
@@ -57,6 +102,7 @@ async function init(){
  const {data:profile,error:pe}=await db.from('dh_profiles').select('role').eq('id',user.id).single();
  if(pe||profile?.role!=='admin')throw Error('Permissão de administrador necessária.');
  show('loading',false);show('admin',true);
+ const hash=location.hash.slice(1);switchTab(hash==='admin-users-section'?'users':hash.startsWith('tab-')?hash.slice(4):'mechanics',false);
  await Promise.all([loadSettings(),loadCatalog(),loadUsers()]);
  }catch(e){show('loading',false);show('denied',true);}
 }
@@ -168,12 +214,12 @@ async function loadSettings(){
 function clearForm(){
  editing=null;
  ['name','archetype','xp','coins','description'].forEach(k=>$(k).value='');
- $('kind').value='talent';$('published').value='false';$('save-entry').textContent='Adicionar ao catálogo';show('cancel-entry',false);
+ $('kind').value=activeTab==='other'?'archetype':(categoryTabs[activeTab]?activeTab:'talent');$('published').value='false';$('save-entry').textContent='Adicionar ao catálogo';show('cancel-entry',false);
 }
 function renderCatalog(){
  const root=$('catalog-list');root.replaceChildren();
  const term=$('filter').value.toLowerCase().trim();
- const matches=catalog.filter(item=>(item.name+' '+item.category+' '+(item.archetype||'')).toLowerCase().includes(term));
+ const matches=catalog.filter(item=>(activeTab==='other'?otherCategories.has(item.category):item.category===activeTab)&& (item.name+' '+item.category+' '+(item.archetype||'')).toLowerCase().includes(term));
  if(!matches.length){const p=document.createElement('p');p.textContent='Nenhuma entrada encontrada.';root.appendChild(p);}
  matches.forEach(item=>{
  const row=document.createElement('div');row.className='entry';
@@ -206,7 +252,9 @@ $('save-entry').addEventListener('click',async()=>{
  const numOrNull=id=>$(id).value.trim()===''?null:Number($(id).value);
  const xp=numOrNull('xp'),coins=numOrNull('coins');
  if([xp,coins].some(n=>n!==null&&(!Number.isSafeInteger(n)||n<0||n>1000000))){msg('catalog-msg','Os custos devem ser inteiros não negativos.',true);return;}
- const payload={category:$('kind').value,name,archetype:archetype||null,description:$('description').value.trim(),xp_cost:xp,coins_cost:coins,published:$('published').value==='true'};
+ const category=activeTab==='other'?$('kind').value:activeTab;
+ if(!categoryTabs[category]&&!otherCategories.has(category)){msg('catalog-msg','Categoria inválida.',true);return}
+ const payload={category,name,archetype:archetype||null,description:$('description').value.trim(),xp_cost:xp,coins_cost:coins,published:$('published').value==='true'};
  $('save-entry').disabled=true;
  const result=editing?await db.from('dh_catalog').update(payload).eq('id',editing).select('id').single():await db.from('dh_catalog').insert(payload).select('id').single();
  $('save-entry').disabled=false;

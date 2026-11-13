@@ -1,6 +1,6 @@
 import {db,getAuth} from './personagens-common.js';
 import {initMasterEditor} from './mesa-mestre.js?v=diary-stress1';
-import {renderOwnedGear} from './active-upgrade-ui.js?v=1';
+import {renderOwnedGear} from './active-upgrade-ui.js?v=2';
 const $=id=>document.getElementById(id),roomId=new URLSearchParams(location.search).get('id');
 const isUuid=x=>/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(x||'');
 const node=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined&&txt!==null)e.textContent=String(txt);if(cls)e.className=cls;return e};

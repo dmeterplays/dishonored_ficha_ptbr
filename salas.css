@@ -249,3 +249,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .diary-table-link{margin:0 0 14px}
 .diary-table-link .btn{font-size:12px;min-height:44px}
 @media(max-width:760px){.stress-widget{padding:10px}.stress-step{flex-basis:44px;width:44px;min-width:44px;min-height:44px!important;height:44px}}
+
+.room-entry-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
+.room-entry-actions>.btn{min-height:43px}
+@media(max-width:760px){.room-entry-actions{width:100%;display:grid;grid-template-columns:1fr 1fr}.room-entry-actions>.btn{padding:12px 6px;font-size:10px}}

@@ -8,7 +8,7 @@ header{border-bottom:1px solid var(--line);background:#111a1d;padding:18px max(1
 a{color:var(--gold)}main{max-width:1100px;margin:auto;padding:35px 20px 90px}
 h1,h2,h3{font-family:Cinzel,serif;color:var(--gold)}h1{font-size:30px}h2{font-size:20px}h3{font-size:15px}p{color:var(--muted);line-height:1.45}
 .panel{border:1px solid var(--line);background:var(--panel);padding:20px;margin:16px 0}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:13px}.setting{border:1px solid var(--line);padding:15px;background:#152124}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:13px}.setting{border:1px solid var(--line);padding:15px;background:#152124}.setting-unlimited{display:flex;align-items:center;gap:9px;margin:12px 0;color:var(--ink)}.setting-unlimited input{width:19px;height:19px;flex:none;margin:0;accent-color:var(--gold)}
 label{display:block;font-size:15px;color:var(--gold);margin:8px 0}input,select,textarea{display:block;width:100%;padding:10px;background:#11191d;border:1px solid #667777;color:var(--ink);font:17px 'Crimson Text',serif}
 textarea{min-height:95px}button{background:var(--gold);border:1px solid var(--gold);color:#10191a;padding:11px 15px;font:12px Cinzel,serif;cursor:pointer}button.secondary{background:transparent;color:var(--gold)}
 button:disabled{opacity:.5;cursor:not-allowed}.hidden{display:none!important}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.row>*{flex:1}.entry{border-top:1px solid var(--line);padding:16px 0}.msg{min-height:20px}.error{color:#e7ada0}.ok{color:#9fd5c6}
@@ -136,18 +136,33 @@ async function loadSettings(){
  const card=document.createElement('div');card.className='setting';
  const heading=document.createElement('label');heading.textContent=entry.label;
  const desc=document.createElement('p');desc.textContent=entry.description;
- const input=document.createElement('input');input.type='number';input.min='0';input.max='1000000';input.step='1';input.value=entry.value;input.setAttribute('aria-label',entry.label);
+ const isAdvance=entry.key==='max_advances';
+ const input=document.createElement('input');input.type='number';input.min=isAdvance?'1':'0';input.max='1000000';input.step='1';input.value=isAdvance&&entry.value===0?'1':entry.value;input.setAttribute('aria-label',entry.label);
  const button=document.createElement('button');button.textContent='Salvar valor';
+ let unlimited=null;
+ if(isAdvance){
+  unlimited=document.createElement('label');unlimited.className='setting-unlimited';
+  const check=document.createElement('input');check.type='checkbox';check.checked=entry.value===0;
+  const text=document.createElement('span');text.textContent='Sem limites de avanços por aventura';
+  unlimited.append(check,text);
+  const sync=()=>{input.disabled=check.checked;input.setAttribute('aria-disabled',String(check.checked));};
+  check.addEventListener('change',sync);sync();
+ }
  button.addEventListener('click',async()=>{
- const val=Number(input.value);
- if(!Number.isSafeInteger(val)||val<0||val>1000000){msg('settings-msg','Informe um número inteiro entre 0 e 1.000.000.',true);return;}
+ const val=isAdvance&&unlimited.querySelector('input').checked?0:Number(input.value);
+ if(!Number.isSafeInteger(val)||val<(isAdvance&&val!==0?1:0)||val>1000000){msg('settings-msg','Informe um número inteiro válido entre 1 e 1.000.000, ou marque Sem limites.',true);return;}
  button.disabled=true;
  const {data:changed,error:err}=await db.from('dh_settings').update({value:val,updated_at:new Date().toISOString()}).eq('key',entry.key).select('key,value').single();
  button.disabled=false;
  if(err)msg('settings-msg','Erro ao salvar: '+err.message,true);
- else{input.value=changed.value;msg('settings-msg',entry.label+' atualizado para '+changed.value+'.');}
+ else{
+  if(isAdvance){unlimited.querySelector('input').checked=changed.value===0;input.disabled=changed.value===0;input.value=changed.value===0?'1':changed.value;}
+  else input.value=changed.value;
+  msg('settings-msg',entry.label+' atualizado para '+(isAdvance&&changed.value===0?'Sem limites':changed.value)+'.');
+ }
  });
- card.append(heading,desc,input,button);root.appendChild(card);
+ if(unlimited)card.append(heading,desc,input,unlimited,button);else card.append(heading,desc,input,button);
+ root.appendChild(card);
  }
 }
 function clearForm(){

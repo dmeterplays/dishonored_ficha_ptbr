@@ -1,6 +1,6 @@
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './supabase-config.js';
-import {UPGRADES} from './equipment-upgrades.js';
+import {UPGRADES} from './equipment-upgrades.js?v=wiki2';
 const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 const root=document.getElementById('master-inventory-list');
 const status=document.getElementById('master-inventory-status');

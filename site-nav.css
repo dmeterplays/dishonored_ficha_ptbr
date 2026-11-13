@@ -1,5 +1,5 @@
 /* Menu único acessível em todas as páginas, sem interferir nos controles do jogo. */
-.global-site-nav{display:none;position:relative;z-index:20;background:#172528;border-bottom:1px solid #405658;color:#e8d5aa;font-family:'Crimson Text',Georgia,serif}
+.global-site-nav{display:block;position:relative;z-index:20;background:#172528;border-bottom:1px solid #405658;color:#e8d5aa;font-family:'Crimson Text',Georgia,serif}
 .global-site-menu{max-width:1160px;margin:0 auto}
 .global-site-summary{display:none}
 .global-site-links{display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;flex-wrap:wrap}

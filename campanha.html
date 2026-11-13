@@ -4,11 +4,23 @@
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at top right,#273a3d,#10181b 65%);color:var(--text);font:19px 'Crimson Text',serif;min-height:100vh}
 header{background:#111a1de8;border-bottom:1px solid var(--line);padding:19px max(20px,calc((100vw - 1080px)/2));display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
 a{color:var(--gold)}h1,h2,h3,button{font-family:Cinzel,serif}h1{font-size:29px;color:var(--gold)}h2{color:var(--gold);font-size:20px}.wrap{max-width:1080px;margin:auto;padding:30px 20px 90px}.panel{background:var(--panel);border:1px solid var(--line);padding:24px;margin:15px 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px}.grid .panel{margin:0}input,select{background:#111b1e;color:white;border:1px solid #637071;padding:11px;width:100%;margin:6px 0 13px;font:18px 'Crimson Text',serif}label{display:block;color:var(--gold);font-size:15px}button,.button{border:1px solid var(--gold);background:var(--gold);color:#111a1a;padding:12px 16px;cursor:pointer;font:12px Cinzel,serif;display:inline-block;text-decoration:none}button.secondary{background:transparent;color:var(--gold)}button:disabled{opacity:.5;cursor:not-allowed}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}p,.muted{color:#abb8b7;line-height:1.5}.hidden{display:none!important}.ok{color:#91ceb8}.bad{color:#e2a69d}.number{font:28px Cinzel,serif;color:#f1d4a0}.counter{display:flex;align-items:center;gap:12px}.counter button{width:44px;height:44px}.entry{border-top:1px solid var(--line);padding:12px 0}small{color:#a5b0ae}#master-area{border-left:3px solid #af5949}#character-list .panel{overflow-wrap:anywhere}
-</style><link rel="stylesheet" href="./site-nav.css?v=1"><link rel="stylesheet" href="./whalepunk-theme.css?v=contrast2"></head><body>
+</style><link rel="stylesheet" href="./auth-improvements.css?v=1"><link rel="stylesheet" href="./site-nav.css?v=1"><link rel="stylesheet" href="./whalepunk-theme.css?v=contrast2"></head><body>
 <header><a href="./" style="font:700 17px Cinzel,serif;text-decoration:none">DISHONORED RPG</a><nav><a href="salas.html">Salas e mesa online</a> · <a href="fichas.html">Minhas fichas</a> · <a href="catalogo.html">Catálogo e progressão</a> · <a id="admin-link" class="hidden" href="admin.html">Administração</a> · <a href="ficha_dishonored_ptbr.html">Ficha antiga</a></nav></header>
 <main class="wrap"><h1>Central da campanha</h1><p>Entre com sua conta para importar personagens, acompanhar o próprio Momentum e solicitar avanços. O painel de Caos é exclusivo do mestre.</p>
 <div id="setup" class="panel hidden"><h2>Integração ainda não configurada</h2><p>O site já tem as telas e o esquema de banco, mas falta conectar um projeto Supabase exclusivo de Dishonored. Não é seguro usar o banco do RPG Naruto.</p></div>
-<section id="auth-area" class="panel hidden"><h2>Entrar ou criar conta</h2><form id="auth-form"><label for="display">Nome de exibição (para novo cadastro)</label><input id="display" autocomplete="nickname" placeholder="Como quer ser chamado"><label for="email">E-mail</label><input id="email" type="email" autocomplete="email" required><label for="password">Senha</label><input id="password" type="password" minlength="6" autocomplete="current-password" required><div class="actions"><button type="submit" data-mode="login">Entrar</button><button type="button" id="signup" class="secondary">Criar conta</button></div></form><p id="auth-message" role="status"></p></section>
+<section id="auth-area" class="panel auth-panel hidden">
+<div class="auth-eyebrow">ACESSO À CAMPANHA</div><h2 id="auth-heading">Entrar na sua conta</h2>
+<div class="auth-tabs" role="tablist" aria-label="Entrar ou criar conta">
+<button id="auth-tab-login" class="auth-tab active" type="button" role="tab" aria-selected="true" aria-controls="auth-form">Entrar</button>
+<button id="auth-tab-signup" class="auth-tab" type="button" role="tab" aria-selected="false" aria-controls="auth-form">Criar conta</button>
+</div>
+<form id="auth-form">
+<div id="signup-fields" class="hidden"><label for="display">Nome de exibição</label><input id="display" autocomplete="nickname" placeholder="Como seus amigos vão identificar você" maxlength="100"></div>
+<label for="email">E-mail</label><input id="email" type="email" autocomplete="email" required>
+<label for="password">Senha</label><input id="password" type="password" minlength="6" autocomplete="current-password" required>
+<p id="auth-help" class="auth-help">Use o e-mail e a senha da sua conta existente.</p>
+<button id="auth-submit" type="submit">Entrar na campanha</button>
+</form><p id="auth-message" role="status" aria-live="polite"></p></section>
 <section id="logged" class="hidden"><div class="panel"><div class="actions" style="justify-content:space-between;align-items:center"><div><h2 id="welcome">Campanha</h2><p id="role-info"></p></div><button id="logout" class="secondary">Sair</button></div></div>
 <div class="grid"><div class="panel"><h2>Importar personagem existente</h2><p>Use o JSON exportado da ficha original.</p><input id="import-json" type="file" accept=".json,application/json"><button id="import-btn">Salvar personagem na conta</button><p id="import-status" role="status"></p></div><div class="panel"><h2>Seus recursos</h2><p>Os Pontos do Vazio continuam individuais. Cada personagem terá seu próprio Momentum e XP no banco de dados.</p><p><small>Alterações de XP/Momentum ficam reservadas ao mestre; recursos não podem ser alterados diretamente pelo navegador.</small></p></div></div>
 <section class="panel"><div class="actions" style="align-items:center;justify-content:space-between"><div><h2>Minhas fichas</h2><p>Personagens salvos na sua conta, com foto, edição de ficha e simulador de itens e poderes.</p></div><a href="fichas.html" class="button">Abrir galeria de fichas →</a></div><div id="character-list" class="grid"></div></section>
@@ -41,8 +53,43 @@ async function refresh(){
  await loadCharacters();
  if(role==='master'||role==='admin'){await loadMaster();await loadChaos();}
 }
-$('auth-form').addEventListener('submit',async e=>{e.preventDefault();const {error}=await client.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});message('auth-message',error?error.message:'Login realizado.',!!error)});
-$('signup').addEventListener('click',async()=>{const {error}=await client.auth.signUp({email:$('email').value.trim(),password:$('password').value,options:{emailRedirectTo:new URL('campanha.html',window.location.href).href,data:{display_name:$('display').value.trim()}}});message('auth-message',error?error.message:'Conta criada. Confirme seu e-mail, caso a confirmação esteja habilitada.',!!error)});
+let authMode='login';
+function setAuthMode(mode){
+ authMode=mode==='signup'?'signup':'login';
+ const signup=authMode==='signup';
+ show('signup-fields',signup);
+ $('auth-heading').textContent=signup?'Criar uma conta':'Entrar na sua conta';
+ $('auth-help').textContent=signup?'Sua conta guardará seus personagens e permitirá entrar nas mesas. A senha deve ter pelo menos 6 caracteres.':'Use o e-mail e a senha da sua conta existente.';
+ $('auth-submit').textContent=signup?'Criar minha conta':'Entrar na campanha';
+ $('password').autocomplete=signup?'new-password':'current-password';
+ $('display').required=signup;
+ for(const [id,active] of [['auth-tab-login',!signup],['auth-tab-signup',signup]]){
+   $(id).setAttribute('aria-selected',String(active));$(id).classList.toggle('active',active);
+ }
+ message('auth-message','');
+}
+$('auth-tab-login').addEventListener('click',()=>setAuthMode('login'));
+$('auth-tab-signup').addEventListener('click',()=>setAuthMode('signup'));
+$('auth-form').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const submit=$('auth-submit');submit.disabled=true;
+ try{
+  const email=$('email').value.trim(),password=$('password').value;
+  if(authMode==='signup'){
+   const display=$('display').value.trim();
+   if(!display)throw Error('Informe seu nome de exibição.');
+   const {error}=await client.auth.signUp({email,password,options:{emailRedirectTo:new URL('campanha.html',window.location.href).href,data:{display_name:display}}});
+   if(error)throw Error(error.message);
+   message('auth-message','Cadastro enviado. Confira seu e-mail caso seja solicitada confirmação.');
+  }else{
+   const {error}=await client.auth.signInWithPassword({email,password});
+   if(error)throw Error(error.message);
+   message('auth-message','Login realizado.');
+  }
+ }catch(error){message('auth-message',error.message,true)}
+ finally{submit.disabled=false}
+});
+setAuthMode('login');
 $('logout').addEventListener('click',async()=>{await client.auth.signOut()});
 function validSheet(d){return d&&typeof d==='object'&&!Array.isArray(d)&&typeof d.nome==='string'&&Array.isArray(d.skills)&&d.skills.length>0&&Array.isArray(d.styles)&&d.styles.length>0&&d.skills.every(x=>x&&typeof x.label==='string'&&Number.isFinite(Number(x.value)))&&d.styles.every(x=>x&&typeof x.label==='string'&&Number.isFinite(Number(x.value)));}
 $('import-btn').addEventListener('click',async()=>{

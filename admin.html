@@ -13,6 +13,7 @@ label{display:block;font-size:15px;color:var(--gold);margin:8px 0}input,select,t
 textarea{min-height:95px}button{background:var(--gold);border:1px solid var(--gold);color:#10191a;padding:11px 15px;font:12px Cinzel,serif;cursor:pointer}button.secondary{background:transparent;color:var(--gold)}
 button:disabled{opacity:.5;cursor:not-allowed}.hidden{display:none!important}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.row>*{flex:1}.entry{border-top:1px solid var(--line);padding:16px 0}.msg{min-height:20px}.error{color:#e7ada0}.ok{color:#9fd5c6}
 .admin-tabs{display:flex;gap:8px;overflow-x:auto;padding:5px 2px 12px;margin:22px 0 12px;scrollbar-width:thin}.admin-tabs button{flex:0 0 auto;white-space:nowrap;background:#172629;color:#e9d9b8;border:1px solid #526663;padding:12px 16px;min-height:46px}.admin-tabs button[aria-selected="true"]{background:var(--gold);color:#121b1e;border-color:var(--gold)}.admin-tabs button:focus-visible{outline:2px solid #a5d2c5;outline-offset:2px}.admin-tab-panel[hidden]{display:none!important}.admin-tab-panel{margin-top:10px}.tab-heading{margin-top:0}.admin-category-note{font-size:16px}.admin-tabs button:hover{border-color:#d5b981}.setting input:disabled{opacity:.65}
+.granted-card{border:1px solid #52625f;background:#172629;margin:10px 0;padding:14px}.granted-card summary{cursor:pointer;color:var(--gold);font-weight:bold}.granted-card h4{color:var(--gold);margin-bottom:8px}.upgrade-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:9px;margin-bottom:14px}.upgrade-choice{display:flex;align-items:flex-start;gap:10px;border:1px solid #405859;padding:10px;margin:0;background:#112022;color:var(--ink)}.upgrade-choice input{width:18px;height:18px;flex:0 0 18px;accent-color:var(--gold)}.upgrade-choice span{display:block}.upgrade-choice small{display:block;color:#c1cdc8;line-height:1.5;margin-top:5px}.grant-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}.grant-grid label{margin-bottom:4px}.grant-grid [hidden]{display:none!important}
 @media(max-width:650px){.admin-tabs{margin:16px -8px 10px;padding:5px 8px 12px}.admin-tabs button{font-size:11px;padding:12px 11px}}
 </style><link rel="stylesheet" href="./auth-improvements.css?v=1"><link rel="stylesheet" href="./site-nav.css?v=1"><link rel="stylesheet" href="./whalepunk-theme.css?v=contrast2"></head>
 <body><header><a href="campanha.html">← Voltar à campanha</a><a href="./">Portal Dishonored RPG</a></header>
@@ -29,8 +30,20 @@ button:disabled{opacity:.5;cursor:not-allowed}.hidden{display:none!important}.ro
 <button type="button" role="tab" id="tab-power" data-tab="power" aria-controls="panel-catalog" aria-selected="false">◈ Poderes</button>
 <button type="button" role="tab" id="tab-item" data-tab="item" aria-controls="panel-catalog" aria-selected="false">▣ Itens</button>
 <button type="button" role="tab" id="tab-other" data-tab="other" aria-controls="panel-catalog" aria-selected="false">☷ Outros conteúdos</button>
+<button type="button" role="tab" id="tab-inventory" data-tab="inventory" aria-controls="panel-inventory" aria-selected="false">🎒 Entregar itens</button>
 <button type="button" role="tab" id="tab-users" data-tab="users" aria-controls="admin-users-section" aria-selected="false">♟ Usuários</button>
 </nav>
+<section class="panel admin-tab-panel" id="panel-inventory" role="tabpanel" aria-labelledby="tab-inventory" hidden>
+<h2>Inventário e entrega de itens</h2><p>Escolha uma ficha para entregar itens do catálogo ou criar itens exclusivos. Abra um item entregue para aplicar melhorias inspiradas em Dishonored. Os efeitos são adaptações narrativas para 2d20 e não modificam rolagens automaticamente.</p>
+<label for="grant-character">Personagem destinatário</label><select id="grant-character"></select>
+<div class="grant-grid"><div><label for="grant-mode">Origem</label><select id="grant-mode"><option value="catalog">Item existente no catálogo</option><option value="custom">Criar item personalizado agora</option></select></div>
+<div id="grant-catalog-wrap"><label for="grant-catalog">Item do catálogo</label><select id="grant-catalog"></select></div>
+<div id="grant-custom-wrap" hidden><label for="grant-name">Nome do novo item</label><input id="grant-name" maxlength="160" placeholder="Ex.: Pistola do Guarda Real"><label for="grant-description">Descrição e regras especiais</label><textarea id="grant-description" maxlength="3000" placeholder="Descreva o funcionamento fictício do item no RPG"></textarea></div>
+<div><label for="grant-qty">Quantidade</label><input id="grant-qty" type="number" min="1" max="10000" value="1"></div></div>
+<div class="row" style="margin-top:12px"><button id="grant-send" type="button">Entregar ao personagem</button><button id="grant-refresh" type="button" class="secondary">Atualizar inventários</button></div>
+<p id="grant-status" role="status"></p><h3>Equipamentos recebidos e melhorias</h3><div id="granted-items"></div>
+<p class="hint">Melhorias não consomem moedas automaticamente. O mestre decide como os personagens as obtêm; o inventário e suas melhorias ficam registrados na conta.</p>
+</section>
 <section class="panel admin-tab-panel" id="admin-users-section" role="tabpanel" aria-labelledby="tab-users" hidden><h2>Usuários e personagens cadastrados</h2>
 <p>Visualização administrativa das contas, suas fichas, recursos e campanhas. Esta área é somente de consulta: não altera as fichas dos jogadores.</p>
 <div class="admin-users-toolbar"><label for="admin-user-search">Buscar jogador ou personagem<input id="admin-user-search" type="search" placeholder="Nome, personagem, arquétipo ou campanha"></label><button id="admin-user-refresh" type="button" class="secondary">Atualizar lista</button></div>
@@ -63,10 +76,11 @@ let catalog=[],editing=null,activeTab='mechanics';
 const categoryTabs={talent:'Talentos',bonecharm:'Amuletos de osso',power:'Poderes',item:'Itens'};
 const otherCategories=new Set(['archetype','skill','style','focus']);
 function switchTab(tab,updateHash=true){
- const valid=['mechanics','talent','bonecharm','power','item','other','users'];
+ const valid=['mechanics','talent','bonecharm','power','item','other','inventory','users'];
  activeTab=valid.includes(tab)?tab:'mechanics';
- const isCatalog=!['mechanics','users'].includes(activeTab);
+ const isCatalog=!['mechanics','users','inventory'].includes(activeTab);
  $('panel-mechanics').hidden=activeTab!=='mechanics';
+ $('panel-inventory').hidden=activeTab!=='inventory';
  $('admin-users-section').hidden=activeTab!=='users';
  $('panel-catalog').hidden=!isCatalog;
  for(const button of document.querySelectorAll('.admin-tabs [role="tab"]')){
@@ -262,4 +276,4 @@ $('save-entry').addEventListener('click',async()=>{
  msg('catalog-msg','Catálogo atualizado com sucesso.');clearForm();await loadCatalog();
 });
 init();
-</script><script src="./site-nav.js?v=admin3" defer></script></body></html>
+</script><script type="module" src="./inventory-admin.js?v=1"></script><script src="./site-nav.js?v=admin3" defer></script></body></html>

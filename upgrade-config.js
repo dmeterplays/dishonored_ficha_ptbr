@@ -31,5 +31,5 @@ export function activeUpgradeEffects(item,activeRows,configs){
  const installed=new Set(installedUpgradeIds(item));
  const active=(activeRows||[]).filter(row=>row.item_id===item.id&&row.active&&installed.has(row.upgrade_id));
  const upgrades=active.map(row=>mergedUpgrade(row.upgrade_id,configs)).filter(u=>u&&compatibleUpgrade(item,u));
- return {upgrades,capacityBonus:upgrades.reduce((sum,u)=>sum+Number(u.capacity_bonus||0),0),testBonuses:upgrades.filter(u=>u.bonus_skill&&u.bonus_value).map(u=>({skill:u.bonus_skill,style:u.bonus_style,value:u.bonus_value,name:u.name}))};
+ return {upgrades,capacityBonus:upgrades.reduce((sum,u)=>sum+Number(u.capacity_bonus||0),0),testBonuses:upgrades.filter(u=>(u.bonus_skill||u.bonus_style)&&u.bonus_value).map(u=>({skill:u.bonus_skill,style:u.bonus_style,value:u.bonus_value,name:u.name}))};
 }

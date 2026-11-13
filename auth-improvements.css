@@ -1,0 +1,31 @@
+/* Login por abas e consulta administrativa de usuários. */
+.auth-panel{max-width:540px;margin:26px auto;padding:28px!important}
+.auth-eyebrow{font:500 11px 'JetBrains Mono',monospace;color:#75ded2;letter-spacing:.15em;margin-bottom:9px}
+.auth-panel h2{margin:0 0 18px!important;color:#ebcf9f}
+.auth-tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:0 0 20px}
+.auth-panel .auth-tab{padding:12px 8px;min-height:47px;background:#1a2227;color:#f0d6a9;border:1px solid #7c6849;box-shadow:none;font-size:12px}
+.auth-panel .auth-tab.active,.auth-panel .auth-tab[aria-selected=true]{background:#314044!important;color:#8ff4e8!important;border-color:#4FD1C5!important}
+.auth-panel .auth-tab:not(.active):hover{background:#283238;color:#fff3d6}
+.auth-panel form label{display:block;margin:14px 0 6px;color:#eed8b3}
+.auth-panel form input{min-height:46px;color:#f5ede2;font-size:18px}
+.auth-panel .auth-help{font-size:16px;color:#cbc8be;margin:9px 0 16px}
+.auth-panel #auth-submit{display:block;width:100%;min-height:49px;color:#191610;background:#d9bf90;border:1px solid #d9bf90}
+.auth-panel #auth-message{min-height:24px;font-size:16px}
+.admin-users-toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin:15px 0}
+.admin-users-toolbar label{flex:1;min-width:190px}
+.admin-users-toolbar button{min-height:43px}
+.admin-user{border:1px solid #7b6547;background:#1a2227;margin:10px 0}
+.admin-user>summary{padding:15px 16px;cursor:pointer;list-style:none;display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;color:#f1dfc0}
+.admin-user>summary::-webkit-details-marker{display:none}
+.admin-user[open]>summary{border-bottom:1px solid #7b6547}
+.admin-user-name{font:600 15px Cinzel,serif;color:#ecd5ad}
+.admin-user-hint{font:13px 'JetBrains Mono',monospace;color:#bfc9c2}
+.admin-user-content{padding:14px 16px 18px}
+.admin-user-content p{margin:6px 0;color:#dad5cb}
+.admin-user-character{padding:12px;background:#242d31;border:1px solid #635941;margin-top:10px}
+.admin-user-character h4{margin:0 0 8px;font-size:14px;color:#f0d5a2}
+.admin-user-character .admin-user-stats{font:12px 'JetBrains Mono',monospace;line-height:1.8;color:#dde1d9}
+.admin-user-character ul{margin:8px 0;padding-left:19px;color:#e1d8c6}
+.admin-user-empty{color:#cfc4b4;font-size:16px}
+.admin-user-meta{color:#d3c6ad}
+@media(max-width:760px){.auth-panel{margin:12px 0;padding:18px!important}.admin-user>summary{padding:13px}.admin-user-content{padding:12px}.admin-users-toolbar{display:block}.admin-users-toolbar button{width:100%;margin-top:8px}}

@@ -1,6 +1,6 @@
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './supabase-config.js';
-import {UPGRADES,optionsFor} from './equipment-upgrades.js';
+import {UPGRADES,optionsFor,GAME_LABELS} from './equipment-upgrades.js?v=wiki2';
 const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 const el=id=>document.getElementById(id);
 let chars=[],items=[],catalog=[],selected=null,uid=null;
@@ -35,19 +35,26 @@ async function refreshItems(){
   const summary=document.createElement('summary');summary.textContent=item.name+' ×'+item.quantity+' · '+(item.upgrades?.length||0)+' melhoria(s)';card.append(summary);
   card.append(text('p',item.description||'Sem descrição.'));
   const installed=new Set((item.upgrades||[]).map(v=>typeof v==='string'?v:v.id));
-  const upgrades=optionsFor(item.name);
+  const upgrades=optionsFor(item.name).sort((a,b)=>['D2','D1','DLC','DOTO'].indexOf(a.game)-['D2','D1','DLC','DOTO'].indexOf(b.game));
+  const legacyInstalled=UPGRADES.filter(u=>u.legacy&&installed.has(u.id));
+  const openBefore=window.__expandedEquipment===item.id; if(openBefore)card.open=true;
   const box=document.createElement('div');box.className='upgrade-options';
+  card.addEventListener('toggle',()=>{if(card.open)window.__expandedEquipment=item.id;else if(window.__expandedEquipment===item.id)window.__expandedEquipment=null});
   if(!upgrades.length)box.append(text('p','Sem melhorias predefinidas para este equipamento. Itens personalizados permanecem disponíveis para uso narrativo.'));
+  for(const u of legacyInstalled){box.append(text('p','Melhoria anterior preservada: '+u.name+' — '+u.effect))}
   for(const u of upgrades){
    const line=document.createElement('label');line.className='upgrade-choice';
    const input=document.createElement('input');input.type='checkbox';input.checked=installed.has(u.id);
    const met=document.createElement('span');
-   met.append(text('strong',u.name+' · '+u.cost+' moedas (referência do videogame)'));
+   met.append(text('strong',u.name+' · '+u.cost+' moedas · '+(GAME_LABELS[u.game]||u.game)));
    met.append(text('small',u.effect));
    if(u.requires.length)met.append(text('small','Pré-requisito: '+u.requires.map(id=>UPGRADES.find(v=>v.id===id)?.name||id).join(', ')));
    input.addEventListener('change',async()=>{
     const next=new Set(installed);
     if(input.checked){
+     if(u.name.startsWith('Obra-prima:') && upgrades.some(v=>v.id!==u.id&&next.has(v.id)&&v.name.startsWith('Obra-prima:')&&v.type===u.type&&v.game===u.game)){
+      say('Só uma obra-prima por equipamento dessa família. Remova a anterior.',true);input.checked=false;return;
+     }
      if(u.requires.some(id=>!next.has(id))){say('Adicione primeiro os pré-requisitos de '+u.name+'.',true);input.checked=false;return}
      next.add(u.id);
     }else{

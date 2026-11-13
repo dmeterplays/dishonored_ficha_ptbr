@@ -1,7 +1,7 @@
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './supabase-config.js';
 import {UPGRADES} from './equipment-upgrades.js?v=wiki3';
-import {mergedUpgrade,compatibleUpgrade,installedUpgradeIds,activeUpgradeEffects} from './upgrade-config.js?v=1';
+import {mergedUpgrade,compatibleUpgrade,installedUpgradeIds,activeUpgradeEffects} from './upgrade-config.js?v=2';
 const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 const el=(tag,value)=>{const x=document.createElement(tag);if(value!==undefined)x.textContent=value;return x};
 let lastKey='',busy=false;

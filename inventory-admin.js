@@ -1,9 +1,10 @@
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './supabase-config.js';
 import {UPGRADES,optionsFor,GAME_LABELS,conflictingMasterwork} from './equipment-upgrades.js?v=wiki3';
+import {mergedUpgrade,compatibleUpgrade} from './upgrade-config.js?v=1';
 const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 const el=id=>document.getElementById(id);
-let chars=[],items=[],catalog=[],selected=null,uid=null;
+let chars=[],items=[],catalog=[],upgradeConfigs=[],selected=null,uid=null;
 const say=(s,bad=false)=>{el('grant-status').textContent=s;el('grant-status').style.color=bad?'#f0a69b':'#a5dbc7'};
 function option(value,label){const x=document.createElement('option');x.value=value;x.textContent=label;return x}
 function text(tag,s){const x=document.createElement(tag);x.textContent=s;return x}
@@ -11,9 +12,9 @@ async function load(){
  const {data:{user}}=await db.auth.getUser();if(!user){say('Entre na conta de administrador.',true);return}
  const {data:p}=await db.from('dh_profiles').select('role').eq('id',user.id).single();if(p?.role!=='admin'){say('Acesso restrito.',true);return}
  uid=user.id;
- const [{data:ch,error:ce},{data:cat,error:ca}]=await Promise.all([db.from('dh_characters').select('id,name,owner_id,archetype').order('name').limit(1000),db.from('dh_catalog').select('id,name,description').eq('category','item').order('name').limit(1000)]);
- if(ce||ca){say('Falha ao carregar: '+(ce||ca).message,true);return}
- chars=ch||[];catalog=cat||[];const s=el('grant-character');s.replaceChildren(option('','Selecione um personagem'));
+ const [{data:ch,error:ce},{data:cat,error:ca},{data:configs,error:ue}]=await Promise.all([db.from('dh_characters').select('id,name,owner_id,archetype').order('name').limit(1000),db.from('dh_catalog').select('id,name,description').eq('category','item').order('name').limit(1000),db.from('dh_upgrade_config').select('*').limit(1000)]);
+ if(ce||ca||ue){say('Falha ao carregar: '+(ce||ca||ue).message,true);return}
+ chars=ch||[];catalog=cat||[];upgradeConfigs=configs||[];const s=el('grant-character');s.replaceChildren(option('','Selecione um personagem'));
  chars.forEach(c=>s.append(option(c.id,c.name+' — '+(c.archetype||'Sem arquétipo'))));
  const cs=el('grant-catalog');cs.replaceChildren(option('','Selecione um item do catálogo'));catalog.forEach(c=>cs.append(option(c.id,c.name)));
  say('Selecione um personagem para entregar e melhorar seus equipamentos.');
@@ -35,7 +36,7 @@ async function refreshItems(){
   const summary=document.createElement('summary');summary.textContent=item.name+' ×'+item.quantity+' · '+(item.upgrades?.length||0)+' melhoria(s)';card.append(summary);
   card.append(text('p',item.description||'Sem descrição.'));
   const installed=new Set((item.upgrades||[]).map(v=>typeof v==='string'?v:v.id));
-  const upgrades=optionsFor(item.name).sort((a,b)=>['D2','D1','DLC','DOTO'].indexOf(a.game)-['D2','D1','DLC','DOTO'].indexOf(b.game));
+  const upgrades=UPGRADES.filter(u=>!u.legacy).map(u=>mergedUpgrade(u.id,upgradeConfigs)).filter(u=>compatibleUpgrade(item,u)).sort((a,b)=>['D2','D1','DLC','DOTO'].indexOf(a.game)-['D2','D1','DLC','DOTO'].indexOf(b.game));
   const legacyInstalled=UPGRADES.filter(u=>u.legacy&&installed.has(u.id));
   const openBefore=window.__expandedEquipment===item.id; if(openBefore)card.open=true;
   const box=document.createElement('div');box.className='upgrade-options';
@@ -48,6 +49,8 @@ async function refreshItems(){
    const met=document.createElement('span');
    met.append(text('strong',u.name+' · '+u.cost+' moedas · '+(GAME_LABELS[u.game]||u.game)));
    met.append(text('small',u.effect));
+   if(u.capacity_bonus)met.append(text('small','Capacidade adicional quando ativada: +'+u.capacity_bonus));
+   if(u.rule_note)met.append(text('small','Regra personalizada: '+u.rule_note));
    if(u.requires.length)met.append(text('small','Pré-requisito: '+u.requires.map(id=>UPGRADES.find(v=>v.id===id)?.name||id).join(', ')));
    if(u.blueprint)met.append(text('small','Projeto do videogame: '+u.blueprint));
    input.addEventListener('change',async()=>{

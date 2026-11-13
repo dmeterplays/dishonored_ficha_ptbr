@@ -658,6 +658,7 @@ async function boot(){
  me=await getAuth();
  gmEditor=initMasterEditor({db,roomId,getCatalog:()=>items,onSaved:async()=>{await refresh()},onSelect:()=>mobileNavigate('character')});
  await refresh({side:false});
+ participantView();
  if(!room)return;
  $('table').classList.remove('hidden');
  await loadCatalog();await loadMySheet(true);await refreshRolls();setRollMode('quick');mobileNavigate(gm()&&!mine?.character_id?'more':'character',false);

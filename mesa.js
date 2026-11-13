@@ -3,7 +3,7 @@ import {initMasterEditor} from './mesa-mestre.js?v=mobile-v1';
 const $=id=>document.getElementById(id),roomId=new URLSearchParams(location.search).get('id');
 const isUuid=x=>/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(x||'');
 const node=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined&&txt!==null)e.textContent=String(txt);if(cls)e.className=cls;return e};
-let me,room,roster=[],enemies=[],mine=null,mySheet=null,items=[],stock=[],purchases=[],tab='sheet',busy=false,costs={},gmEditor=null,realtimeChannel=null,roomRefreshTimer=null,rollRefreshTimer=null,rollsSnapshot='',queuedRoomRefresh=false,lastRoll=null,mobileView='rolls';
+let me,room,roster=[],enemies=[],mine=null,mySheet=null,items=[],stock=[],purchases=[],tab='sheet',rollMode='quick',busy=false,costs={},gmEditor=null,realtimeChannel=null,roomRefreshTimer=null,rollRefreshTimer=null,rollsSnapshot='',queuedRoomRefresh=false,lastRoll=null,mobileView='rolls';
 const gm=()=>room?.owner_id===me?.id;
 const say=(id,msg,bad=false)=>{$(id).textContent=msg;$(id).className=bad?'error':'status'};
 const clip=x=>String(x??'').slice(0,5000);
@@ -42,6 +42,10 @@ function roomView(){
  $('shop-toggle').textContent=room.shop_open?'Fechar loja':'Abrir loja';
  $('adventure-number').textContent='Aventura '+room.adventure_number;
  $('chaos-current').textContent=String(room.chaos??0);
+ $('roll-difficulty-value').textContent=String(room.test_difficulty??1);
+ $('gm-test-difficulty').value=String(room.test_difficulty??1);
+ $('gm-dashboard').classList.toggle('hidden',!gm());
+
  $('gm-tools').classList.toggle('hidden',!gm());
  $('bestiary-link').classList.toggle('hidden',!gm());
  $('bestiary-link').href='bestiario.html?room='+encodeURIComponent(roomId);
@@ -125,6 +129,64 @@ function focusOptions(){
  for(const f of mySheet?.catalogSelections?.focus||[])if(f.origin==='starting'&&f.name&&f.rank&&!result.some(x=>x.name===f.name))result.push({name:f.name,rank:f.rank});
  return result;
 }
+const quickActions=[
+ ['Ataque corpo a corpo','Lutar','Rapidamente','swords'],
+ ['Ataque preciso','Lutar','Cuidadosamente','target'],
+ ['Esquivar','Mover','Rapidamente','footprints'],
+ ['Investigar','Estudar','Cuidadosamente','search'],
+ ['Intimidar','Falar','Forçosamente','message-circle'],
+ ['Consertar','Consertar','Habilmente','wrench']
+];
+function chooseQuickAction(skill,style){
+ if(![...$('roll-skill').options].some(x=>x.value===skill)||![...$('roll-style').options].some(x=>x.value===style)){
+  say('roll-msg','A ficha não possui a perícia/estilo necessário para esta ação.',true);return
+ }
+ $('roll-skill').value=skill;$('roll-style').value=style;
+ for(const btn of document.querySelectorAll('.quick-action-btn'))btn.setAttribute('aria-pressed',String(btn.dataset.skill===skill&&btn.dataset.style===style));
+ say('roll-msg','Ação selecionada: '+skill+' + '+style+'.','');
+}
+function paintQuickActions(){
+ const root=$('roll-quick-actions');root.replaceChildren();
+ for(const [name,skill,style] of quickActions){
+  const btn=node('button',name,'secondary quick-action-btn');btn.type='button';
+  btn.dataset.skill=skill;btn.dataset.style=style;
+  btn.disabled=!mySheet;
+  btn.setAttribute('aria-pressed',String($('roll-skill').value===skill&&$('roll-style').value===style));
+  btn.addEventListener('click',()=>chooseQuickAction(skill,style));
+  root.append(btn);
+ }
+}
+function setRollMode(mode){
+ rollMode=mode;
+ $('roll-custom-fields').classList.toggle('roll-custom-collapsed',mode==='quick');
+ $('roll-mode-quick').setAttribute('aria-pressed',String(mode==='quick'));
+ $('roll-mode-custom').setAttribute('aria-pressed',String(mode==='custom'));
+}
+$('roll-mode-quick').addEventListener('click',()=>setRollMode('quick'));
+$('roll-mode-custom').addEventListener('click',()=>setRollMode('custom'));
+function openMasterArea(id){
+ if(!gm())return;
+ if(id==='gm-enemies'){mobileNavigate('sheets');return}
+ mobileNavigate('more');
+ const tools=$('gm-tools');tools.open=true;
+ const area=$(id);if(area){
+  if(area.closest('details'))area.closest('details').open=true;
+  area.scrollIntoView({behavior:'smooth',block:'start'});
+ }
+}
+for(const btn of document.querySelectorAll('[data-gm-target]'))btn.addEventListener('click',()=>openMasterArea(btn.dataset.gmTarget));
+$('gm-save-difficulty').addEventListener('click',async()=>{
+ if(!gm())return;
+ const chosen=Number($('gm-test-difficulty').value);
+ const btn=$('gm-save-difficulty');btn.disabled=true;
+ const {error}=await db.rpc('dh_room_set_difficulty',{p_room:roomId,p_difficulty:chosen});
+ btn.disabled=false;
+ if(error){say('gm-msg','Falha ao definir dificuldade: '+error.message,true);return}
+ room.test_difficulty=chosen;
+ $('roll-difficulty-value').textContent=String(chosen);
+ say('gm-msg','Dificuldade '+chosen+' aplicada a todos os testes da sala.');
+});
+
 function rollerView(){
  const disabled=!mySheet;
  $('roll-submit').disabled=disabled;
@@ -164,7 +226,7 @@ async function refresh({side=false}={}){
  busy=true;
  try{
   const [r,m,st,pu,enemyResponse]=await Promise.all([
-   db.from('dh_rooms').select('id,code,name,owner_id,shop_open,chaos,adventure_number,active,revision').eq('id',roomId).single(),
+   db.from('dh_rooms').select('id,code,name,owner_id,shop_open,chaos,adventure_number,active,revision,test_difficulty').eq('id',roomId).single(),
    db.rpc('dh_room_roster',{p_room:roomId}),
    db.from('dh_room_stock').select('catalog_id,available,quantity').eq('room_id',roomId),
    db.from('dh_room_purchases').select('id,room_id,character_id,catalog_id,amount,currency,created_at').eq('room_id',roomId).order('created_at',{ascending:false}).limit(200),
@@ -382,21 +444,33 @@ function renderSide(){
  if(tab==='upgrade'){renderUpgrade();return}
  if(tab==='sheet'){
   if(!mine?.character_id){root.append(node('p','Nenhum personagem vinculado. Use a página Salas para vincular uma ficha.'));return}
-  root.append(node('p','Personagem: '+mine.character_name));
+  const hero=node('div',null,'hero-card');
+  hero.append(node('span','PERSONAGEM ATIVO','eyebrow'),node('h3',mine.character_name),node('p',mine.archetype||'Sem arquétipo'));
+  root.append(hero);
+  const stats=node('div',null,'hero-stats');
+  for(const [label,value] of [['Estresse',mine.stress_now+'/'+mine.stress_max],['Vazio',mine.void_points],['XP',mine.xp],['Moedas',mine.coins]]){
+   const card=node('div',null,'hero-stat');card.append(node('small',label),node('strong',value));stats.append(card);
+  }
+  root.append(stats);
+  const shortcuts=node('div',null,'hero-shortcuts');
+  for(const [label,action] of [['🎲 Nova rolagem',()=>mobileNavigate('rolls')],['⚔ Ações de combate',()=>{tab='actions';renderSide()}],['🎒 Inventário',()=>{tab='item';renderSide()}]]){
+   const button=node('button',label,'secondary');button.type='button';button.addEventListener('click',action);shortcuts.append(button);
+  }
+  root.append(shortcuts);
   root.append(node('p','Arquétipo: '+mine.archetype));
   root.append(node('p','Estresse: '+mine.stress_now+'/'+mine.stress_max+' · Vazio: '+mine.void_points+' · Momentum: '+mine.momentum));
   const link=node('a','Editar ficha completa','btn secondary');link.href='personagem.html?id='+encodeURIComponent(mine.character_id);root.append(link);
-  root.append(node('p','A tabela de combate e os recursos mostrados aqui refletem sua ficha salva no Supabase.','small'));return;
+  return;
  }
  if(tab==='actions'){
-  root.append(node('p','Escolha uma ação para configurar a próxima rolagem. A dificuldade e a privacidade continuam à sua escolha.','small'));
+  root.append(node('p','Escolha uma ação; o mestre define a dificuldade da mesa.','small'));
   const actions=[['Ataque corpo a corpo','Lutar','Rapidamente'],['Ataque calculado','Lutar','Cuidadosamente'],['Fugir ou esquivar','Mover','Rapidamente'],['Observar inimigo','Estudar','Cuidadosamente'],['Intimidar','Falar','Forçosamente'],['Reparar equipamento','Consertar','Habilmente']];
   for(const [name,skill,style] of actions){
    const row=node('div',null,'item-row');
    const b=node('button',name,'secondary');b.type='button';b.disabled=!mySheet;
    b.addEventListener('click',()=>{
     if(![...$('roll-skill').options].some(x=>x.value===skill)||![...$('roll-style').options].some(x=>x.value===style)){say('side-msg','Esta ação exige perícia ou estilo não disponível na ficha.',true);return}
-    $('roll-skill').value=skill;$('roll-style').value=style;
+    $('roll-skill').value=skill;$('roll-style').value=style;paintQuickActions();
     say('side-msg','Rolagem configurada para '+name+'. Use o botão Rolar dados no painel central.');
     if(isMobile())mobileNavigate('rolls');
     $('roll-submit').scrollIntoView({behavior:'smooth',block:'center'});
@@ -461,7 +535,7 @@ const currentRollPayload=()=>({
  p_room:roomId,
  p_skill:$('roll-skill').value,p_style:$('roll-style').value,
  p_focus:$('roll-focus').value||null,p_dice:Number($('roll-dice').value),
- p_difficulty:Number($('roll-difficulty').value),
+ p_difficulty:Number(room?.test_difficulty??1),
  p_visibility:$('roll-visibility').value
 });
 async function sendRoll(payload){
@@ -512,7 +586,7 @@ async function boot(){
  await refresh({side:false});
  if(!room)return;
  $('table').classList.remove('hidden');
- await loadCatalog();await loadMySheet(true);await refreshRolls();mobileNavigate('rolls',false);
+ await loadCatalog();await loadMySheet(true);await refreshRolls();setRollMode('quick');mobileNavigate('character',false);
  const selectedEnemy=new URLSearchParams(location.search).get('enemy');
  if(selectedEnemy&&gm()&&enemies.some(e=>e.id===selectedEnemy)){await gmEditor.chooseEnemy(selectedEnemy);history.replaceState(null,'','mesa.html?id='+encodeURIComponent(roomId));}
  startLiveUpdates();

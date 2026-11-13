@@ -53,3 +53,19 @@ header:has(.dh-header-menu){position:relative}
  .legacy-import>summary{min-height:50px;padding:14px;font-size:12px}
  .global-site-links a{font-family:'Crimson Text',Georgia,serif!important}
 }
+
+/* Inventário de melhorias ativo na ficha e na sessão de jogo. */
+.gear-header{display:flex;justify-content:flex-end;align-items:center;margin:8px 0}
+.gear-header button{min-height:36px;padding:8px 12px}
+.gear-item{border:1px solid #746044;background:#171f24;margin:9px 0;padding:11px 13px;color:#e9e2d4}
+.gear-item>summary{cursor:pointer;font:600 15px 'Cinzel',Georgia,serif;color:#ead1a3;line-height:1.4;list-style:inside}
+.gear-item>p{font-size:15px;color:#d4d0c5;line-height:1.5}
+.gear-effect-total{color:#86d6c9!important;font-weight:bold}
+.gear-upgrade-choice{box-sizing:border-box;display:flex!important;align-items:flex-start!important;gap:10px;padding:10px;border:1px solid #465858;background:#1e292b;margin:8px 0!important;color:#f0e6d6!important}
+.gear-upgrade-choice input[type="checkbox"]{flex:0 0 19px!important;width:19px!important;height:19px!important;margin:2px 0 0!important;accent-color:#bfa174}
+.gear-upgrade-choice span{display:block;flex:1;min-width:0}
+.gear-upgrade-choice strong{display:block;font-size:15px;color:#f2e6cf}
+.gear-upgrade-choice small{display:block;font-size:13px;line-height:1.45;color:#cbd1cd;margin-top:5px}
+.gear-upgrade-choice input:disabled+span{opacity:.68}
+.session-gear-panel{margin:15px 0!important;padding:12px 14px!important}
+.session-gear-panel>summary{cursor:pointer;color:#f0d4a8;font-weight:bold;font-size:15px}

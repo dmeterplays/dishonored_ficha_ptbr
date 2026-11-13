@@ -49,6 +49,42 @@ function roomView(){
  $('gm-tools').classList.toggle('hidden',!gm());
  $('bestiary-link').classList.toggle('hidden',!gm());
  $('bestiary-link').href='bestiario.html?room='+encodeURIComponent(roomId);
+ $('diary-link').href='diario.html?room='+encodeURIComponent(roomId);
+ $('mobile-journal-link').href='diario.html?room='+encodeURIComponent(roomId);
+}
+
+function stressControl(now,max,editable,onDelta){
+ const current=Math.min(Math.max(0,Number(now)||0),Math.max(0,Number(max)||0));
+ const ceiling=Math.max(0,Number(max)||0);
+ const root=node('div',null,'stress-widget');
+ const line=node('div',null,'stress-widget-header');
+ line.append(node('strong','Estresse'),node('span',current+' / '+ceiling,'stress-value'));
+ root.append(line);
+ const row=node('div',null,'stress-widget-row');
+ const minus=node('button','−','secondary stress-step'),plus=node('button','+','secondary stress-step');
+ minus.type='button';plus.type='button';minus.setAttribute('aria-label','Diminuir estresse');plus.setAttribute('aria-label','Aumentar estresse');
+ const track=node('div',null,'stress-widget-track');
+ track.setAttribute('role','progressbar');track.setAttribute('aria-label','Estresse atual');
+ track.setAttribute('aria-valuemin','0');track.setAttribute('aria-valuemax',String(ceiling));
+ const fill=node('span',null,'stress-widget-fill');track.append(fill);
+ const update=(value)=>{const n=Math.max(0,Math.min(ceiling,Number(value)||0));line.querySelector('.stress-value').textContent=n+' / '+ceiling;fill.style.width=(ceiling?100*n/ceiling:0)+'%';track.setAttribute('aria-valuenow',String(n));minus.disabled=!editable||n<=0;plus.disabled=!editable||n>=ceiling;};
+ update(current);
+ if(!editable){minus.hidden=true;plus.hidden=true;}
+ else for(const [button,delta] of [[minus,-1],[plus,1]])button.addEventListener('click',async()=>{
+  if(minus.disabled&&delta<0||plus.disabled&&delta>0)return;
+  minus.disabled=true;plus.disabled=true;
+  try{const value=await onDelta(delta);if(value!=null)update(value)}
+  catch(e){say('room-status','Não foi possível alterar o estresse: '+e.message,true)}
+  finally{update(Number(line.querySelector('.stress-value').textContent.split('/')[0]))}
+ });
+ row.append(minus,track,plus);root.append(row);
+ return root;
+}
+async function changeStress({characterId=null,enemyId=null,delta}){
+ const {data,error}=await db.rpc('dh_room_adjust_stress',{p_room:roomId,p_character:characterId,p_enemy:enemyId,p_delta:delta});
+ if(error)throw Error(error.message);
+ requestRoomRefresh();
+ return data;
 }
 function rosterView(){
  const root=$('roster');root.replaceChildren();
@@ -57,10 +93,7 @@ function rosterView(){
   card.append(node('strong',p.character_name||p.display_name||(p.is_gm?'Mestre':'Jogador')));
   card.append(node('p',(p.is_gm?'Mestre · ':'')+(p.character_name?(p.archetype||'Sem arquétipo'):'Sem personagem selecionado')));
   if(p.character_id){
-   card.append(node('p','Estresse '+p.stress_now+'/'+p.stress_max));
-   const outer=node('div',null,'meter'),inner=node('span');
-   inner.style.width=Math.min(100,Math.max(0,Number(p.stress_now)/(Number(p.stress_max)||12)*100))+'%';
-   outer.append(inner);card.append(outer);
+   card.append(stressControl(p.stress_now,p.stress_max,gm()||p.user_id===me.id,delta=>changeStress({characterId:p.character_id,delta})));
    card.append(node('p','Vazio: '+p.void_points+' · Momentum: '+p.momentum));
    if(gm())card.append(node('p','Moedas: '+fmt(p.coins)+' · XP: '+fmt(p.xp)));
   }
@@ -91,10 +124,7 @@ function enemyView(){
    card.append(node('p','Sem trilha de estresse','small'));
   }else if(e.stress_max!==null){
    const now=Number(e.stress_now||0),max=Number(e.stress_max);
-   card.append(node('p','Estresse '+now+'/'+max));
-   const meter=node('div',null,'meter'),fill=node('span');
-   fill.style.width=Math.min(100,Math.max(0,now/Math.max(1,max)*100))+'%';
-   meter.append(fill);card.append(meter);
+   card.append(stressControl(now,max,gm(),delta=>changeStress({enemyId:e.id,delta})));
   }
   if(gm()){
    card.append(node('p','Pontos do Vazio: '+(e.void_points??0),'small'));
@@ -177,6 +207,7 @@ function openMasterArea(id){
  }
 }
 for(const btn of document.querySelectorAll('[data-gm-target]'))btn.addEventListener('click',()=>openMasterArea(btn.dataset.gmTarget));
+$('gm-open-journal').addEventListener('click',()=>location.assign('diario.html?room='+encodeURIComponent(roomId)));
 $('gm-save-difficulty').addEventListener('click',async()=>{
  if(!gm())return;
  const chosen=Number($('gm-test-difficulty').value);

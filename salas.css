@@ -235,3 +235,17 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
  .hero-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
  .quick-actions{grid-template-columns:1fr 1fr}
 }
+
+/* Estresse: barra com botões nas extremidades e valores atuais. */
+.stress-widget,.sheet-stress-control{margin:11px 0;padding:10px 11px;border:1px solid #455e60;background:#12272b}
+.stress-widget-header{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px;color:#d4e0d7;margin-bottom:8px}
+.stress-widget-header strong{font-size:14px;color:#e3d0ab}
+.stress-value,.stress-widget-header>span{font:600 14px Cinzel,serif;color:#edcf94;white-space:nowrap}
+.stress-widget-row{display:flex;align-items:center;gap:9px;width:100%}
+.stress-widget-track{height:18px;border-radius:4px;border:1px solid #607777;background:#08191d;overflow:hidden;flex:1;min-width:30px}
+.stress-widget-fill{display:block;height:100%;background:linear-gradient(90deg,#659c8c,#c3aa75);transition:width .18s ease;width:0}
+.stress-step{display:flex!important;align-items:center;justify-content:center;flex:0 0 39px;width:39px;min-width:39px;min-height:40px!important;height:40px;padding:0!important;font-size:24px!important;line-height:1!important}
+.stress-step[hidden]{display:none!important}
+.diary-table-link{margin:0 0 14px}
+.diary-table-link .btn{font-size:12px;min-height:44px}
+@media(max-width:760px){.stress-widget{padding:10px}.stress-step{flex-basis:44px;width:44px;min-width:44px;min-height:44px!important;height:44px}}

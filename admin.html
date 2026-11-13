@@ -60,6 +60,7 @@ button:disabled{opacity:.5;cursor:not-allowed}.hidden{display:none!important}.ro
 <div><label for="coins">Custo em moedas</label><input id="coins" min="0" max="1000000" type="number" placeholder="Opcional"></div>
 <div><label for="published">Visibilidade</label><select id="published"><option value="false">Rascunho</option><option value="true">Publicado</option></select></div></div>
 <label for="description">Descrição, benefícios e condições</label><textarea id="description"></textarea>
+<details id="catalog-upgrade-tab" class="granted-card" hidden><summary>Melhorias disponíveis para este equipamento</summary><p class="admin-category-note">Referências inspiradas nas melhorias dos videogames Dishonored. Os efeitos descritos são adaptações narrativas para o RPG; instalá-las em um personagem é uma ação do mestre na aba Entregar itens.</p><div id="catalog-upgrade-list"></div></details>
 <div class="row" style="margin-top:15px"><button id="save-entry">Adicionar ao catálogo</button><button id="cancel-entry" class="secondary hidden">Cancelar edição</button></div>
 <p id="catalog-msg" role="status"></p>
 <h3>Entradas existentes</h3>
@@ -70,9 +71,25 @@ button:disabled{opacity:.5;cursor:not-allowed}.hidden{display:none!important}.ro
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './supabase-config.js';
+import {optionsFor,UPGRADES} from './equipment-upgrades.js';
 const $=id=>document.getElementById(id),show=(id,on)=>$(id).classList.toggle('hidden',!on);
 const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 let catalog=[],editing=null,activeTab='mechanics';
+function renderUpgradePreview(){
+ const panel=$('catalog-upgrade-tab');
+ const upgrades=activeTab==='item'?optionsFor($('name').value):[];
+ panel.hidden=!upgrades.length;
+ const list=$('catalog-upgrade-list');list.replaceChildren();
+ for(const u of upgrades){
+  const card=document.createElement('div');card.className='entry';
+  const name=document.createElement('strong');name.textContent=u.name+' · '+u.cost+' moedas (videogame)';
+  const effect=document.createElement('p');effect.textContent=u.effect;
+  card.append(name,effect);
+  if(u.requires.length){const req=document.createElement('small');req.textContent='Requer: '+u.requires.map(id=>UPGRADES.find(v=>v.id===id)?.name||id).join(', ');card.append(req)}
+  list.append(card);
+ }
+}
+$('name').addEventListener('input',renderUpgradePreview);
 const categoryTabs={talent:'Talentos',bonecharm:'Amuletos de osso',power:'Poderes',item:'Itens'};
 const otherCategories=new Set(['archetype','skill','style','focus']);
 function switchTab(tab,updateHash=true){
@@ -91,7 +108,7 @@ function switchTab(tab,updateHash=true){
   $('kind-field').hidden=activeTab!=='other';
   if(activeTab!=='other')$('kind').value=activeTab;
   else if(!otherCategories.has($('kind').value))$('kind').value='archetype';
-  $('filter').value='';clearForm();renderCatalog();
+  $('filter').value='';clearForm();renderCatalog();renderUpgradePreview();
  }
  if(updateHash)history.replaceState(null,'','#'+(activeTab==='users'?'admin-users-section':'tab-'+activeTab));
 }
@@ -228,7 +245,7 @@ async function loadSettings(){
 function clearForm(){
  editing=null;
  ['name','archetype','xp','coins','description'].forEach(k=>$(k).value='');
- $('kind').value=activeTab==='other'?'archetype':(categoryTabs[activeTab]?activeTab:'talent');$('published').value='false';$('save-entry').textContent='Adicionar ao catálogo';show('cancel-entry',false);
+ $('kind').value=activeTab==='other'?'archetype':(categoryTabs[activeTab]?activeTab:'talent');$('published').value='false';renderUpgradePreview();$('save-entry').textContent='Adicionar ao catálogo';show('cancel-entry',false);
 }
 function renderCatalog(){
  const root=$('catalog-list');root.replaceChildren();
@@ -242,7 +259,7 @@ function renderCatalog(){
  const actions=document.createElement('div');actions.className='row';
  const edit=document.createElement('button');edit.textContent='Editar';edit.className='secondary';
  edit.addEventListener('click',()=>{
- editing=item.id;$('kind').value=item.category;$('name').value=item.name;$('archetype').value=item.archetype||'';$('xp').value=item.xp_cost??'';$('coins').value=item.coins_cost??'';$('published').value=String(item.published);$('description').value=item.description||'';$('save-entry').textContent='Salvar alterações';show('cancel-entry',true);$('name').scrollIntoView({behavior:'smooth',block:'center'});
+ editing=item.id;$('kind').value=item.category;$('name').value=item.name;$('archetype').value=item.archetype||'';$('xp').value=item.xp_cost??'';$('coins').value=item.coins_cost??'';$('published').value=String(item.published);$('description').value=item.description||'';$('save-entry').textContent='Salvar alterações';show('cancel-entry',true);renderUpgradePreview();$('name').scrollIntoView({behavior:'smooth',block:'center'});
  });
  const del=document.createElement('button');del.textContent='Excluir';del.className='secondary';
  del.addEventListener('click',async()=>{

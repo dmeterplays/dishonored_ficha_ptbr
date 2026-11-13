@@ -39,8 +39,7 @@ body::after{
   content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
   box-shadow:inset 0 0 125px 25px rgba(0,0,0,.40);
 }
-body>*{position:relative;z-index:1}
-body>script,body>style{position:static}
+/* Preserve each page's original sticky/fixed positioning. */
 h1,h2,h3,h4,h5,h6,
 .brand,.logo,.eyebrow,
 button,.btn,.button,

@@ -1,4 +1,4 @@
-import {UPGRADES,GAME_LABELS,UPGRADE_GROUPS} from './equipment-upgrades.js';
+import {UPGRADES,GAME_LABELS,UPGRADE_GROUPS} from './equipment-upgrades.js?v=wiki2';
 const $=id=>document.getElementById(id);
 const filtered=()=>UPGRADES.filter(u=>!u.legacy && (!$('upgrade-game').value||u.game===$('upgrade-game').value) && (!$('upgrade-group').value||u.type===$('upgrade-group').value) && [u.name,u.effect,GAME_LABELS[u.game]||''].join(' ').toLocaleLowerCase('pt-BR').includes($('upgrade-search').value.toLocaleLowerCase('pt-BR').trim()));
 function render(){

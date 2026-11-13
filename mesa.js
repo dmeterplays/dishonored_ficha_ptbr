@@ -3,7 +3,7 @@ import {initMasterEditor} from './mesa-mestre.js?v=diary-stress1';
 const $=id=>document.getElementById(id),roomId=new URLSearchParams(location.search).get('id');
 const isUuid=x=>/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(x||'');
 const node=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined&&txt!==null)e.textContent=String(txt);if(cls)e.className=cls;return e};
-let me,room,roster=[],enemies=[],mine=null,mySheet=null,items=[],stock=[],purchases=[],tab='sheet',rollMode='quick',busy=false,costs={},gmEditor=null,realtimeChannel=null,roomRefreshTimer=null,rollRefreshTimer=null,rollsSnapshot='',queuedRoomRefresh=false,lastRoll=null,mobileView='rolls';
+let me,room,roster=[],enemies=[],mine=null,mySheet=null,items=[],stock=[],purchases=[],tab='sheet',rollMode='quick',busy=false,costs={},gmEditor=null,realtimeChannel=null,presenceChannel=null,presenceReady=false,onlineUsers=new Set(),roomRefreshTimer=null,rollRefreshTimer=null,rollsSnapshot='',queuedRoomRefresh=false,lastRoll=null,mobileView='rolls';
 const gm=()=>room?.owner_id===me?.id;
 const say=(id,msg,bad=false)=>{$(id).textContent=msg;$(id).className=bad?'error':'status'};
 const clip=x=>String(x??'').slice(0,5000);
@@ -86,6 +86,46 @@ async function changeStress({characterId=null,enemyId=null,delta}){
  requestRoomRefresh();
  return data;
 }
+function participantView(){
+ const root=$('participants-list');if(!root)return;
+ root.replaceChildren();
+ $('participants-count').textContent=roster.length+' inscrito'+(roster.length===1?'':'s')+
+   (presenceReady?' · '+roster.filter(p=>onlineUsers.has(p.user_id)).length+' na mesa agora':'');
+ $('roster-count').textContent='('+roster.length+')';
+ if(!roster.length){root.append(node('p','Nenhum participante entrou nesta campanha ainda.','small'));return}
+ for(const p of roster){
+  const card=node('div',null,'participant-chip');
+  const dot=node('span',null,'participant-dot');
+  const live=presenceReady&&onlineUsers.has(p.user_id);
+  dot.classList.toggle('is-online',live);
+  dot.setAttribute('aria-hidden','true');
+  const body=node('div',null,'participant-chip-info');
+  body.append(node('strong',p.display_name||'Jogador'));
+  const summary=(p.is_gm?'Mestre':'Jogador')+(p.character_name?' · '+p.character_name:' · Sem personagem');
+  body.append(node('span',summary,'participant-character'));
+  const state=node('span',presenceReady?(live?'Na mesa':'Fora da mesa'):'Inscrito','participant-state'+(live?' is-online':''));
+  card.append(dot,body,state);
+  root.append(card);
+ }
+}
+function startPresence(){
+ if(!me?.id)return;
+ presenceChannel=db.channel('dh-presence-'+roomId,{config:{presence:{key:me.id}}})
+ .on('presence',{event:'sync'},()=>{
+  const state=presenceChannel.presenceState();
+  onlineUsers=new Set(Object.keys(state).filter(id=>Array.isArray(state[id])&&state[id].length));
+  presenceReady=true;participantView();
+ })
+ .subscribe(async status=>{
+  if(status==='SUBSCRIBED'){
+   try{await presenceChannel.track({joined:true})}catch(e){presenceReady=false;participantView()}
+  }
+  if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'){
+   presenceReady=false;onlineUsers.clear();participantView();
+  }
+ });
+}
+$('participants-view-sheets').addEventListener('click',()=>mobileNavigate('sheets'));
 function rosterView(){
  const root=$('roster');root.replaceChildren();
  for(const p of roster){
@@ -104,6 +144,7 @@ function rosterView(){
   }
   root.append(card);
  }
+ participantView();
  gmEditor?.highlight();
  if(!roster.length)root.append(node('p','Ainda não há participantes.'));
  const chooser=$('gm-character'),old=chooser.value;chooser.replaceChildren();
@@ -312,7 +353,7 @@ function startLiveUpdates(){
  document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible'){requestRoomRefresh();requestRollRefresh()}
  });
- window.addEventListener('pagehide',()=>{if(realtimeChannel)db.removeChannel(realtimeChannel)});
+ window.addEventListener('pagehide',()=>{if(realtimeChannel)db.removeChannel(realtimeChannel);if(presenceChannel)db.removeChannel(presenceChannel)});
 }
 async function loadMySheet(redraw=true){
  if(!mine?.character_id){mySheet=null;rollerView();setRepeatReady();$('my-character').replaceChildren(node('p',gm()?'Você está como mestre. Clique em Abrir ficha de um participante ou inimigo no painel esquerdo.':'Vincule uma ficha à campanha pelo lobby.'));if(redraw)renderSide();return}
@@ -622,6 +663,6 @@ async function boot(){
  await loadCatalog();await loadMySheet(true);await refreshRolls();setRollMode('quick');mobileNavigate(gm()&&!mine?.character_id?'more':'character',false);
  const selectedEnemy=new URLSearchParams(location.search).get('enemy');
  if(selectedEnemy&&gm()&&enemies.some(e=>e.id===selectedEnemy)){await gmEditor.chooseEnemy(selectedEnemy);history.replaceState(null,'','mesa.html?id='+encodeURIComponent(roomId));}
- startLiveUpdates();
+ startLiveUpdates();startPresence();
 }
 try{await boot()}catch(e){say('room-status',e.message,true)}

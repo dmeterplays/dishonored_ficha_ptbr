@@ -155,4 +155,4 @@ async function loadMaster(){
  if(ae)addText($('master-list'),'p',ae.message);else (all||[]).forEach(c=>addText($('master-list'),'div',c.name+' · '+(c.archetype||'Sem arquétipo')+' · '+(c.creation_status==='ready'?'Pronto':'Rascunho')+' · XP '+c.xp+' · Momentum '+c.momentum));
  if(re)addText($('request-list'),'p',re.message);else (req||[]).forEach(r=>addText($('request-list'),'div',(r.details?.description||r.request_type)+' · '+r.status));
 }
-</script><script src="./site-nav.js?v=1" defer></script></body></html>
+</script><script src="./site-nav.js?v=admin3" defer></script></body></html>

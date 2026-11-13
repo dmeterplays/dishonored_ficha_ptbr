@@ -1423,7 +1423,9 @@ const MASTERWORK_PAIRS=[
 ['d2-master-expansive','d2-master-discreet']
 ];
 export function conflictingMasterwork(id,installed){return MASTERWORK_PAIRS.some(pair=>pair.includes(id)&&pair.some(other=>other!==id&&installed.has(other)))}
-export const UPGRADES=[...WIKI_UPGRADES.map(u=>({...u,blueprint:BLUEPRINTS[u.id]||null})),...LEGACY_UPGRADES];
+// Apenas as melhorias de pistola de Dishonored 2 aparecem no catálogo.
+// As versões antigas permanecem internamente para preservar inventários existentes.
+export const UPGRADES=[...WIKI_UPGRADES.map(u=>({...u,blueprint:BLUEPRINTS[u.id]||null})),...LEGACY_UPGRADES].map(u=>({...u,hidden:u.type==='pistol'&&u.game!=='D2'}));
 const groupLabels={pistol:'Pistola',crossbow:'Besta',wristbow:'Besta de pulso',sword:'Espada',armor:'Armadura/vestimentas',optic:'Óptica',bonecharm:'Amuletos',grenade:'Granadas',trap:'Navalhas/armadilhas',mine:'Minas',voltaic:'Arma voltaica',gear:'Equipamento'};
 export const UPGRADE_GROUPS=groupLabels;
 export const GAME_LABELS={D1:'Dishonored',DLC:'The Knife of Dunwall / Brigmore Witches',D2:'Dishonored 2',DOTO:'Death of the Outsider',Casa:'Regras opcionais'};
@@ -1442,4 +1444,4 @@ export function itemType(name=''){
  if(/armadura|manto|colete|capacete|roupa|bota/.test(n))return 'armor';
  return 'other';
 }
-export function optionsFor(name){const type=itemType(name);return UPGRADES.filter(u=>u.type===type&&!u.legacy)}
+export function optionsFor(name){const type=itemType(name);return UPGRADES.filter(u=>u.type===type&&!u.legacy&&!u.hidden)}

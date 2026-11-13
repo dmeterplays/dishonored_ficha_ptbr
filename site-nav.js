@@ -31,6 +31,20 @@
   const dest=href.split('?')[0];if(dest===path){a.setAttribute('aria-current','page');}
   list.append(a);
  }
+ // Só mostra Administração quando a conta autenticada realmente é administradora.
+ // A própria página e a API continuam verificando as permissões no servidor.
+ import('./personagens-common.js').then(async ({db})=>{
+  const {data:{user},error:authError}=await db.auth.getUser();
+  if(authError||!user)return;
+  const {data:profile,error:profileError}=await db.from('dh_profiles').select('role').eq('id',user.id).single();
+  if(profileError||profile?.role!=='admin')return;
+  if(!list.querySelector('a[href="admin.html"]')){
+   const admin=document.createElement('a');
+   admin.href='admin.html';admin.textContent='Administração';admin.title='Usuários, personagens e configurações do sistema';
+   if(path==='admin.html')admin.setAttribute('aria-current','page');
+   list.append(admin);
+  }
+ }).catch(()=>{});
  details.append(list);root.append(details);
  const header=document.querySelector('header');
  if(header)header.insertAdjacentElement('afterend',root);

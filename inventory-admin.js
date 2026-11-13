@@ -1,7 +1,7 @@
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './supabase-config.js';
-import {UPGRADES,optionsFor,GAME_LABELS,conflictingMasterwork} from './equipment-upgrades.js?v=wiki3';
-import {mergedUpgrade,compatibleUpgrade} from './upgrade-config.js?v=2';
+import {UPGRADES,optionsFor,GAME_LABELS,conflictingMasterwork} from './equipment-upgrades.js?v=wiki4';
+import {mergedUpgrade,compatibleUpgrade} from './upgrade-config.js?v=4';
 const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 const el=id=>document.getElementById(id);
 let chars=[],items=[],catalog=[],upgradeConfigs=[],selected=null,uid=null;
@@ -36,7 +36,7 @@ async function refreshItems(){
   const summary=document.createElement('summary');summary.textContent=item.name+' ×'+item.quantity+' · '+(item.upgrades?.length||0)+' melhoria(s)';card.append(summary);
   card.append(text('p',item.description||'Sem descrição.'));
   const installed=new Set((item.upgrades||[]).map(v=>typeof v==='string'?v:v.id));
-  const upgrades=UPGRADES.filter(u=>!u.legacy).map(u=>mergedUpgrade(u.id,upgradeConfigs)).filter(u=>compatibleUpgrade(item,u)).sort((a,b)=>['D2','D1','DLC','DOTO'].indexOf(a.game)-['D2','D1','DLC','DOTO'].indexOf(b.game));
+  const upgrades=UPGRADES.filter(u=>!u.legacy&&!u.hidden).map(u=>mergedUpgrade(u.id,upgradeConfigs)).filter(u=>compatibleUpgrade(item,u)).sort((a,b)=>['D2','D1','DLC','DOTO'].indexOf(a.game)-['D2','D1','DLC','DOTO'].indexOf(b.game));
   const legacyInstalled=UPGRADES.filter(u=>u.legacy&&installed.has(u.id));
   const openBefore=window.__expandedEquipment===item.id; if(openBefore)card.open=true;
   const box=document.createElement('div');box.className='upgrade-options';
@@ -51,6 +51,7 @@ async function refreshItems(){
    met.append(text('small',u.effect));
    if(u.capacity_bonus)met.append(text('small','Capacidade adicional quando ativada: +'+u.capacity_bonus));
    if(u.rule_note)met.append(text('small','Regra personalizada: '+u.rule_note));
+   if(u.bonus_value&&(u.bonus_skill||u.bonus_style))met.append(text('small','Bônus de ação: '+(u.bonus_value>0?'+':'')+u.bonus_value+' em '+(u.bonus_skill||'qualquer perícia')+' + '+(u.bonus_style||'qualquer estilo')));
    if(u.requires.length)met.append(text('small','Pré-requisito: '+u.requires.map(id=>UPGRADES.find(v=>v.id===id)?.name||id).join(', ')));
    if(u.blueprint)met.append(text('small','Projeto do videogame: '+u.blueprint));
    input.addEventListener('change',async()=>{

@@ -14,7 +14,9 @@ async function showRooms(){
   const hint=document.createElement('span');hint.textContent='Código: '+room.code+' · '+(room.shop_open?'Loja aberta':'Loja fechada');
   info.append(title,hint);
   const a=document.createElement('a');a.className='btn';a.href='mesa.html?id='+encodeURIComponent(room.id);a.textContent='Abrir mesa';
-  row.append(info,a);root.append(row);
+  const actions=document.createElement('div');actions.className='room-entry-actions';
+  const journal=document.createElement('a');journal.className='btn secondary';journal.href='diario.html?room='+encodeURIComponent(room.id);journal.textContent='Diário de Bordo';
+  actions.append(a,journal);row.append(info,actions);root.append(row);
  }
 }
 $('join-form').addEventListener('submit',async event=>{

@@ -12,10 +12,10 @@ h1,h2,h3{font-family:Cinzel,serif;color:var(--gold)}h1{font-size:30px}h2{font-si
 label{display:block;font-size:15px;color:var(--gold);margin:8px 0}input,select,textarea{display:block;width:100%;padding:10px;background:#11191d;border:1px solid #667777;color:var(--ink);font:17px 'Crimson Text',serif}
 textarea{min-height:95px}button{background:var(--gold);border:1px solid var(--gold);color:#10191a;padding:11px 15px;font:12px Cinzel,serif;cursor:pointer}button.secondary{background:transparent;color:var(--gold)}
 button:disabled{opacity:.5;cursor:not-allowed}.hidden{display:none!important}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.row>*{flex:1}.entry{border-top:1px solid var(--line);padding:16px 0}.msg{min-height:20px}.error{color:#e7ada0}.ok{color:#9fd5c6}
-.admin-tabs{display:flex;gap:8px;overflow-x:auto;padding:5px 2px 12px;margin:22px 0 12px;scrollbar-width:thin}.admin-tabs button{flex:0 0 auto;white-space:nowrap;background:#172629;color:#e9d9b8;border:1px solid #526663;padding:12px 16px;min-height:46px}.admin-tabs button[aria-selected="true"]{background:var(--gold);color:#121b1e;border-color:var(--gold)}.admin-tabs button:focus-visible{outline:2px solid #a5d2c5;outline-offset:2px}.admin-tab-panel[hidden]{display:none!important}.admin-tab-panel{margin-top:10px}.tab-heading{margin-top:0}.admin-category-note{font-size:16px}.admin-tabs button:hover{border-color:#d5b981}.setting input:disabled{opacity:.65}
+.admin-menu-wrap{display:flex;justify-content:flex-end;margin:18px 0 12px;position:relative;z-index:12}.admin-menu{position:relative;width:min(100%,350px)}.admin-menu-trigger{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;justify-content:space-between;padding:13px 15px;min-height:49px;border:1px solid #9b845a;background:#172629;color:#f3dfb6;font:600 12px Cinzel,serif}.admin-menu-trigger::-webkit-details-marker{display:none}.admin-menu-trigger strong{color:#f2eee4;font:600 15px 'Crimson Text',Georgia,serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.admin-menu-chevron{transition:transform .15s}.admin-menu[open] .admin-menu-chevron{transform:rotate(180deg)}.admin-menu-trigger:hover,.admin-menu-trigger:focus-visible{background:#293c3b;outline:2px solid #bca16c;outline-offset:1px}.admin-tabs{position:absolute;right:0;top:calc(100% + 4px);width:100%;background:#152326;border:1px solid #7f7156;box-shadow:0 14px 25px #0009;display:grid;gap:5px;padding:9px;max-height:min(65vh,560px);overflow-y:auto}.admin-tabs button{width:100%;text-align:left;background:#1d3032;color:#e9d9b8;border:1px solid #435a58;padding:12px 14px;min-height:43px;font:600 12px Cinzel,serif}.admin-tabs button[aria-current="true"]{background:var(--gold);color:#121b1e;border-color:var(--gold)}.admin-tabs button:focus-visible{outline:2px solid #a5d2c5;outline-offset:2px}.admin-tab-panel[hidden]{display:none!important}.admin-tab-panel{margin-top:10px}.tab-heading{margin-top:0}.admin-category-note{font-size:16px}.admin-tabs button:hover{border-color:#d5b981}.setting input:disabled{opacity:.65}
 .granted-card{border:1px solid #52625f;background:#172629;margin:10px 0;padding:14px}.granted-card summary{cursor:pointer;color:var(--gold);font-weight:bold}.granted-card h4{color:var(--gold);margin-bottom:8px}.upgrade-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:9px;margin-bottom:14px}.upgrade-choice{display:flex;align-items:flex-start;gap:10px;border:1px solid #405859;padding:10px;margin:0;background:#112022;color:var(--ink)}.upgrade-choice input{width:18px;height:18px;flex:0 0 18px;accent-color:var(--gold)}.upgrade-choice span{display:block}.upgrade-choice small{display:block;color:#c1cdc8;line-height:1.5;margin-top:5px}.grant-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}.grant-grid label{margin-bottom:4px}.grant-grid [hidden]{display:none!important}
 .upgrade-catalog-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px}.upgrade-catalog-card{background:#152326;border:1px solid #50625e;padding:15px;overflow-wrap:anywhere}.upgrade-catalog-card h3{font-size:15px;margin:0 0 9px}.upgrade-catalog-card p{font-size:16px;color:#d4ddd7;margin:10px 0}.upgrade-catalog-meta{display:flex;flex-wrap:wrap;gap:6px}.upgrade-catalog-meta span{font:12px 'Cinzel',serif;color:#f1d7aa;border:1px solid #526561;padding:5px 7px}.upgrade-requirements{color:#e0bcb0!important;font-size:14px!important}.upgrade-catalog-card small{color:#c4d1cd;line-height:1.45}
-@media(max-width:650px){.admin-tabs{margin:16px -8px 10px;padding:5px 8px 12px}.admin-tabs button{font-size:11px;padding:12px 11px}}
+@media(max-width:650px){.admin-menu-wrap{margin:13px 0 10px}.admin-menu{width:min(100%,310px)}.admin-tabs button{font-size:11px;padding:11px 12px}}
 </style><link rel="stylesheet" href="./auth-improvements.css?v=1"><link rel="stylesheet" href="./site-nav.css?v=1"><link rel="stylesheet" href="./whalepunk-theme.css?v=contrast2"></head>
 <body><header><a href="campanha.html">← Voltar à campanha</a><a href="./">Portal Dishonored RPG</a></header>
 <main>
@@ -24,17 +24,17 @@ button:disabled{opacity:.5;cursor:not-allowed}.hidden{display:none!important}.ro
 <div id="loading" class="panel">Verificando seu acesso...</div>
 <div id="denied" class="panel hidden"><h2>Acesso restrito</h2><p>Somente a conta com permissão de administrador pode usar esta página. Entre primeiro na área da campanha.</p><a href="campanha.html">Ir para login</a></div>
 <div id="admin" class="hidden">
-<nav class="admin-tabs" role="tablist" aria-label="Seções da administração">
-<button type="button" role="tab" id="tab-mechanics" data-tab="mechanics" aria-controls="panel-mechanics" aria-selected="true">⚙ Mecânicas</button>
-<button type="button" role="tab" id="tab-talent" data-tab="talent" aria-controls="panel-catalog" aria-selected="false">✦ Talentos</button>
-<button type="button" role="tab" id="tab-bonecharm" data-tab="bonecharm" aria-controls="panel-catalog" aria-selected="false">◇ Amuletos de osso</button>
-<button type="button" role="tab" id="tab-power" data-tab="power" aria-controls="panel-catalog" aria-selected="false">◈ Poderes</button>
-<button type="button" role="tab" id="tab-item" data-tab="item" aria-controls="panel-catalog" aria-selected="false">▣ Itens</button>
-<button type="button" role="tab" id="tab-other" data-tab="other" aria-controls="panel-catalog" aria-selected="false">☷ Outros conteúdos</button>
-<button type="button" role="tab" id="tab-upgrades" data-tab="upgrades" aria-controls="panel-upgrades" aria-selected="false">🔧 Melhorias</button>
-<button type="button" role="tab" id="tab-inventory" data-tab="inventory" aria-controls="panel-inventory" aria-selected="false">🎒 Entregar itens</button>
-<button type="button" role="tab" id="tab-users" data-tab="users" aria-controls="admin-users-section" aria-selected="false">♟ Usuários</button>
-</nav>
+<nav class="admin-menu-wrap" aria-label="Seções da administração"><details class="admin-menu" id="admin-menu"><summary class="admin-menu-trigger"><span>☰ Seções</span><strong id="admin-current-section">Mecânicas</strong><span aria-hidden="true" class="admin-menu-chevron">▾</span></summary><div class="admin-tabs" aria-label="Escolher seção">
+<button type="button" id="tab-mechanics" data-tab="mechanics">⚙ Mecânicas</button>
+<button type="button" id="tab-talent" data-tab="talent">✦ Talentos</button>
+<button type="button" id="tab-bonecharm" data-tab="bonecharm">◇ Amuletos de osso</button>
+<button type="button" id="tab-power" data-tab="power">◈ Poderes</button>
+<button type="button" id="tab-item" data-tab="item">▣ Itens</button>
+<button type="button" id="tab-other" data-tab="other">☷ Outros conteúdos</button>
+<button type="button" id="tab-upgrades" data-tab="upgrades">🔧 Melhorias</button>
+<button type="button" id="tab-inventory" data-tab="inventory">🎒 Entregar itens</button>
+<button type="button" id="tab-users" data-tab="users">♟ Usuários</button>
+</div></details></nav>
 <section class="panel admin-tab-panel" id="panel-upgrades" role="tabpanel" aria-labelledby="tab-upgrades" hidden>
 <h2>🔧 Catálogo de melhorias</h2>
 <p>Melhorias de equipamentos de Dishonored, The Knife of Dunwall / The Brigmore Witches, Dishonored 2 e Death of the Outsider. Preços e requisitos são referências dos videogames. Para instalar uma melhoria em um personagem, abra a aba <strong>Entregar itens</strong>, selecione sua ficha e expanda o equipamento recebido.</p>
@@ -115,9 +115,13 @@ function switchTab(tab,updateHash=true){
  $('panel-upgrades').hidden=activeTab!=='upgrades';
  $('admin-users-section').hidden=activeTab!=='users';
  $('panel-catalog').hidden=!isCatalog;
- for(const button of document.querySelectorAll('.admin-tabs [role="tab"]')){
-  const selected=button.dataset.tab===activeTab;button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;
+ for(const button of document.querySelectorAll('.admin-tabs [data-tab]')){
+  const selected=button.dataset.tab===activeTab;
+  if(selected)button.setAttribute('aria-current','true');else button.removeAttribute('aria-current');
  }
+ const selectedButton=document.querySelector('.admin-tabs [data-tab="'+activeTab+'"]');
+ $('admin-current-section').textContent=selectedButton?.textContent.trim()||'Mecânicas';
+ $('admin-menu').open=false;
  if(isCatalog){
   $('catalog-heading').textContent=categoryTabs[activeTab]||'Outros conteúdos';
   $('kind-field').hidden=activeTab!=='other';
@@ -127,14 +131,14 @@ function switchTab(tab,updateHash=true){
  }
  if(updateHash)history.replaceState(null,'','#'+(activeTab==='users'?'admin-users-section':'tab-'+activeTab));
 }
-document.querySelectorAll('.admin-tabs [role="tab"]').forEach(button=>{
+document.querySelectorAll('.admin-tabs [data-tab]').forEach(button=>{
  button.addEventListener('click',()=>switchTab(button.dataset.tab));
- button.addEventListener('keydown',e=>{
-  if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
-  e.preventDefault();const buttons=[...document.querySelectorAll('.admin-tabs [role="tab"]')];
-  const ix=buttons.indexOf(button);const target=e.key==='Home'?0:e.key==='End'?buttons.length-1:(ix+(e.key==='ArrowRight'?1:-1)+buttons.length)%buttons.length;
-  buttons[target].focus();switchTab(buttons[target].dataset.tab);
- });
+});
+document.addEventListener('click',event=>{
+ if(!event.target.closest('#admin-menu'))$('admin-menu').open=false;
+});
+document.addEventListener('keydown',event=>{
+ if(event.key==='Escape')$('admin-menu').open=false;
 });
 window.addEventListener('hashchange',()=>{
  const hash=location.hash.slice(1);

@@ -1,5 +1,5 @@
 import {db,getAuth} from './personagens-common.js';
-import {initMasterEditor} from './mesa-mestre.js?v=removefast1';
+import {initMasterEditor} from './mesa-mestre.js?v=mobile-v1';
 const $=id=>document.getElementById(id),roomId=new URLSearchParams(location.search).get('id');
 const isUuid=x=>/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(x||'');
 const node=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined&&txt!==null)e.textContent=String(txt);if(cls)e.className=cls;return e};
@@ -22,7 +22,7 @@ function mobileNavigate(next,scroll=true){
  for(const button of document.querySelectorAll('[data-mobile-target]')){
   button.setAttribute('aria-pressed',String(button.dataset.mobileTarget===next));
  }
- if(isMobile()&&scroll)window.scrollTo({top:0,behavior:'instant'});
+ if(isMobile()&&scroll)window.scrollTo({top:0,behavior:'auto'});
 }
 function connectionState(state,label){
  const el=$('connection-status');if(!el)return;
@@ -187,6 +187,7 @@ async function refresh({side=false}={}){
   if(stockChanged&&gm())stockView();
   $('coins').textContent='Moedas: '+(mine?.character_id?fmt(mine.coins):'—');
   $('xp').textContent='XP: '+(mine?.character_id?fmt(mine.xp):'—');
+  if(oldCharacterId!==mine?.character_id){lastRoll=null;setRepeatReady()}
   if(side||oldMode!==room.shop_open||purchasesChanged||stockChanged||oldCharacterId!==mine?.character_id)renderSide();
   if(!m.error&&mine?.character_id)await loadMySheet(false);
   if(!mine?.character_id&&oldCharacterId)await loadMySheet(false);
@@ -397,6 +398,7 @@ function renderSide(){
     if(![...$('roll-skill').options].some(x=>x.value===skill)||![...$('roll-style').options].some(x=>x.value===style)){say('side-msg','Esta ação exige perícia ou estilo não disponível na ficha.',true);return}
     $('roll-skill').value=skill;$('roll-style').value=style;
     say('side-msg','Rolagem configurada para '+name+'. Use o botão Rolar dados no painel central.');
+    if(isMobile())mobileNavigate('rolls');
     $('roll-submit').scrollIntoView({behavior:'smooth',block:'center'});
    });row.append(b);root.append(row);
   }

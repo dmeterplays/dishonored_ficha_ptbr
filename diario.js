@@ -87,6 +87,7 @@ async function boot(){
  $('diary-editor').classList.toggle('hidden',!master);
  await refresh();status('');
  channel=db.channel('diary-'+roomId).on('postgres_changes',{event:'*',schema:'public',table:'dh_room_journal',filter:'room_id=eq.'+roomId},()=>{if(!editing)refresh()}).subscribe();
+ setInterval(()=>{if(!editing&&document.visibilityState==='visible')refresh()},45000);
  window.addEventListener('pagehide',()=>{if(channel)db.removeChannel(channel)});
 }
 try{await boot()}catch(e){status(e.message,true)}

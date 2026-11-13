@@ -1,5 +1,5 @@
 /* Menu único acessível em todas as páginas, sem interferir nos controles do jogo. */
-.global-site-nav{position:relative;z-index:20;background:#172528;border-bottom:1px solid #405658;color:#e8d5aa;font-family:'Crimson Text',Georgia,serif}
+.global-site-nav{display:none;position:relative;z-index:20;background:#172528;border-bottom:1px solid #405658;color:#e8d5aa;font-family:'Crimson Text',Georgia,serif}
 .global-site-menu{max-width:1160px;margin:0 auto}
 .global-site-summary{display:none}
 .global-site-links{display:flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;flex-wrap:wrap}
@@ -7,6 +7,7 @@
 .global-site-links a[aria-current=page]{border-color:#8e7b57;color:#edd4a6;background:#293631}
 .global-site-links a:hover,.global-site-links a:focus-visible{color:#efd6a8;border-color:#8e7b57;background:#253739}
 @media(max-width:760px){
+ .global-site-nav{display:block}
  .global-nav-ready header nav{display:none!important}
  .global-site-nav{position:sticky;top:0;z-index:39;box-shadow:0 3px 9px #0005}
  .global-site-summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 17px;min-height:48px;cursor:pointer;list-style:none}

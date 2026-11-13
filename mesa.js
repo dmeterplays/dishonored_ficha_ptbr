@@ -1,9 +1,10 @@
 import {db,getAuth} from './personagens-common.js';
 import {initMasterEditor} from './mesa-mestre.js?v=diary-stress1';
+import {renderOwnedGear} from './active-upgrade-ui.js?v=1';
 const $=id=>document.getElementById(id),roomId=new URLSearchParams(location.search).get('id');
 const isUuid=x=>/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(x||'');
 const node=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined&&txt!==null)e.textContent=String(txt);if(cls)e.className=cls;return e};
-let me,room,roster=[],enemies=[],mine=null,mySheet=null,items=[],stock=[],purchases=[],tab='sheet',rollMode='quick',busy=false,costs={},gmEditor=null,realtimeChannel=null,presenceChannel=null,presenceReady=false,onlineUsers=new Set(),roomRefreshTimer=null,rollRefreshTimer=null,rollsSnapshot='',queuedRoomRefresh=false,lastRoll=null,mobileView='rolls';
+let lastGearCharacter=null;let me,room,roster=[],enemies=[],mine=null,mySheet=null,items=[],stock=[],purchases=[],tab='sheet',rollMode='quick',busy=false,costs={},gmEditor=null,realtimeChannel=null,presenceChannel=null,presenceReady=false,onlineUsers=new Set(),roomRefreshTimer=null,rollRefreshTimer=null,rollsSnapshot='',queuedRoomRefresh=false,lastRoll=null,mobileView='rolls';
 const gm=()=>room?.owner_id===me?.id;
 const say=(id,msg,bad=false)=>{$(id).textContent=msg;$(id).className=bad?'error':'status'};
 const clip=x=>String(x??'').slice(0,5000);
@@ -356,10 +357,11 @@ function startLiveUpdates(){
  window.addEventListener('pagehide',()=>{if(realtimeChannel)db.removeChannel(realtimeChannel);if(presenceChannel)db.removeChannel(presenceChannel)});
 }
 async function loadMySheet(redraw=true){
- if(!mine?.character_id){mySheet=null;rollerView();setRepeatReady();$('my-character').replaceChildren(node('p',gm()?'Você está como mestre. Clique em Abrir ficha de um participante ou inimigo no painel esquerdo.':'Vincule uma ficha à campanha pelo lobby.'));if(redraw)renderSide();return}
+ if(!mine?.character_id){lastGearCharacter=null;$('session-gear-list')?.replaceChildren(node('p','Vincule um personagem para consultar seu inventário.'));mySheet=null;rollerView();setRepeatReady();$('my-character').replaceChildren(node('p',gm()?'Você está como mestre. Clique em Abrir ficha de um participante ou inimigo no painel esquerdo.':'Vincule uma ficha à campanha pelo lobby.'));if(redraw)renderSide();return}
  const {data,error}=await db.from('dh_characters').select('id,name,sheet,creation_status').eq('id',mine.character_id).eq('owner_id',me.id).single();
  if(error){say('side-msg',error.message,true);return}
  const changed=JSON.stringify(mySheet)!==JSON.stringify(data.sheet);
+ if(lastGearCharacter!==mine.character_id){lastGearCharacter=mine.character_id;renderOwnedGear($('session-gear-list'),mine.character_id)}
  mySheet=data.sheet;
  if(!changed&&!redraw)return;
  rollerView();setRepeatReady();

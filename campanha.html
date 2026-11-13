@@ -21,7 +21,7 @@ a{color:var(--gold)}h1,h2,h3,button{font-family:Cinzel,serif}h1{font-size:29px;c
 <p id="auth-help" class="auth-help">Use o e-mail e a senha da sua conta existente.</p>
 <button id="auth-submit" type="submit">Entrar na campanha</button>
 </form><p id="auth-message" role="status" aria-live="polite"></p></section>
-<section id="logged" class="hidden"><div class="panel"><div class="actions" style="justify-content:space-between;align-items:center"><div><h2 id="welcome">Campanha</h2><p id="role-info"></p></div><button id="logout" class="secondary">Sair</button></div></div>
+<section id="logged" class="hidden"><div class="panel"><div class="actions" style="justify-content:space-between;align-items:center"><div><h2 id="welcome">Campanha</h2><p id="role-info"></p></div><a id="admin-dashboard-link" class="button hidden" href="admin.html#admin-users-section">Ver usuários</a><button id="logout" class="secondary">Sair</button></div></div>
 <div class="grid"><div class="panel"><h2>Importar personagem existente</h2><p>Use o JSON exportado da ficha original.</p><input id="import-json" type="file" accept=".json,application/json"><button id="import-btn">Salvar personagem na conta</button><p id="import-status" role="status"></p></div><div class="panel"><h2>Seus recursos</h2><p>Os Pontos do Vazio continuam individuais. Cada personagem terá seu próprio Momentum e XP no banco de dados.</p><p><small>Alterações de XP/Momentum ficam reservadas ao mestre; recursos não podem ser alterados diretamente pelo navegador.</small></p></div></div>
 <section class="panel"><div class="actions" style="align-items:center;justify-content:space-between"><div><h2>Minhas fichas</h2><p>Personagens salvos na sua conta, com foto, edição de ficha e simulador de itens e poderes.</p></div><a href="fichas.html" class="button">Abrir galeria de fichas →</a></div><div id="character-list" class="grid"></div></section>
 <section class="panel"><h2>Mesas de campanha</h2><p>Crie uma sala de RPG ou entre com o código do mestre. Participe das rolagens da mesa, gerencie seu personagem e explore o modo loja.</p><a href="salas.html" class="button">Abrir salas e mesa online</a></section><section class="panel"><h2>Catálogo de progressão</h2><p>Veja os 13 arquétipos e custos oficiais de avanço.</p><a href="catalogo.html" class="button">Abrir catálogo</a></section>
@@ -49,7 +49,7 @@ async function refresh(){
  role=prof.role;
  $('welcome').textContent='Bem-vindo, '+(prof.display_name||user.email);
  $('role-info').textContent=role==='admin'?'Acesso: Administrador e Mestre':role==='master'?'Acesso: Mestre':'Acesso: Jogador';
- show('master-area',role==='master'||role==='admin');show('admin-link',role==='admin');
+ show('master-area',role==='master'||role==='admin');show('admin-link',role==='admin');show('admin-dashboard-link',role==='admin');
  await loadCharacters();
  if(role==='master'||role==='admin'){await loadMaster();await loadChaos();}
 }

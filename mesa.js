@@ -143,7 +143,7 @@ function chooseQuickAction(skill,style){
  }
  $('roll-skill').value=skill;$('roll-style').value=style;
  for(const btn of document.querySelectorAll('.quick-action-btn'))btn.setAttribute('aria-pressed',String(btn.dataset.skill===skill&&btn.dataset.style===style));
- say('roll-msg','Ação selecionada: '+skill+' + '+style+'.','');
+ say('roll-msg','Ação selecionada: '+skill+' + '+style+'.');
 }
 function paintQuickActions(){
  const root=$('roll-quick-actions');root.replaceChildren();
@@ -457,8 +457,8 @@ function renderSide(){
    const button=node('button',label,'secondary');button.type='button';button.addEventListener('click',action);shortcuts.append(button);
   }
   root.append(shortcuts);
-  root.append(node('p','Arquétipo: '+mine.archetype));
-  root.append(node('p','Estresse: '+mine.stress_now+'/'+mine.stress_max+' · Vazio: '+mine.void_points+' · Momentum: '+mine.momentum));
+  root.append(node('p','Momentum: '+mine.momentum,'small'));
+
   const link=node('a','Editar ficha completa','btn secondary');link.href='personagem.html?id='+encodeURIComponent(mine.character_id);root.append(link);
   return;
  }

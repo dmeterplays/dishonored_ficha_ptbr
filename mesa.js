@@ -3,7 +3,7 @@ import {initMasterEditor} from './mesa-mestre.js?v=removefast1';
 const $=id=>document.getElementById(id),roomId=new URLSearchParams(location.search).get('id');
 const isUuid=x=>/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(x||'');
 const node=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined&&txt!==null)e.textContent=String(txt);if(cls)e.className=cls;return e};
-let me,room,roster=[],enemies=[],mine=null,mySheet=null,items=[],stock=[],purchases=[],tab='sheet',busy=false,costs={},gmEditor=null,realtimeChannel=null,roomRefreshTimer=null,rollRefreshTimer=null,rollsSnapshot='',queuedRoomRefresh=false;
+let me,room,roster=[],enemies=[],mine=null,mySheet=null,items=[],stock=[],purchases=[],tab='sheet',busy=false,costs={},gmEditor=null,realtimeChannel=null,roomRefreshTimer=null,rollRefreshTimer=null,rollsSnapshot='',queuedRoomRefresh=false,lastRoll=null,mobileView='rolls';
 const gm=()=>room?.owner_id===me?.id;
 const say=(id,msg,bad=false)=>{$(id).textContent=msg;$(id).className=bad?'error':'status'};
 const clip=x=>String(x??'').slice(0,5000);
@@ -12,6 +12,28 @@ const byId=x=>items.find(i=>i.id===x);
 const owns=x=>purchases.filter(p=>p.catalog_id===x.id);
 const storeRecord=x=>stock.find(s=>s.catalog_id===x.id);
 const available=x=>{const s=storeRecord(x);return !s||(s.available&&s.quantity!==0)};
+
+const isMobile=()=>window.matchMedia('(max-width:760px)').matches;
+function mobileNavigate(next,scroll=true){
+ if(!['sheets','rolls','character','more'].includes(next))return;
+ mobileView=next;
+ const table=$('table');
+ if(table)table.dataset.mobileView=next;
+ for(const button of document.querySelectorAll('[data-mobile-target]')){
+  button.setAttribute('aria-pressed',String(button.dataset.mobileTarget===next));
+ }
+ if(isMobile()&&scroll)window.scrollTo({top:0,behavior:'instant'});
+}
+function connectionState(state,label){
+ const el=$('connection-status');if(!el)return;
+ el.dataset.status=state;el.textContent=label;
+}
+function setRepeatReady(){
+ const button=$('roll-repeat');
+ if(button)button.disabled=!mySheet||!lastRoll;
+}
+for(const button of document.querySelectorAll('[data-mobile-target]'))button.addEventListener('click',()=>mobileNavigate(button.dataset.mobileTarget));
+
 function option(select,value,label){const o=node('option',label);o.value=String(value);select.append(o)}
 function roomView(){
  $('room-name').textContent=room.name;
@@ -182,8 +204,9 @@ function startLiveUpdates(){
  .on('postgres_changes',{event:'UPDATE',schema:'public',table:'dh_rooms',filter:'id=eq.'+roomId},requestRoomRefresh)
  .on('postgres_changes',{event:'INSERT',schema:'public',table:'dh_room_rolls',filter:'room_id=eq.'+roomId},requestRollRefresh)
  .subscribe(status=>{
-  if(status==='SUBSCRIBED'){requestRoomRefresh();requestRollRefresh()}
-  if(status==='CHANNEL_ERROR'||status==='TIMED_OUT')say('room-status','Conexão em tempo real instável. A mesa continuará sincronizando periodicamente.',true);
+  if(status==='SUBSCRIBED'){connectionState('live','Sincronizado');requestRoomRefresh();requestRollRefresh()}
+  if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){connectionState('offline','Reconectando...');say('room-status','Conexão em tempo real instável. A mesa continuará sincronizando periodicamente.',true)}
+  if(status==='CLOSED')connectionState('offline','Offline');
  });
  setInterval(()=>{
   if(document.visibilityState!=='visible')return;
@@ -196,13 +219,13 @@ function startLiveUpdates(){
  window.addEventListener('pagehide',()=>{if(realtimeChannel)db.removeChannel(realtimeChannel)});
 }
 async function loadMySheet(redraw=true){
- if(!mine?.character_id){mySheet=null;rollerView();$('my-character').replaceChildren(node('p',gm()?'Você está como mestre. Clique em Abrir ficha de um participante ou inimigo no painel esquerdo.':'Vincule uma ficha à campanha pelo lobby.'));if(redraw)renderSide();return}
+ if(!mine?.character_id){mySheet=null;rollerView();setRepeatReady();$('my-character').replaceChildren(node('p',gm()?'Você está como mestre. Clique em Abrir ficha de um participante ou inimigo no painel esquerdo.':'Vincule uma ficha à campanha pelo lobby.'));if(redraw)renderSide();return}
  const {data,error}=await db.from('dh_characters').select('id,name,sheet,creation_status').eq('id',mine.character_id).eq('owner_id',me.id).single();
  if(error){say('side-msg',error.message,true);return}
  const changed=JSON.stringify(mySheet)!==JSON.stringify(data.sheet);
  mySheet=data.sheet;
  if(!changed&&!redraw)return;
- rollerView();
+ rollerView();setRepeatReady();
  const root=$('my-character');root.replaceChildren();
  root.append(node('strong',mine.character_name));
  const edit=node('a','Abrir ficha completa','btn secondary');edit.href='personagem.html?id='+encodeURIComponent(mine.character_id);edit.style.marginTop='8px';
@@ -432,14 +455,28 @@ $('copy-code').addEventListener('click',async()=>{
  try{await navigator.clipboard.writeText(room.code);say('room-status','Código copiado: '+room.code)}
  catch(e){say('room-status','Código: '+room.code)}
 });
-$('roll-submit').addEventListener('click',async()=>{
- const b=$('roll-submit');b.disabled=true;
+const currentRollPayload=()=>({
+ p_room:roomId,
+ p_skill:$('roll-skill').value,p_style:$('roll-style').value,
+ p_focus:$('roll-focus').value||null,p_dice:Number($('roll-dice').value),
+ p_difficulty:Number($('roll-difficulty').value),
+ p_visibility:$('roll-visibility').value
+});
+async function sendRoll(payload){
+ const submit=$('roll-submit'),repeat=$('roll-repeat');
+ submit.disabled=true;repeat.disabled=true;
  try{
- const payload={p_room:roomId,p_skill:$('roll-skill').value,p_style:$('roll-style').value,p_focus:$('roll-focus').value||null,p_dice:Number($('roll-dice').value),p_difficulty:Number($('roll-difficulty').value),p_visibility:$('roll-visibility').value};
- const {error}=await db.rpc('dh_roll_room',payload);if(error)throw Error(error.message);
- say('roll-msg',payload.p_visibility==='gm_only'?'Rolagem enviada somente ao mestre.':'Rolagem registrada na mesa!');
- await refreshRolls();
- }catch(e){say('roll-msg',e.message,true)}finally{b.disabled=!mySheet}
+  const {error}=await db.rpc('dh_roll_room',payload);
+  if(error)throw Error(error.message);
+  lastRoll={...payload};
+  say('roll-msg',payload.p_visibility==='gm_only'?'Rolagem enviada somente ao mestre.':'Rolagem registrada na mesa!');
+  await refreshRolls();
+ }catch(e){say('roll-msg',e.message,true)}
+ finally{submit.disabled=!mySheet;setRepeatReady()}
+}
+$('roll-submit').addEventListener('click',()=>sendRoll(currentRollPayload()));
+$('roll-repeat').addEventListener('click',()=>{
+ if(lastRoll&&mySheet)sendRoll({...lastRoll});
 });
 $('shop-toggle').addEventListener('click',async()=>{
  const {error}=await db.rpc('dh_room_set_shop',{p_room:roomId,p_open:!room.shop_open});
@@ -469,11 +506,11 @@ $('stock-search').addEventListener('input',stockView);
 async function boot(){
  if(!isUuid(roomId))throw Error('Endereço de sala inválido.');
  me=await getAuth();
- gmEditor=initMasterEditor({db,roomId,getCatalog:()=>items,onSaved:async()=>{await refresh()}});
+ gmEditor=initMasterEditor({db,roomId,getCatalog:()=>items,onSaved:async()=>{await refresh()},onSelect:()=>mobileNavigate('character')});
  await refresh({side:false});
  if(!room)return;
  $('table').classList.remove('hidden');
- await loadCatalog();await loadMySheet(true);await refreshRolls();
+ await loadCatalog();await loadMySheet(true);await refreshRolls();mobileNavigate('rolls',false);
  const selectedEnemy=new URLSearchParams(location.search).get('enemy');
  if(selectedEnemy&&gm()&&enemies.some(e=>e.id===selectedEnemy)){await gmEditor.chooseEnemy(selectedEnemy);history.replaceState(null,'','mesa.html?id='+encodeURIComponent(roomId));}
  startLiveUpdates();

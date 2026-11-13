@@ -60,7 +60,23 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog,onSelect=()=>{}})
   const tier=working.tier==='incidental'?'Incidental':working.tier==='menor'?'Menor':working.tier==='notavel'?'Notável':'Principal';
   root.append(make('p','NPC '+tier+' · '+(working.section==='selvagens'?'O Selvagem':working.section==='nobreza'?'A Nobreza':working.section==='notorios'?'O Notório':'O Povo Comum'),'small'));
   const stress=Number(sh.stressMax??0);
-  const stressText=make('p',stress===0?'Sem trilha de estresse.':'Estresse: '+(sh.stressAtual??0)+' / '+stress,'small');
+  const stressText=make('div',null,'stress-widget');
+  if(stress<=0)stressText.append(make('p','Sem trilha de estresse.','small'));
+  else{
+   let current=Math.min(stress,Math.max(0,Number(sh.stressAtual)||0));
+   const header=make('div',null,'stress-widget-header'),label=make('strong','Estresse'),value=make('span',current+' / '+stress,'stress-value');header.append(label,value);
+   const bar=make('div',null,'stress-widget-row'),minus=make('button','−','secondary stress-step'),plus=make('button','+','secondary stress-step'),track=make('div',null,'stress-widget-track'),fill=make('span',null,'stress-widget-fill');
+   track.setAttribute('role','progressbar');track.setAttribute('aria-label','Estresse do inimigo');track.setAttribute('aria-valuemin','0');track.setAttribute('aria-valuemax',String(stress));track.append(fill);
+   const paint=()=>{value.textContent=current+' / '+stress;fill.style.width=(100*current/stress)+'%';track.setAttribute('aria-valuenow',String(current));minus.disabled=current<=0;plus.disabled=current>=stress};
+   for(const [btn,delta] of [[minus,-1],[plus,1]]){btn.type='button';btn.setAttribute('aria-label',delta===-1?'Diminuir estresse':'Aumentar estresse');btn.addEventListener('click',async()=>{
+    minus.disabled=true;plus.disabled=true;
+    const {data,error}=await db.rpc('dh_room_adjust_stress',{p_room:roomId,p_character:null,p_enemy:selected.id,p_delta:delta});
+    if(error)message(error.message,true);
+    else{current=data;working.sheet.stressAtual=data;await onSaved();}
+    paint();
+   })}
+   bar.append(minus,track,plus);stressText.append(header,bar);paint();
+  }
   const visibility=make('label','Mostrar barra de estresse aos jogadores','gm-stress-toggle');
   const checkbox=make('input');checkbox.type='checkbox';checkbox.checked=working.stress_visible!==false;
   checkbox.style.width='auto';checkbox.setAttribute('aria-label','Exibir estresse do inimigo aos jogadores');

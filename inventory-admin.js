@@ -1,6 +1,6 @@
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './supabase-config.js';
-import {UPGRADES,optionsFor,GAME_LABELS} from './equipment-upgrades.js?v=wiki2';
+import {UPGRADES,optionsFor,GAME_LABELS,conflictingMasterwork} from './equipment-upgrades.js?v=wiki3';
 const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 const el=id=>document.getElementById(id);
 let chars=[],items=[],catalog=[],selected=null,uid=null;
@@ -49,11 +49,12 @@ async function refreshItems(){
    met.append(text('strong',u.name+' · '+u.cost+' moedas · '+(GAME_LABELS[u.game]||u.game)));
    met.append(text('small',u.effect));
    if(u.requires.length)met.append(text('small','Pré-requisito: '+u.requires.map(id=>UPGRADES.find(v=>v.id===id)?.name||id).join(', ')));
+   if(u.blueprint)met.append(text('small','Projeto do videogame: '+u.blueprint));
    input.addEventListener('change',async()=>{
     const next=new Set(installed);
     if(input.checked){
-     if(u.name.startsWith('Obra-prima:') && upgrades.some(v=>v.id!==u.id&&next.has(v.id)&&v.name.startsWith('Obra-prima:')&&v.type===u.type&&v.game===u.game)){
-      say('Só uma obra-prima por equipamento dessa família. Remova a anterior.',true);input.checked=false;return;
+     if(conflictingMasterwork(u.id,next)){
+      say('Essas duas obras-primas são alternativas exclusivas. Remova a anterior.',true);input.checked=false;return;
      }
      if(u.requires.some(id=>!next.has(id))){say('Adicione primeiro os pré-requisitos de '+u.name+'.',true);input.checked=false;return}
      next.add(u.id);

@@ -12,7 +12,7 @@ h1,h2,h3{font-family:Cinzel,serif;color:var(--gold)}h1{font-size:30px}h2{font-si
 label{display:block;font-size:15px;color:var(--gold);margin:8px 0}input,select,textarea{display:block;width:100%;padding:10px;background:#11191d;border:1px solid #667777;color:var(--ink);font:17px 'Crimson Text',serif}
 textarea{min-height:95px}button{background:var(--gold);border:1px solid var(--gold);color:#10191a;padding:11px 15px;font:12px Cinzel,serif;cursor:pointer}button.secondary{background:transparent;color:var(--gold)}
 button:disabled{opacity:.5;cursor:not-allowed}.hidden{display:none!important}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.row>*{flex:1}.entry{border-top:1px solid var(--line);padding:16px 0}.msg{min-height:20px}.error{color:#e7ada0}.ok{color:#9fd5c6}
-</style><link rel="stylesheet" href="./site-nav.css?v=1"><link rel="stylesheet" href="./whalepunk-theme.css?v=contrast2"></head>
+</style><link rel="stylesheet" href="./auth-improvements.css?v=1"><link rel="stylesheet" href="./site-nav.css?v=1"><link rel="stylesheet" href="./whalepunk-theme.css?v=contrast2"></head>
 <body><header><a href="campanha.html">← Voltar à campanha</a><a href="./">Portal Dishonored RPG</a></header>
 <main>
 <h1>Administração do sistema</h1>
@@ -20,6 +20,11 @@ button:disabled{opacity:.5;cursor:not-allowed}.hidden{display:none!important}.ro
 <div id="loading" class="panel">Verificando seu acesso...</div>
 <div id="denied" class="panel hidden"><h2>Acesso restrito</h2><p>Somente a conta com permissão de administrador pode usar esta página. Entre primeiro na área da campanha.</p><a href="campanha.html">Ir para login</a></div>
 <div id="admin" class="hidden">
+<section class="panel" id="admin-users-section"><h2>Usuários e personagens cadastrados</h2>
+<p>Visualização administrativa das contas, suas fichas, recursos e campanhas. Esta área é somente de consulta: não altera as fichas dos jogadores.</p>
+<div class="admin-users-toolbar"><label for="admin-user-search">Buscar jogador ou personagem<input id="admin-user-search" type="search" placeholder="Nome, personagem, arquétipo ou campanha"></label><button id="admin-user-refresh" type="button" class="secondary">Atualizar lista</button></div>
+<p id="admin-users-status" class="msg" role="status">Carregando usuários...</p>
+<div id="admin-users-list"></div></section>
 <section class="panel"><h2>Parâmetros do RPG</h2><p>Os valores iniciais seguem o livro; você pode modificá-los para adotar regras próprias. As mudanças nesta tela afetam as configurações armazenadas no banco, mas ainda não são aplicadas automaticamente às fichas antigas.</p>
 <div id="settings" class="grid"></div><p id="settings-msg" class="msg" role="status"></p></section>
 <section class="panel"><h2>Catálogo de conteúdos</h2><p>Cadastre ou ajuste arquétipos, talentos, poderes, amuletos de osso e itens. A publicação torna a entrada visível para os jogadores conectados.</p>
@@ -52,9 +57,77 @@ async function init(){
  const {data:profile,error:pe}=await db.from('dh_profiles').select('role').eq('id',user.id).single();
  if(pe||profile?.role!=='admin')throw Error('Permissão de administrador necessária.');
  show('loading',false);show('admin',true);
- await Promise.all([loadSettings(),loadCatalog()]);
+ await Promise.all([loadSettings(),loadCatalog(),loadUsers()]);
  }catch(e){show('loading',false);show('denied',true);}
 }
+let systemUsers=[];
+function userElement(tag,text,cls){
+ const x=document.createElement(tag);if(text!==undefined&&text!==null)x.textContent=String(text);if(cls)x.className=cls;return x;
+}
+const roleLabel=role=>role==='admin'?'Administrador':role==='master'?'Mestre':'Jogador';
+function ownedNames(value){
+ const names=new Set();
+ function walk(x,depth=0){
+  if(depth>5||x===null||x===undefined)return;
+  if(typeof x==='string'){const name=x.trim();if(name&&name.length<160&&!/^[0-9a-f]{8}-[0-9a-f-]{20,}$/i.test(name))names.add(name);return}
+  if(Array.isArray(x)){for(const y of x.slice(0,80))walk(y,depth+1);return}
+  if(typeof x==='object'){
+   const label=x.name||x.nome||x.title||x.label;
+   if(typeof label==='string')walk(label,depth+1);
+   else for(const [key,val] of Object.entries(x).slice(0,80)){
+    if(['id','catalog_id','source','origin','category','quantity','amount','cost','value','level'].includes(key))continue;
+    if(val===true&&key.length<100)names.add(key);
+    else if(typeof val==='object')walk(val,depth+1);
+   }
+  }
+ }
+ walk(value);
+ return [...names].slice(0,50);
+}
+function renderUsers(){
+ const root=$('admin-users-list');root.replaceChildren();
+ const term=$('admin-user-search').value.toLocaleLowerCase('pt-BR').trim();
+ const filtered=systemUsers.filter(u=>[u.display_name,u.role,...(u.characters||[]).flatMap(c=>[c.name,c.archetype]),...(u.rooms||[]).map(r=>r.name)].join(' ').toLocaleLowerCase('pt-BR').includes(term));
+ $('admin-users-status').textContent=filtered.length+' de '+systemUsers.length+' usuário(s) cadastrado(s)';
+ if(!filtered.length){root.append(userElement('p','Nenhum usuário encontrado.','admin-user-empty'));return}
+ for(const u of filtered){
+  const wrapper=userElement('details',null,'admin-user'),summary=userElement('summary');
+  const title=userElement('span',u.display_name||'Sem nome','admin-user-name');
+  const small=userElement('span',roleLabel(u.role)+' · '+(u.characters?.length||0)+' ficha(s)','admin-user-hint');
+  summary.append(title,small);wrapper.append(summary);
+  const detail=userElement('div',null,'admin-user-content');
+  const joined=u.created_at?new Date(u.created_at).toLocaleDateString('pt-BR'):'Não informado';
+  detail.append(userElement('p','Cadastrado em '+joined,'admin-user-meta'));
+  const rooms=(u.rooms||[]).map(r=>r.name).filter(Boolean);
+  detail.append(userElement('p','Campanhas: '+(rooms.length?rooms.join(' · '):'Nenhuma'),'admin-user-meta'));
+  if(!(u.characters||[]).length)detail.append(userElement('p','Este usuário ainda não possui fichas.','admin-user-empty'));
+  for(const c of u.characters||[]){
+   const card=userElement('div',null,'admin-user-character');
+   card.append(userElement('h4',(c.name||'Sem nome')+' · '+(c.archetype||'Sem arquétipo')));
+   card.append(userElement('p',c.creation_status==='ready'?'Pronto para jogar':'Rascunho'));
+   card.append(userElement('div','Estresse '+c.stress_now+'/'+c.stress_max+' · XP '+(c.xp??0)+' · Moedas '+(c.coins??0)+' · Momentum '+(c.momentum??0)+' · Vazio '+(c.void_points??0),'admin-user-stats'));
+   const owned=ownedNames(c.catalog_selections).concat(ownedNames(c.gm_inventory));
+   if(c.inventory&&String(c.inventory).trim())owned.push('Anotações de pertences: '+String(c.inventory).slice(0,300));
+   const list=userElement('ul');
+   for(const item of [...new Set(owned)].slice(0,30))list.append(userElement('li',item));
+   if(list.childElementCount){card.append(userElement('p','Conteúdos e pertences registrados:'));card.append(list)}
+   else card.append(userElement('p','Nenhum conteúdo registrado na ficha.','admin-user-empty'));
+   detail.append(card);
+  }
+  wrapper.append(detail);root.append(wrapper);
+ }
+}
+async function loadUsers(){
+ $('admin-user-refresh').disabled=true;
+ const {data,error}=await db.rpc('dh_admin_users_overview');
+ $('admin-user-refresh').disabled=false;
+ if(error){msg('admin-users-status','Não foi possível carregar usuários: '+error.message,true);return}
+ systemUsers=Array.isArray(data)?data:[];
+ renderUsers();
+}
+$('admin-user-search').addEventListener('input',renderUsers);
+$('admin-user-refresh').addEventListener('click',loadUsers);
+
 async function loadSettings(){
  const {data,error}=await db.from('dh_settings').select('key,value,label,description').order('key');
  const root=$('settings');root.replaceChildren();

@@ -146,6 +146,10 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
  .mobile-nav-btn>span:first-child{font-size:21px;line-height:1}
  .mobile-nav-btn[aria-pressed="true"]{color:#f1d5a0;border-color:#756c53;background:#293632}
  .mobile-nav-btn:focus-visible{outline:2px solid var(--gold)}
+ #table-rolls{flex-direction:column}
+ .table-layout[data-mobile-view="rolls"]>#table-rolls{display:flex}
+ #table-rolls>.subpanel{order:1;margin-top:7px}
+ #table-rolls>#rolls{order:2;margin-top:13px}
  .table-panel h2{font-size:17px}
  .table-panel .form-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
  .table-panel input,.table-panel select,.table-panel textarea{font-size:16px;min-height:44px}

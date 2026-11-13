@@ -1,7 +1,7 @@
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2.58.0';
 import {SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY} from './supabase-config.js';
 import {UPGRADES,GAME_LABELS,UPGRADE_GROUPS} from './equipment-upgrades.js?v=wiki4';
-import {mergedUpgrade} from './upgrade-config.js?v=3';
+import {mergedUpgrade} from './upgrade-config.js?v=4';
 const db=createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 const $=id=>document.getElementById(id);
 let configs=[], catalogItems=[],renderLimit=130;
@@ -25,7 +25,7 @@ function render(){
   card.append(meta,node('p',effective.effect));
   if(effective.rule_note)card.append(node('p','Regra 2d20: '+effective.rule_note));
   if(effective.capacity_bonus)card.append(node('p','Capacidade adicional enquanto ativa: +'+effective.capacity_bonus));
-  if(effective.bonus_skill&&effective.bonus_value)card.append(node('p','Bônus em teste de '+effective.bonus_skill+': '+(effective.bonus_value>0?'+':'')+effective.bonus_value+' ao alvo 2d20'));
+  if((effective.bonus_skill||effective.bonus_style)&&effective.bonus_value)card.append(node('p','Bônus em teste de '+(effective.bonus_skill||'qualquer perícia')+' + '+(effective.bonus_style||'qualquer estilo')+': '+(effective.bonus_value>0?'+':'')+effective.bonus_value+' ao alvo 2d20'));
   if(u.requires?.length)card.append(node('p','Requer: '+u.requires.map(id=>UPGRADES.find(x=>x.id===id)?.name||id).join(', ')));
   if(u.blueprint)card.append(node('small','Projeto do jogo: '+u.blueprint));
   const editor=node('details');editor.className='upgrade-editor';
@@ -35,7 +35,12 @@ function render(){
   const effect=field(form,'Descrição do efeito','textarea',effective.effect);effect.maxLength=3000;
   const price=field(form,'Custo de referência em moedas','number',effective.cost);price.min=0;price.max=1000000;
   const capacity=field(form,'Bônus de capacidade (somado quando ativa)','number',effective.capacity_bonus);capacity.min=0;capacity.max=100;
-  const skill=field(form,'Perícia beneficiada (nome EXATO da ficha, ex.: Furtividade)','text',effective.bonus_skill||'');skill.maxLength=100;
+  const skillLabel=node('label','Perícia beneficiada pelo bônus');const skill=node('select');
+  for(const [value,label] of [['','Todas as perícias'],...['Lutar','Mover','Estudar','Sobreviver','Falar','Consertar'].map(x=>[x,x])]){const op=node('option',label);op.value=value;skill.append(op)}
+  skill.value=effective.bonus_skill||'';skillLabel.append(skill);form.append(skillLabel);
+  const styleLabel=node('label','Estilo beneficiado (ex.: Silenciosamente para Furtividade)');const style=node('select');
+  for(const [value,label] of [['','Todos os estilos'],...['Ousadamente','Cuidadosamente','Habilmente','Forçosamente','Silenciosamente','Rapidamente'].map(x=>[x,x])]){const op=node('option',label);op.value=value;style.append(op)}
+  style.value=effective.bonus_style||'';styleLabel.append(style);form.append(styleLabel);
   const bonus=field(form,'Bônus de teste 2d20 (-5 a +5 no alvo)','number',effective.bonus_value||0);bonus.min=-5;bonus.max=5;
   const rule=field(form,'Regra personalizada para a mesa (texto livre)','textarea',effective.rule_note);rule.maxLength=3000;
   const enabledLabel=node('label','Melhoria habilitada');const enabled=node('input');enabled.type='checkbox';enabled.checked=effective.enabled;enabledLabel.append(enabled);form.append(enabledLabel);
@@ -50,8 +55,8 @@ function render(){
   function sync(){choices.hidden=auto.checked}auto.addEventListener('change',sync);sync();form.append(link);
   const save=node('button','Salvar melhoria');save.type='button';const status=node('p');status.setAttribute('role','status');
   save.addEventListener('click',async()=>{
-   const val={upgrade_id:u.id,name:name.value.trim(),effect:effect.value.trim(),price:Number(price.value),capacity_bonus:Number(capacity.value),rule_note:rule.value.trim(),bonus_skill:skill.value.trim(),bonus_value:Number(bonus.value),enabled:enabled.checked,item_ids:auto.checked?null:[...choices.querySelectorAll('input:checked')].map(x=>x.value),updated_at:new Date().toISOString()};
-   if(!val.name||val.name.length>160||val.effect.length>3000||val.rule_note.length>3000||val.bonus_skill.length>100||!Number.isSafeInteger(val.bonus_value)||val.bonus_value< -5||val.bonus_value>5||(!val.bonus_skill&&val.bonus_value!==0)||!Number.isSafeInteger(val.price)||val.price<0||val.price>1000000||!Number.isSafeInteger(val.capacity_bonus)||val.capacity_bonus<0||val.capacity_bonus>100){status.textContent='Confira os valores e limites.';return}
+   const val={upgrade_id:u.id,name:name.value.trim(),effect:effect.value.trim(),price:Number(price.value),capacity_bonus:Number(capacity.value),rule_note:rule.value.trim(),bonus_skill:skill.value,bonus_style:style.value,bonus_value:Number(bonus.value),enabled:enabled.checked,item_ids:auto.checked?null:[...choices.querySelectorAll('input:checked')].map(x=>x.value),updated_at:new Date().toISOString()};
+   if(!val.name||val.name.length>160||val.effect.length>3000||val.rule_note.length>3000||val.bonus_skill.length>100||!Number.isSafeInteger(val.bonus_value)||val.bonus_value< -5||val.bonus_value>5||(!val.bonus_skill&&!val.bonus_style&&val.bonus_value!==0)||!Number.isSafeInteger(val.price)||val.price<0||val.price>1000000||!Number.isSafeInteger(val.capacity_bonus)||val.capacity_bonus<0||val.capacity_bonus>100){status.textContent='Confira os valores e limites.';return}
    save.disabled=true;const {data,error}=await db.from('dh_upgrade_config').upsert(val,{onConflict:'upgrade_id'}).select('*').single();save.disabled=false;
    if(error){status.textContent='Erro: '+error.message;return}
    const old=configs.findIndex(x=>x.upgrade_id===u.id);if(old>=0)configs[old]=data;else configs.push(data);

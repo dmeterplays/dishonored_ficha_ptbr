@@ -86,7 +86,7 @@ async function boot(){
  $('diary-back').href='mesa.html?id='+encodeURIComponent(roomId);
  $('diary-editor').classList.toggle('hidden',!master);
  await refresh();status('');
- channel=db.channel('diary-'+roomId).on('postgres_changes',{event:'UPDATE',schema:'public',table:'dh_rooms',filter:'id=eq.'+roomId},()=>{if(!editing)refresh()}).subscribe();
+ channel=db.channel('diary-'+roomId).on('postgres_changes',{event:'*',schema:'public',table:'dh_room_journal',filter:'room_id=eq.'+roomId},()=>{if(!editing)refresh()}).subscribe();
  window.addEventListener('pagehide',()=>{if(channel)db.removeChannel(channel)});
 }
 try{await boot()}catch(e){status(e.message,true)}

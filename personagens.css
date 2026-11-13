@@ -127,3 +127,14 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
 
 .danger-button{background:transparent;color:#f3aaa0;border:1px solid #bc6f69}
 .danger-button:hover,.danger-button:focus-visible{background:#5a292b;color:#fff}
+
+/* Barra de estresse editável na ficha completa */
+.sheet-stress-control{border:1px solid #526a67;background:#13262b;padding:14px;margin:12px 0 18px}
+.sheet-stress-control .stress-widget-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:9px;color:#dfceb0}
+.sheet-stress-control .stress-widget-header strong{font:600 14px Cinzel,serif}
+.sheet-stress-control .stress-widget-header span{font:600 16px Cinzel,serif;color:#e7c68f}
+.sheet-stress-control .stress-widget-row{display:flex;align-items:center;gap:10px}
+.sheet-stress-control .stress-widget-track{height:21px;flex:1;background:#0b1b1f;border:1px solid #5a7672;border-radius:4px;overflow:hidden}
+.sheet-stress-control .stress-widget-fill{display:block;height:100%;width:0;background:linear-gradient(90deg,#679e8e,#cbb07e);transition:width .2s ease}
+.sheet-stress-control .stress-step{width:46px;min-width:46px;height:46px;font-size:25px;padding:5px;text-align:center}
+.sheet-stress-control .small{margin:9px 0 0}

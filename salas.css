@@ -253,3 +253,28 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .room-entry-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap}
 .room-entry-actions>.btn{min-height:43px}
 @media(max-width:760px){.room-entry-actions{width:100%;display:grid;grid-template-columns:1fr 1fr}.room-entry-actions>.btn{padding:12px 6px;font-size:10px}}
+
+/* Editor do mestre: áreas expansíveis para focos, poderes e talentos. */
+.gm-catalog-accordion{border:2px double #8c6d3f;background:#161d23;margin:12px 0}
+.gm-catalog-accordion>summary{list-style:none;cursor:pointer;padding:14px 13px;font:600 13px Cinzel,serif;letter-spacing:.05em;color:#eed3a3;min-height:46px}
+.gm-catalog-accordion>summary::-webkit-details-marker{display:none}
+.gm-catalog-accordion>summary::after{content:'⌄';float:right;color:#78e1d4;font-size:19px}
+.gm-catalog-accordion[open]>summary{border-bottom:1px solid #8c6d3f}
+.gm-catalog-accordion[open]>summary::after{content:'⌃'}
+.gm-catalog-body{padding:12px}
+.gm-catalog-picker{display:flex;align-items:end;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.gm-catalog-picker>select{flex:1 1 180px;min-width:0;min-height:43px;background:#10171c;color:#efe5d3;border:1px solid #8c6d3f;font-size:16px}
+.gm-catalog-picker>button{min-height:43px;color:#efe1c9!important;background:#243034!important;border:1px solid #8c6d3f}
+.gm-catalog-picker .gm-level-field{flex:0 0 76px}
+.gm-catalog-entry{display:flex;align-items:center;gap:9px;padding:10px;border:1px solid #685638;background:#222a2e;margin:7px 0;min-width:0}
+.gm-catalog-entry-info{flex:1;min-width:0;overflow-wrap:anywhere}
+.gm-catalog-entry-info strong{font-size:15px;color:#efdbba}
+.gm-catalog-entry-info p{color:#d3ccbf;margin:5px 0;font-size:14px}
+.gm-catalog-entry button{min-height:40px;color:#efddc3!important;background:#26292b!important;border:1px solid #896d43}
+.gm-level-field{display:flex;flex-direction:column;gap:3px}
+.gm-level-field label{font-size:12px;color:#d6c5a4}
+.gm-level-field input{width:76px;min-height:43px;background:#10171c;border:1px solid #8c6d3f;color:#f7e9d6;padding:8px;font-size:16px}
+.gm-original-notes{border:1px solid #63573e;padding:10px;margin:12px 0;color:#e8d8bb}
+.gm-original-notes>summary{cursor:pointer;color:#edcea0}
+.gm-old-note-text{white-space:pre-wrap;overflow-wrap:anywhere;color:#e1d7c8;line-height:1.5}
+@media(max-width:760px){.gm-catalog-picker{display:grid;grid-template-columns:minmax(0,1fr) 80px}.gm-catalog-picker>select{grid-column:1/-1;width:100%}.gm-catalog-picker>button{grid-column:1/-1}.gm-catalog-entry{flex-wrap:wrap}.gm-catalog-entry-info{flex:1 1 100%}.gm-catalog-accordion>summary{font-size:12px}}

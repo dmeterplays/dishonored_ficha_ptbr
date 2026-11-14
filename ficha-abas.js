@@ -2,7 +2,7 @@ import {focosOficiais} from './focos-oficiais.js';
 // Abas de catálogo da ficha: apenas referências. Não altera posse oficial, XP, moedas ou poderes.
 const categories={
  talent:{title:'Talentos',hint:'Talentos escolhidos e opções para avaliação do mestre.',price:'XP'},
- focus:{title:'Focos',hint:'Especialidades do personagem e novas opções de foco.',price:'XP'},
+ focus:{title:'Focos',hint:'Escolha o foco, defina a classificação e adicione quantos precisar. Os focos salvos poderão ser escolhidos nas rolagens.',price:'XP'},
  power:{title:'Poderes do Vazio',hint:'Poderes registrados e sugestões de habilidades sobrenaturais.',price:'XP'},
  bonecharm:{title:'Amuletos de osso',hint:'Amuletos registrados e referências para encontrar durante a aventura.',price:'Moedas'},
  item:{title:'Itens',hint:'Equipamentos iniciais, inventário de referência e itens de interesse.',price:'Moedas'}
@@ -65,6 +65,8 @@ export function initCharacterCollections({db,sheet,onChange}){
  const values=normalizeSelections(sheet);
  const list=$('collection-cards'),browser=$('collection-browser'),options=$('collection-options');
  const search=$('collection-search'),notice=$('collection-status'),browserNotice=$('collection-browser-status');
+ const helpTip=document.querySelector('#character-collection .help-tip');
+ const originalHelp=helpTip?.textContent||'';
  let kind='talent',catalog=[],loadError=null;
  const tell=(txt,err=false)=>{notice.textContent=txt;notice.className=err?'error':'status'};
  const current=()=>values[kind]||[];
@@ -142,6 +144,7 @@ export function initCharacterCollections({db,sheet,onChange}){
   }
   for(const count of document.querySelectorAll('[data-count]'))count.textContent=(values[count.dataset.count]?.length??0)+(count.dataset.count==='item'?(sheet?.gmInventory||[]).filter(x=>x&&x.quantity>0).length:0);
   $('collection-hint').textContent=categories[kind].hint;
+  if(helpTip)helpTip.textContent=kind==='focus'?'Os focos desta aba são atributos da ficha e aparecem nas rolagens após salvar. Novos focos e aumentos durante a campanha devem seguir a progressão definida pelo mestre.':originalHelp;
   list.replaceChildren();
   $('collection-add').classList.toggle('hidden',kind==='focus');
   if(kind==='focus'){renderFocusEditor();return}
@@ -230,5 +233,5 @@ export function initCharacterCollections({db,sheet,onChange}){
   render();if(!browser.classList.contains('hidden'))renderOptions();
  }
  render();load();
- return {getSelection:()=>structuredClone(values),getFocuses:()=>values.focus.map(x=>({name:x.name,rank:x.rank})),reload:load};
+ return {getSelection:()=>structuredClone(values),getFocuses:()=>values.focus.map(x=>({name:x.name,rank:Number.isInteger(Number(x.rank))&&Number(x.rank)>=1&&Number(x.rank)<=8?Number(x.rank):2})),reload:load};
 }

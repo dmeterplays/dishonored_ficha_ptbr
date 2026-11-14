@@ -236,6 +236,20 @@ footer{
   border-radius:2px;
 }
 .mini-btn:hover{background:var(--panel-2);}
+.legacy-notes-hint{font-size:.9rem;color:#ddd0ba;margin:0 0 13px}
+.legacy-note-accordions{display:flex;flex-direction:column;gap:10px;margin:12px 0 26px}
+.legacy-note-accordion{border:2px double #8C6D3F;background:#16191E}
+.legacy-note-accordion>summary{display:flex;align-items:center;justify-content:space-between;gap:14px;list-style:none;cursor:pointer;padding:15px 16px;color:#e4d2ab;font-family:'Cinzel',serif;font-size:.9rem;letter-spacing:.04em;min-height:50px}
+.legacy-note-accordion>summary::-webkit-details-marker{display:none}
+.legacy-note-accordion>summary:focus-visible{outline:2px solid #4FD1C5;outline-offset:2px}
+.legacy-note-accordion[open]>summary{border-bottom:1px solid #8C6D3F;background:#25272a}
+.legacy-accordion-arrow{font:700 24px Georgia,serif;color:#4FD1C5;transition:transform .18s ease}
+.legacy-note-accordion[open] .legacy-accordion-arrow{transform:rotate(180deg)}
+.legacy-note-content{padding:14px 16px 18px}
+.legacy-note-content .label{display:block;margin-bottom:9px;color:#dfcfb0}
+.legacy-note-content textarea{width:100%;min-height:140px;max-width:100%;background:#10151a;color:#E2DCD0;border:1px solid #8C6D3F;padding:12px;font-size:1rem;line-height:1.5;box-sizing:border-box}
+@media(max-width:640px){.legacy-note-accordion>summary{padding:14px 12px;font-size:.78rem}.legacy-note-content{padding:12px}.legacy-note-content textarea{font-size:16px}}
+
 </style>
 <link rel="stylesheet" href="./whalepunk-theme.css?v=contrast2"><link rel="stylesheet" href="./site-nav.css?v=menu-header-20261113c"></head>
 <body>
@@ -331,14 +345,27 @@ footer{
   </section>
 
   <section>
-    <h2>Anotações</h2>
+    <h2>Focos, ataques e poderes</h2>
+    <p class="legacy-notes-hint">Abra apenas a seção que deseja consultar ou editar. O conteúdo antigo continua salvo neste navegador.</p>
+    <div class="legacy-note-accordions">
+      <details class="legacy-note-accordion">
+        <summary><span>Focos e especialidades</span><span class="legacy-accordion-arrow" aria-hidden="true">⌄</span></summary>
+        <div class="legacy-note-content"><label for="nota-focos" class="label">Focos</label><textarea id="nota-focos" aria-label="Focos e especialidades"></textarea></div>
+      </details>
+      <details class="legacy-note-accordion">
+        <summary><span>Poderes do Vazio</span><span class="legacy-accordion-arrow" aria-hidden="true">⌄</span></summary>
+        <div class="legacy-note-content"><label for="nota-poderes" class="label">Poderes</label><textarea id="nota-poderes" aria-label="Poderes do Vazio"></textarea></div>
+      </details>
+      <details class="legacy-note-accordion">
+        <summary><span>Talentos</span><span class="legacy-accordion-arrow" aria-hidden="true">⌄</span></summary>
+        <div class="legacy-note-content"><label for="nota-talentos" class="label">Talentos</label><textarea id="nota-talentos" aria-label="Talentos"></textarea></div>
+      </details>
+    </div>
+    <h2>Outras anotações</h2>
     <div class="textareas">
-      <div><span class="label">Contatos</span><textarea id="nota-contatos"></textarea></div>
-      <div><span class="label">Focos</span><textarea id="nota-focos"></textarea></div>
-      <div><span class="label">Talentos</span><textarea id="nota-talentos"></textarea></div>
-      <div><span class="label">Pertences</span><textarea id="nota-pertences"></textarea></div>
-      <div><span class="label">Poderes</span><textarea id="nota-poderes"></textarea></div>
-      <div><span class="label">Notas Gerais</span><textarea id="nota-gerais"></textarea></div>
+      <div><label for="nota-contatos" class="label">Contatos</label><textarea id="nota-contatos"></textarea></div>
+      <div><label for="nota-pertences" class="label">Pertences</label><textarea id="nota-pertences"></textarea></div>
+      <div><label for="nota-gerais" class="label">Notas Gerais</label><textarea id="nota-gerais"></textarea></div>
     </div>
   </section>
 

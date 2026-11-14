@@ -198,9 +198,22 @@ function diceView(rolls){
  }
 }
 function focusOptions(){
- const result=[];const built=mySheet?.creation?.focus;
- if(Array.isArray(built))for(const f of built)if(f.nome&&f.valor)result.push({name:f.nome,rank:f.valor});
- for(const f of mySheet?.catalogSelections?.focus||[])if(f.origin==='starting'&&f.name&&f.rank&&!result.some(x=>x.name===f.name))result.push({name:f.name,rank:f.rank});
+ const normalize=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
+ const result=[];
+ const add=(name,rank)=>{
+  const level=Number(rank),label=String(name||'').trim();
+  if(!label||!Number.isInteger(level)||level<1||level>8||result.some(x=>normalize(x.name)===normalize(label)))return;
+  result.push({name:label,rank:level});
+ };
+ // Fichas atualizadas usam a lista estruturada. Uma lista vazia indica remoção intencional.
+ if(Array.isArray(mySheet?.focuses)){
+  for(const f of mySheet.focuses)add(f.name||f.nome,f.rank??f.valor);
+  return result;
+ }
+ const built=mySheet?.creation?.focus;
+ if(Array.isArray(built))for(const f of built)add(f.nome||f.name,f.valor??f.rank);
+ for(const f of mySheet?.catalogSelections?.focus||[])
+  if(f.origin==='starting'||f.origin==='sheet')add(f.name,f.rank);
  return result;
 }
 const quickActions=[

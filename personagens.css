@@ -138,3 +138,26 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
 .sheet-stress-control .stress-widget-fill{display:block;height:100%;width:0;background:linear-gradient(90deg,#679e8e,#cbb07e);transition:width .2s ease}
 .sheet-stress-control .stress-step{width:46px;min-width:46px;height:46px;font-size:25px;padding:5px;text-align:center}
 .sheet-stress-control .small{margin:9px 0 0}
+
+/* Editor de Focos: especialidades estruturadas, sem campo de notas livre. */
+.focus-editor{padding:16px;background:#1a2228;border:2px double #8c6d3f;margin:12px 0 18px}
+.focus-editor h3{margin:0 0 8px;color:#e9d4af}
+.focus-editor p{color:#ddd3c4}
+.focus-editor-fields{display:grid;grid-template-columns:minmax(0,2fr) minmax(95px,.7fr) auto;gap:10px;align-items:end}
+.focus-editor-fields label,.focus-editor-controls label{display:block;color:#e8cfa4;font-size:14px;margin:0 0 7px}
+.focus-editor-fields :is(select,input){width:100%;min-height:46px;border:1px solid #8c6d3f;background:#121921;color:#f1e7d7;padding:10px;font-size:16px}
+.focus-editor-fields button{min-height:46px;white-space:normal}
+.focus-editor-item{background:#212a2e;border:1px solid #776043;padding:13px 15px;margin:9px 0;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.focus-editor-info{flex:1;min-width:0}
+.focus-editor-info strong{color:#eddbb8;font-size:17px}
+.focus-editor-info p{color:#d7cec1;font-size:14px;margin:5px 0}
+.focus-editor-controls{display:flex;align-items:end;gap:8px}
+.focus-editor-controls input{width:80px;min-height:43px;background:#111b21;color:#f3ead8;border:1px solid #8c6d3f;padding:8px;font-size:16px}
+.focus-editor-controls button{min-height:43px}
+@media(max-width:690px){
+.focus-editor{padding:12px}
+.focus-editor-fields{grid-template-columns:minmax(0,1fr) 100px}
+.focus-editor-fields button{grid-column:1/-1;width:100%}
+.focus-editor-item{align-items:stretch;flex-direction:column}
+.focus-editor-controls{justify-content:flex-end}
+}

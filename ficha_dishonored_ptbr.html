@@ -250,6 +250,42 @@ footer{
 .legacy-note-content textarea{width:100%;min-height:140px;max-width:100%;background:#10151a;color:#E2DCD0;border:1px solid #8C6D3F;padding:12px;font-size:1rem;line-height:1.5;box-sizing:border-box}
 @media(max-width:640px){.legacy-note-accordion>summary{padding:14px 12px;font-size:.78rem}.legacy-note-content{padding:12px}.legacy-note-content textarea{font-size:16px}}
 
+
+/* Seleção de itens do banco e controle de nível; anotações antigas seguem preservadas. */
+.legacy-catalog-status{font-size:.92rem;color:#8fe3d9;line-height:1.5;margin:10px 0}
+.legacy-catalog-status.error{color:#ffb6aa}
+.legacy-catalog-entry{display:grid;grid-template-columns:minmax(0,1fr) 110px auto;gap:9px;align-items:end;margin-bottom:13px}
+.legacy-catalog-entry>label{grid-column:1/-1;margin:0}
+.legacy-catalog-entry select,.legacy-catalog-entry input,.legacy-owned-row input{
+ min-height:44px;width:100%;background:#10151a;color:#f1e7d6;
+ border:1px solid #8c6d3f;padding:9px 10px;font:16px 'Crimson Text',serif;
+}
+.legacy-catalog-entry .add-btn{margin:0;min-height:44px;white-space:normal;background:#2b3234;color:#f2deb8}
+.legacy-note-accordion:not([data-legacy-category="focus"]) .legacy-catalog-entry{
+ grid-template-columns:minmax(0,1fr) auto
+}
+.legacy-catalog-owned{display:grid;gap:9px}
+.legacy-owned-row{display:flex;align-items:center;gap:10px;padding:10px 11px;background:#242b30;border:1px solid #6e5a3d;min-width:0}
+.legacy-owned-info{flex:1;min-width:0}
+.legacy-owned-info strong{font-size:1.06rem;color:#ebd6af;overflow-wrap:anywhere}
+.legacy-owned-info small{display:block;color:#c7c4ba;line-height:1.4;margin-top:3px}
+.legacy-owned-rank{display:flex;flex-direction:column;gap:4px;flex:0 0 72px}
+.legacy-owned-rank label{font:12px Cinzel,serif;color:#e7cfaa}
+.legacy-owned-rank input{width:72px;font-size:16px}
+.legacy-owned-remove{border:1px solid #906957!important;background:#262224!important;color:#ffceb8!important;min-height:43px;padding:8px 9px;cursor:pointer}
+.legacy-previous-notes{border-top:1px solid #665639;margin-top:14px;padding-top:10px}
+.legacy-previous-notes summary{cursor:pointer;color:#d6c7aa;font-size:.9rem;padding:7px 0}
+.legacy-previous-notes textarea{margin-top:7px}
+.legacy-catalog-empty{color:#bfc6bc;font-size:.9rem;padding:7px}
+@media(max-width:640px){
+ .legacy-catalog-entry,.legacy-note-accordion:not([data-legacy-category="focus"]) .legacy-catalog-entry{grid-template-columns:minmax(0,1fr) 100px}
+ .legacy-catalog-entry select{grid-column:1/-1}
+ .legacy-catalog-entry .add-btn{grid-column:1/-1}
+ .legacy-owned-row{flex-wrap:wrap}
+ .legacy-owned-info{flex-basis:100%}
+ .legacy-owned-rank{flex:0 0 80px}
+}
+
 </style>
 <link rel="stylesheet" href="./whalepunk-theme.css?v=contrast2"><link rel="stylesheet" href="./site-nav.css?v=menu-header-20261113c"></head>
 <body>
@@ -346,19 +382,46 @@ footer{
 
   <section>
     <h2>Focos, ataques e poderes</h2>
-    <p class="legacy-notes-hint">Abra apenas a seção que deseja consultar ou editar. O conteúdo antigo continua salvo neste navegador.</p>
-    <div class="legacy-note-accordions">
-      <details class="legacy-note-accordion">
-        <summary><span>Focos e especialidades</span><span class="legacy-accordion-arrow" aria-hidden="true">⌄</span></summary>
-        <div class="legacy-note-content"><label for="nota-focos" class="label">Focos</label><textarea id="nota-focos" aria-label="Focos e especialidades"></textarea></div>
+    <p class="legacy-notes-hint">Escolha do catálogo oficial, adicione à ficha e edite a classificação de cada foco. As escolhas são salvas neste navegador e exportadas junto do JSON.</p>
+    <p id="legacy-catalog-status" class="legacy-catalog-status" role="status">Carregando catálogo do sistema...</p>
+    <div class="legacy-note-accordions" id="legacy-catalog-accordions">
+      <details class="legacy-note-accordion" data-legacy-category="focus" open>
+        <summary><span>Focos e especialidades <small id="legacy-count-focus">0</small></span><span class="legacy-accordion-arrow" aria-hidden="true">⌄</span></summary>
+        <div class="legacy-note-content">
+          <div class="legacy-catalog-entry">
+            <label for="legacy-pick-focus" class="label">Escolher foco do catálogo</label>
+            <select id="legacy-pick-focus" aria-label="Foco a adicionar"><option value="">Carregando focos...</option></select>
+            <label for="legacy-rank-focus" class="label">Classificação do foco</label>
+            <input id="legacy-rank-focus" type="number" min="1" max="8" step="1" value="2">
+            <button type="button" id="legacy-add-focus" class="add-btn">+ Adicionar foco</button>
+          </div>
+          <div id="legacy-list-focus" class="legacy-catalog-owned" aria-live="polite"></div>
+          <details class="legacy-previous-notes"><summary>Ver anotações antigas de focos</summary><label for="nota-focos" class="label">Texto original preservado</label><textarea id="nota-focos"></textarea></details>
+        </div>
       </details>
-      <details class="legacy-note-accordion">
-        <summary><span>Poderes do Vazio</span><span class="legacy-accordion-arrow" aria-hidden="true">⌄</span></summary>
-        <div class="legacy-note-content"><label for="nota-poderes" class="label">Poderes</label><textarea id="nota-poderes" aria-label="Poderes do Vazio"></textarea></div>
+      <details class="legacy-note-accordion" data-legacy-category="power">
+        <summary><span>Poderes do Vazio <small id="legacy-count-power">0</small></span><span class="legacy-accordion-arrow" aria-hidden="true">⌄</span></summary>
+        <div class="legacy-note-content">
+          <div class="legacy-catalog-entry">
+            <label for="legacy-pick-power" class="label">Escolher poder do catálogo</label>
+            <select id="legacy-pick-power" aria-label="Poder a adicionar"><option value="">Carregando poderes...</option></select>
+            <button type="button" id="legacy-add-power" class="add-btn">+ Adicionar poder</button>
+          </div>
+          <div id="legacy-list-power" class="legacy-catalog-owned" aria-live="polite"></div>
+          <details class="legacy-previous-notes"><summary>Ver anotações antigas de poderes</summary><label for="nota-poderes" class="label">Texto original preservado</label><textarea id="nota-poderes"></textarea></details>
+        </div>
       </details>
-      <details class="legacy-note-accordion">
-        <summary><span>Talentos</span><span class="legacy-accordion-arrow" aria-hidden="true">⌄</span></summary>
-        <div class="legacy-note-content"><label for="nota-talentos" class="label">Talentos</label><textarea id="nota-talentos" aria-label="Talentos"></textarea></div>
+      <details class="legacy-note-accordion" data-legacy-category="talent">
+        <summary><span>Talentos <small id="legacy-count-talent">0</small></span><span class="legacy-accordion-arrow" aria-hidden="true">⌄</span></summary>
+        <div class="legacy-note-content">
+          <div class="legacy-catalog-entry">
+            <label for="legacy-pick-talent" class="label">Escolher talento do catálogo</label>
+            <select id="legacy-pick-talent" aria-label="Talento a adicionar"><option value="">Carregando talentos...</option></select>
+            <button type="button" id="legacy-add-talent" class="add-btn">+ Adicionar talento</button>
+          </div>
+          <div id="legacy-list-talent" class="legacy-catalog-owned" aria-live="polite"></div>
+          <details class="legacy-previous-notes"><summary>Ver anotações antigas de talentos</summary><label for="nota-talentos" class="label">Texto original preservado</label><textarea id="nota-talentos"></textarea></details>
+        </div>
       </details>
     </div>
     <h2>Outras anotações</h2>
@@ -537,6 +600,7 @@ function rolar(){
 /* ---------------- Salvar / Exportar / Importar ---------------- */
 
 const STORAGE_KEY = 'dishonored-ficha-v1';
+window.legacyCatalogSelections={focus:[],power:[],talent:[]};
 const textareaIds = ['nota-contatos','nota-focos','nota-talentos','nota-pertences','nota-poderes','nota-gerais'];
 
 function coletarEstado(){
@@ -556,7 +620,9 @@ function coletarEstado(){
     void: document.getElementById('void').value,
     skills: skills.map(s => ({label:s.label, value:s.value})),
     styles: styles.map(s => ({label:s.label, value:s.value})),
-    notas
+    notas,
+    catalogSelections:JSON.parse(JSON.stringify(window.legacyCatalogSelections)),
+    focuses:(window.legacyCatalogSelections.focus||[]).map(x=>({name:x.name,rank:Number(x.rank)||2}))
   };
 }
 
@@ -590,6 +656,18 @@ function aplicarEstado(estado){
   document.getElementById('stress-max').value = estado.stressMax ?? 12;
   document.getElementById('stress-atual').value = estado.stressAtual ?? 0;
   buildStressBoxes();
+  const stored=estado.catalogSelections;
+  const selections=stored&&typeof stored==='object'&&!Array.isArray(stored)?JSON.parse(JSON.stringify(stored)):{};
+  for(const category of ['focus','power','talent']){
+    if(!Array.isArray(selections[category]))selections[category]=[];
+  }
+  if(Array.isArray(estado.focuses)){
+    selections.focus=estado.focuses.filter(x=>x&&typeof(x.name||x.nome)==='string').map(x=>({
+      id:null,name:String(x.name||x.nome).trim(),rank:Number(x.rank??x.valor)||2,origin:'sheet'
+    }));
+  }
+  window.legacyCatalogSelections=selections;
+  document.dispatchEvent(new Event('legacy-sheet-loaded'));
 }
 
 let saveTimeout = null;
@@ -657,5 +735,5 @@ document.addEventListener('click', (e)=>{
 // Carrega dados salvos anteriormente neste dispositivo/navegador, se existirem
 carregarLocal();
 </script>
-<script src="./site-nav.js?v=menu-header-20261113c" defer></script></body>
+<script type="module" src="./legacy-catalog-editor.js?v=1"></script><script src="./site-nav.js?v=menu-header-20261113c" defer></script></body>
 </html>

@@ -86,7 +86,13 @@ $('auth-form').addEventListener('submit',async e=>{
    if(error)throw Error(error.message);
    message('auth-message','Login realizado.');
   }
- }catch(error){message('auth-message',error.message,true)}
+ }catch(error){
+  const code=String(error?.code||'').toLowerCase(),raw=String(error?.message||'');
+  const emailLimited=code==='over_email_send_rate_limit'||/email rate limit exceeded/i.test(raw);
+  message('auth-message',emailLimited?
+   'O serviço de e-mail de confirmação atingiu o limite temporário do projeto. Não adianta tentar várias vezes agora. Avise o mestre para configurar o envio de e-mails (SMTP) ou tente novamente depois que o limite for liberado.':
+   raw,true);
+ }
  finally{submit.disabled=false}
 });
 setAuthMode('login');

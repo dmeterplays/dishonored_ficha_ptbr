@@ -6,7 +6,7 @@ const tiers={incidental:'Incidental',menor:'Menor',notavel:'Notável',principal:
 const skills=['Lutar','Mover','Estudar','Sobreviver','Falar','Consertar'];
 const styles=['Ousadamente','Cuidadosamente','Habilmente','Forçosamente','Silenciosamente','Rapidamente'];
 export function initMasterEditor({db,roomId,onSaved,getCatalog,onSelect=()=>{}}){
- let selected=null,working=null,inventory=[],focusEntries=[],saving=false;
+ let selected=null,working=null,inventory=[],focusEntries=[],selectionEntries={power:[],talent:[]},saving=false;
  const message=(text,bad=false)=>{$('gm-editor-status').textContent=text;$('gm-editor-status').className=bad?'error':'status'};
  const put=(id,label,value,type='text',max)=>{
   const box=make('div');const lab=make('label',label);lab.htmlFor=id;
@@ -23,23 +23,112 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog,onSelect=()=>{}})
  const section=(title)=>{const s=make('section',null,'gm-sheet-section');s.append(make('h3',title));return s};
  const paired=(root,...fields)=>{const grid=make('div',null,'form-grid');grid.append(...fields);root.append(grid);};
  function close(){
-  selected=null;working=null;inventory=[];focusEntries=[];
+  selected=null;working=null;inventory=[];focusEntries=[];selectionEntries={power:[],talent:[]};
   $('gm-selected').classList.add('hidden');$('player-side').classList.remove('hidden');
   $('right-title').textContent='Minha ficha e ações';$('gm-editor').replaceChildren();message('');
   document.querySelectorAll('.player-card.gm-active').forEach(x=>x.classList.remove('gm-active'));
  }
  $('gm-back-own').addEventListener('click',close);
+ const norm=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
+ const catalogOf=kind=>getCatalog().filter(x=>x.category===kind&&x.published!==false);
+ function focusCatalogOptions(select,chosen=''){
+  select.replaceChildren();
+  const placeholder=make('option','Escolha um foco do banco');placeholder.value='';select.append(placeholder);
+  const options=new Map();
+  for(const record of catalogOf('focus'))options.set(norm(record.name),record.name);
+  if(chosen&&!options.has(norm(chosen)))options.set(norm(chosen),chosen);
+  for(const name of [...options.values()].sort((a,b)=>a.localeCompare(b,'pt-BR'))){
+   const opt=make('option',name);opt.value=name;select.append(opt);
+  }
+  select.value=chosen||'';
+ }
  function drawFocuses(){
   const root=$('gm-focus-list');if(!root)return;root.replaceChildren();
-  focusEntries.forEach((item,i)=>{
-   const row=make('div',null,'gm-focus-entry');
-   const name=make('input');name.type='text';name.value=item.nome||'';name.placeholder='Nome do foco';
-   name.setAttribute('aria-label','Foco '+(i+1));name.addEventListener('input',()=>{item.nome=name.value});
-   const rank=make('input');rank.type='number';rank.min='1';rank.max='8';rank.step='1';rank.value=item.valor??2;
-   rank.setAttribute('aria-label','Classificação do foco '+(i+1));rank.addEventListener('input',()=>{item.valor=Number(rank.value)});
-   const remove=make('button','Remover','secondary');remove.type='button';remove.addEventListener('click',()=>{focusEntries.splice(i,1);drawFocuses()});
-   row.append(name,rank,remove);root.append(row);
+  if(!focusEntries.length)root.append(make('p','Nenhum foco registrado.','small'));
+  for(const [i,item] of focusEntries.entries()){
+   const row=make('div',null,'gm-focus-entry gm-catalog-entry');
+   const info=make('div',null,'gm-catalog-entry-info');
+   info.append(make('strong',item.nome||'Foco sem nome'));
+   const record=catalogOf('focus').find(x=>norm(x.name)===norm(item.nome));
+   if(record?.description)info.append(make('p',record.description,'small'));
+   const level=make('div',null,'gm-level-field');
+   const label=make('label','Nível');const rank=make('input');
+   rank.type='number';rank.min='1';rank.max='8';rank.step='1';rank.value=item.valor??2;
+   rank.setAttribute('aria-label','Nível do foco '+item.nome);
+   rank.addEventListener('change',()=>{
+    const value=Number(rank.value);
+    if(!Number.isInteger(value)||value<1||value>8){rank.value=item.valor??2;return message('Nível do foco deve estar entre 1 e 8.',true)}
+    item.valor=value;message('Classificação alterada. Clique em Salvar ficha.');
+   });
+   level.append(label,rank);
+   const remove=make('button','Remover','secondary');remove.type='button';remove.addEventListener('click',()=>{focusEntries.splice(i,1);drawFocuses();message('Foco removido. Salve a ficha para confirmar.')});
+   row.append(info,level,remove);root.append(row);
+  }
+ }
+ function drawOtherCategory(kind){
+  const root=$('gm-list-'+kind);if(!root)return;root.replaceChildren();
+  const entries=selectionEntries[kind]||[];
+  if(!entries.length)root.append(make('p','Nenhum '+(kind==='power'?'poder':'talento')+' adicionado.','small'));
+  for(const item of entries){
+   const row=make('div',null,'gm-catalog-entry');
+   const info=make('div',null,'gm-catalog-entry-info');
+   info.append(make('strong',item.name));
+   const record=catalogOf(kind).find(x=>x.id===item.id||norm(x.name)===norm(item.name));
+   const desc=record?.description||item.description||'';
+   if(desc)info.append(make('p',desc,'small'));
+   const remove=make('button','Remover','secondary');remove.type='button';
+   remove.addEventListener('click',()=>{selectionEntries[kind]=entries.filter(x=>x!==item);drawOtherCategory(kind);message('Removido da lista. Salve a ficha para confirmar.')});
+   row.append(info,remove);root.append(row);
+  }
+ }
+ function catalogAccordion(parent,{kind,title}){
+  const block=make('details',null,'gm-catalog-accordion');
+  const summary=make('summary',title);
+  block.append(summary);
+  const body=make('div',null,'gm-catalog-body');
+  const line=make('div',null,'gm-catalog-picker');
+  const select=make('select');select.id='gm-add-'+kind;select.setAttribute('aria-label','Adicionar '+title.toLocaleLowerCase('pt-BR'));
+  const placeholder=make('option','Selecione do catálogo');placeholder.value='';select.append(placeholder);
+  if(kind==='focus')focusCatalogOptions(select);
+  else for(const record of catalogOf(kind)){
+   const opt=make('option',record.name);opt.value=record.id;select.append(opt);
+  }
+  if(select.options.length===1)body.append(make('p','O catálogo não foi carregado ou não tem opções publicadas nesta categoria.','small'));
+  line.append(select);
+  let level;
+  if(kind==='focus'){
+   const levelBox=make('div',null,'gm-level-field');
+   const label=make('label','Nível');level=make('input');level.type='number';level.min='1';level.max='8';level.step='1';level.value='2';level.setAttribute('aria-label','Nível do novo foco');levelBox.append(label,level);line.append(levelBox);
+  }
+  const add=make('button','+ Adicionar','secondary');add.type='button';
+  add.disabled=select.options.length<2;
+  add.addEventListener('click',()=>{
+   if(!select.value)return message('Selecione uma opção do catálogo.',true);
+   if(kind==='focus'){
+    const name=select.value,rank=Number(level.value);
+    if(!Number.isInteger(rank)||rank<1||rank>8)return message('Informe um nível inteiro de 1 a 8.',true);
+    if(focusEntries.some(x=>norm(x.nome)===norm(name)))return message('Este foco já está na ficha. Edite o nível dele na lista.',true);
+    focusEntries.push({nome:name,valor:rank});drawFocuses();
+   }else{
+    const entry=catalogOf(kind).find(x=>x.id===select.value);
+    if(!entry)return message('Opção do catálogo não encontrada.',true);
+    if(selectionEntries[kind].some(x=>x.id===entry.id||norm(x.name)===norm(entry.name)))return message('Esta opção já está na ficha.',true);
+    selectionEntries[kind].push({id:entry.id,name:entry.name,description:entry.description||'',origin:'reference',rank:null});
+    drawOtherCategory(kind);
+   }
+   message('Adicionado à ficha. Clique em Salvar ficha para confirmar.');
   });
+  line.append(add);body.append(line);
+  const list=make('div',null,'gm-catalog-owned');list.id=kind==='focus'?'gm-focus-list':'gm-list-'+kind;body.append(list);
+  const oldNotes=kind==='focus'?(working.sheet?.focos||working.sheet?.notas?.['nota-focos']):
+    kind==='power'?working.sheet?.notas?.['nota-poderes']:working.sheet?.notas?.['nota-talentos'];
+  if(oldNotes){
+   const original=make('details',null,'gm-original-notes');
+   original.append(make('summary','Consultar anotações antigas (preservadas)'));
+   original.append(make('p',String(oldNotes),'gm-old-note-text'));
+   body.append(original);
+  }
+  block.append(body);parent.append(block);
  }
  function drawInventory(){
   const root=$('gm-inventory-list');if(!root)return;
@@ -177,28 +266,24 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog,onSelect=()=>{}})
    stats.append(area);
   }
   root.append(stats);
-  const abilities=section('Focos, ataques e poderes');
-  const asText=(id,label,value)=>{
-   const labelElement=make('label',label);labelElement.htmlFor=id;
-   const field=make('textarea');field.id=id;field.rows=3;field.value=String(value||'');
-   abilities.append(labelElement,field);
-  };
-  asText('gm-focus-text','Focos e especialidades',sheet.focos||sheet.notas?.['nota-focos']||'');
-  asText('gm-attack-text','Ataques e ações especiais',sheet.ataques||'');
-  asText('gm-power-text','Poderes do Vazio',sheet.notas?.['nota-poderes']||'');
-  asText('gm-talent-text','Talentos e vantagens',sheet.notas?.['nota-talentos']||'');
-  asText('gm-special-text','Regras especiais e condições',sheet.regrasEspeciais||'');
-  if(!npc){
-   const focusTitle=make('h4','Focos ativos na rolagem (nome e classificação)');
-   abilities.append(focusTitle);
-   const focusList=make('div');focusList.id='gm-focus-list';abilities.append(focusList);
-   const addFocus=make('button','+ Adicionar foco','secondary');addFocus.type='button';
-   addFocus.addEventListener('click',()=>{focusEntries.push({nome:'',valor:2});drawFocuses()});
-   abilities.append(addFocus);
-   abilities.append(make('p','Estas classificações passam a valer nas rolagens oficiais.','small'));
+  const abilities=section('Focos, poderes e talentos');
+  abilities.append(make('p','Selecione itens do catálogo para registrar na ficha. Os níveis dos focos entram nas rolagens; poderes e talentos não são comprados automaticamente.','small'));
+  catalogAccordion(abilities,{kind:'focus',title:'Focos e especialidades'});
+  catalogAccordion(abilities,{kind:'power',title:'Poderes do Vazio'});
+  catalogAccordion(abilities,{kind:'talent',title:'Talentos'});
+  const extras=make('details',null,'gm-original-notes');extras.append(make('summary','Ataques e regras especiais'));
+  const extraBody=make('div',null,'gm-catalog-body');
+  for(const [id,label,value] of [
+   ['gm-attack-text','Ataques e ações especiais',sheet.ataques||''],
+   ['gm-special-text','Regras especiais e condições',sheet.regrasEspeciais||'']
+  ]){
+   const lab=make('label',label);lab.htmlFor=id;
+   const field=make('textarea');field.id=id;field.rows=3;field.value=String(value);
+   extraBody.append(lab,field);
   }
+  extras.append(extraBody);abilities.append(extras);
   root.append(abilities);
-  if(!npc)drawFocuses();
+  drawFocuses();drawOtherCategory('power');drawOtherCategory('talent');
   const inventorySection=section('Itens e equipamentos');
   inventorySection.append(make('p',npc?'Equipamentos deste inimigo.':'Inventário oficial concedido pelo mestre — separado de itens apenas anotados para teste.','small'));
   const invRoot=make('div');invRoot.id='gm-inventory-list';inventorySection.append(invRoot);
@@ -265,14 +350,17 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog,onSelect=()=>{}})
   }
   if(!npc){
    const normalized=focusEntries.map(x=>({nome:String(x.nome||'').trim(),valor:Number(x.valor)}));
-   if(normalized.some(x=>!x.nome||!Number.isInteger(x.valor)||x.valor<1||x.valor>8))throw Error('Foco precisa de nome e classificação entre 1 e 8.');
-   if(new Set(normalized.map(x=>x.nome.toLocaleLowerCase('pt-BR'))).size!==normalized.length)throw Error('Focos duplicados.');
+   if(normalized.some(x=>!x.nome||!Number.isInteger(x.valor)||x.valor<1||x.valor>8))throw Error('Foco precisa de nome e nível entre 1 e 8.');
+   if(new Set(normalized.map(x=>norm(x.nome))).size!==normalized.length)throw Error('Focos duplicados.');
+   sheet.focuses=normalized.map(x=>({name:x.nome,rank:x.valor}));
    sheet.creation={...(sheet.creation||{}),focus:normalized};
+   sheet.catalogSelections={...(sheet.catalogSelections||{})};
+   sheet.catalogSelections.focus=normalized.map(x=>({id:null,name:x.nome,origin:'sheet',rank:x.valor}));
+   for(const kind of ['power','talent'])sheet.catalogSelections[kind]=structuredClone(selectionEntries[kind]);
   }
-  sheet.focos=$('gm-focus-text').value;
   sheet.ataques=$('gm-attack-text').value;
   sheet.regrasEspeciais=$('gm-special-text').value;
-  sheet.notas={...(sheet.notas||{}),'nota-focos':sheet.focos,'nota-poderes':$('gm-power-text').value,'nota-talentos':$('gm-talent-text').value,'nota-pertences':$('gm-initial-gear').value};
+  // Anotações da ficha antiga permanecem intactas. O catálogo usa campos estruturados.
   if(npc){sheet.void=readNum('gm-void',0,20);sheet.momentum=readNum('gm-momentum',0,50);sheet.defeated_on_success=['menor','incidental'].includes($('gm-tier').value);}
   else{sheet.arquetipo=$('gm-archetype').value.trim();sheet.gmInventory=structuredClone(inventory);}
   return {name,sheet};
@@ -320,7 +408,17 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog,onSelect=()=>{}})
  async function choosePlayer(id){
   const {data,error}=await db.rpc('dh_room_gm_sheet',{p_room:roomId,p_character:id});
   if(error)return message(error.message,true);
-  selected={kind:'player',id};working=data;inventory=Array.isArray(data.sheet?.gmInventory)?structuredClone(data.sheet.gmInventory):[];focusEntries=Array.isArray(data.sheet?.creation?.focus)?structuredClone(data.sheet.creation.focus):[];
+  selected={kind:'player',id};working=data;inventory=Array.isArray(data.sheet?.gmInventory)?structuredClone(data.sheet.gmInventory):[];
+  const sheet=data.sheet||{};
+  const originals=Array.isArray(sheet.focuses)?sheet.focuses:Array.isArray(sheet.creation?.focus)?sheet.creation.focus:Array.isArray(sheet.catalogSelections?.focus)?sheet.catalogSelections.focus:[];
+  focusEntries=originals.filter(x=>x&&(x.name||x.nome)).map(x=>({nome:String(x.name||x.nome),valor:Number(x.rank??x.valor)||2}));
+  selectionEntries={power:[],talent:[]};
+  for(const kind of ['power','talent']){
+   selectionEntries[kind]=Array.isArray(sheet.catalogSelections?.[kind])?structuredClone(sheet.catalogSelections[kind].filter(x=>x?.name)):[];
+  }
+  if(sheet.creation?.talent&&!selectionEntries.talent.some(x=>norm(x.name)===norm(sheet.creation.talent))){
+   selectionEntries.talent.unshift({id:null,name:sheet.creation.talent,origin:'starting',description:''});
+  }
   render();highlight();onSelect();
  }
  async function chooseEnemy(id){

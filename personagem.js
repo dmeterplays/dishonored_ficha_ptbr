@@ -96,7 +96,7 @@ function gather(){
  }
  data.notas={...(character.sheet.notas||{})};
  for(const [key] of noteKeys)if($(key))data.notas[key]=$(key).value;
- if(collections)data.catalogSelections=collections.getSelection();
+ if(collections){data.catalogSelections=collections.getSelection();data.focuses=collections.getFocuses();}
  return data;
 }
 function ready(data){return !!(data.nome?.trim()&&data.arquetipo?.trim()&&data.verdade1?.trim()&&data.verdade2?.trim()&&data.background?.trim());}

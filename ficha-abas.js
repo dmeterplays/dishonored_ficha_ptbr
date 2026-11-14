@@ -1,3 +1,4 @@
+import {focosOficiais} from './focos-oficiais.js';
 // Abas de catálogo da ficha: apenas referências. Não altera posse oficial, XP, moedas ou poderes.
 const categories={
  talent:{title:'Talentos',hint:'Talentos escolhidos e opções para avaliação do mestre.',price:'XP'},
@@ -48,6 +49,16 @@ function normalizeSelections(sheet){
     rank:Number.isInteger(Number(x.rank))&&x.rank!==null?Number(x.rank):null
    })):seeded[kind];
  }
+ const focusRecords=Array.isArray(sheet?.focuses)?sheet.focuses:null;
+ if(focusRecords){
+  result.focus=focusRecords.filter(x=>x&&typeof (x.name||x.nome)==='string'&&Number.isInteger(Number(x.rank??x.valor))&&Number(x.rank??x.valor)>=1&&Number(x.rank??x.valor)<=8)
+   .map(x=>({id:null,name:String(x.name||x.nome).trim(),description:'',origin:'sheet',rank:Number(x.rank??x.valor)}));
+ }else{
+  const merged=[];
+  for(const entry of [...(seeded.focus||[]),...(result.focus||[])])
+   if(entry.name&&!merged.some(x=>normalize(x.name)===normalize(entry.name)))merged.push(entry);
+  result.focus=merged;
+ }
  return result;
 }
 export function initCharacterCollections({db,sheet,onChange}){
@@ -71,6 +82,60 @@ export function initCharacterCollections({db,sheet,onChange}){
   if(record?.rules?.dano!==null&&record?.rules?.dano!==undefined)wrap.append(node('p','Dano base: '+record.rules.dano));
   return wrap;
  }
+ function renderFocusEditor(){
+  browser.classList.add('hidden');
+  const heading=node('div',null,'focus-editor');
+  heading.append(node('h3','Adicionar foco à ficha'));
+  heading.append(node('p','Escolha um foco do livro e sua classificação. Os valores ficam registrados na ficha após salvar; a progressão com XP continua sujeita às regras da mesa.','small'));
+  const fields=node('div',null,'focus-editor-fields');
+  const selectWrap=node('div'),pickLabel=node('label','Foco'),picker=node('select');
+  pickLabel.htmlFor='sheet-focus-select';picker.id='sheet-focus-select';
+  const placeholder=node('option','Selecione um foco');placeholder.value='';picker.append(placeholder);
+  const names=new Map();
+  for(const focus of focosOficiais)if(focus?.nome)names.set(normalize(focus.nome),{name:focus.nome,description:focus.descricao||''});
+  for(const entry of catalog.filter(x=>x.category==='focus'))if(entry.name&&!names.has(normalize(entry.name)))names.set(normalize(entry.name),{name:entry.name,description:entry.description||''});
+  for(const entry of current())if(entry.name&&!names.has(normalize(entry.name)))names.set(normalize(entry.name),{name:entry.name,description:entry.description||''});
+  for(const focus of [...names.values()].sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'))){
+   const opt=node('option',focus.name);opt.value=focus.name;picker.append(opt);
+  }
+  selectWrap.append(pickLabel,picker);
+  const rankWrap=node('div'),rankLabel=node('label','Classificação / nível'),rank=node('input');
+  rankLabel.htmlFor='sheet-focus-level';rank.id='sheet-focus-level';rank.type='number';rank.min='1';rank.max='8';rank.step='1';rank.value='2';
+  rankWrap.append(rankLabel,rank);
+  const add=node('button','+ Adicionar foco');add.type='button';
+  add.addEventListener('click',()=>{
+   const name=picker.value,level=Number(rank.value);
+   if(!name){tell('Selecione um foco da lista.',true);picker.focus();return}
+   if(!Number.isInteger(level)||level<1||level>8){tell('Informe uma classificação inteira entre 1 e 8.',true);rank.focus();return}
+   if(current().some(x=>normalize(x.name)===normalize(name))){tell('Este foco já está na ficha. Altere o nível dele abaixo.',true);return}
+   const choice=names.get(normalize(name));
+   values.focus.push({id:null,name,description:choice?.description||'',origin:'sheet',rank:level});
+   onChange();render();tell('Foco adicionado. Clique em Salvar ficha para confirmar.');
+  });
+  fields.append(selectWrap,rankWrap,add);heading.append(fields);
+  list.append(heading);
+  if(!current().length)list.append(node('p','Nenhum foco adicionado.','small'));
+  for(const entry of current()){
+   const card=node('div',null,'focus-editor-item');
+   const info=node('div',null,'focus-editor-info');
+   info.append(node('strong',entry.name));
+   const official=focosOficiais.find(x=>normalize(x.nome)===normalize(entry.name));
+   if(official?.descricao||entry.description)info.append(node('p',official?.descricao||entry.description,'small'));
+   const controls=node('div',null,'focus-editor-controls');
+   const levelLabel=node('label','Nível'),level=node('input');
+   level.type='number';level.min='1';level.max='8';level.step='1';level.value=entry.rank??2;
+   level.setAttribute('aria-label','Classificação do foco '+entry.name);
+   level.addEventListener('change',()=>{
+    const next=Number(level.value);
+    if(!Number.isInteger(next)||next<1||next>8){level.value=entry.rank??2;tell('Classificação deve estar entre 1 e 8.',true);return}
+    entry.rank=next;entry.origin='sheet';onChange();tell('Classificação atualizada. Salve a ficha para registrar.');
+   });
+   const remove=node('button','Remover','secondary');remove.type='button';
+   remove.setAttribute('aria-label','Remover foco '+entry.name);
+   remove.addEventListener('click',()=>{values.focus=values.focus.filter(x=>x!==entry);onChange();render();tell('Foco removido. Salve a ficha para confirmar.')});
+   controls.append(levelLabel,level,remove);card.append(info,controls);list.append(card);
+  }
+ }
  function render(){
   for(const btn of document.querySelectorAll('[data-collection]')){
    const selected=btn.dataset.collection===kind;btn.setAttribute('aria-selected',String(selected));
@@ -78,6 +143,8 @@ export function initCharacterCollections({db,sheet,onChange}){
   for(const count of document.querySelectorAll('[data-count]'))count.textContent=(values[count.dataset.count]?.length??0)+(count.dataset.count==='item'?(sheet?.gmInventory||[]).filter(x=>x&&x.quantity>0).length:0);
   $('collection-hint').textContent=categories[kind].hint;
   list.replaceChildren();
+  $('collection-add').classList.toggle('hidden',kind==='focus');
+  if(kind==='focus'){renderFocusEditor();return}
   const official=kind==='item'&&Array.isArray(sheet?.gmInventory)?sheet.gmInventory.filter(x=>x&&x.quantity>0):[];
   if(!current().length&&!official.length)list.append(node('p','Nada registrado nesta aba. Clique em “Adicionar do catálogo” para explorar opções.','small'));
   for(const owned of official){
@@ -163,5 +230,5 @@ export function initCharacterCollections({db,sheet,onChange}){
   render();if(!browser.classList.contains('hidden'))renderOptions();
  }
  render();load();
- return {getSelection:()=>structuredClone(values),reload:load};
+ return {getSelection:()=>structuredClone(values),getFocuses:()=>values.focus.map(x=>({name:x.name,rank:x.rank})),reload:load};
 }

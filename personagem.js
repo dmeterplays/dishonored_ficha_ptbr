@@ -1,7 +1,7 @@
 import {db,el,cleanString,getAuth,validSheet,portraitURL,localJSON,placeholder} from './personagens-common.js';
 import {items,powers,bonecharms} from './catalogo-dados.js';
 import {initCharacterCollections} from './ficha-abas.js?v=focus-editor2';
-import {mountActionEditor} from './combat-actions.js?v=actions3';
+import {mountActionEditor} from './combat-actions.js?v=actions4-collapsed';
 const $=id=>document.getElementById(id);
 const id=new URLSearchParams(location.search).get('id');
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

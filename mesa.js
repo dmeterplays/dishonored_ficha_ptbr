@@ -5,7 +5,7 @@ import {allActions} from './combat-actions.js?v=actions3';
 const $=id=>document.getElementById(id),roomId=new URLSearchParams(location.search).get('id');
 const isUuid=x=>/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(x||'');
 const node=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined&&txt!==null)e.textContent=String(txt);if(cls)e.className=cls;return e};
-let ownedCombatItems=[];let lastGearCharacter=null;let me,room,roster=[],enemies=[],mine=null,mySheet=null,items=[],stock=[],purchases=[],tab='sheet',rollMode='quick',busy=false,costs={},gmEditor=null,realtimeChannel=null,presenceChannel=null,presenceReady=false,onlineUsers=new Set(),roomRefreshTimer=null,rollRefreshTimer=null,rollsSnapshot='',queuedRoomRefresh=false,lastRoll=null,mobileView='rolls';
+let trackLimits={};let ownedCombatItems=[];let lastGearCharacter=null;let me,room,roster=[],enemies=[],mine=null,mySheet=null,items=[],stock=[],purchases=[],tab='sheet',rollMode='quick',busy=false,costs={},gmEditor=null,realtimeChannel=null,presenceChannel=null,presenceReady=false,onlineUsers=new Set(),roomRefreshTimer=null,rollRefreshTimer=null,rollsSnapshot='',queuedRoomRefresh=false,lastRoll=null,mobileView='rolls';
 const gm=()=>room?.owner_id===me?.id;
 const say=(id,msg,bad=false)=>{$(id).textContent=msg;$(id).className=bad?'error':'status'};
 const clip=x=>String(x??'').slice(0,5000);
@@ -161,6 +161,44 @@ function roomView(){
  $('mobile-journal-link').href='diario.html?room='+encodeURIComponent(roomId);
 }
 
+function resourceTrack(label,now,max,editable,onDelta){
+ const ceiling=Math.max(1,Number(max)||1);
+ const widget=node('div',null,'stress-widget resource-widget');
+ const header=node('div',null,'stress-widget-header'),value=node('span',null,'stress-value');
+ header.append(node('strong',label),value);
+ const row=node('div',null,'stress-widget-row'),less=node('button','−','secondary stress-step'),more=node('button','+','secondary stress-step');
+ less.type='button';more.type='button';
+ less.setAttribute('aria-label','Diminuir '+label);more.setAttribute('aria-label','Aumentar '+label);
+ const track=node('div',null,'stress-widget-track'),fill=node('span',null,'stress-widget-fill');
+ track.setAttribute('role','progressbar');track.setAttribute('aria-label',label);
+ track.setAttribute('aria-valuemin','0');track.setAttribute('aria-valuemax',String(ceiling));
+ track.append(fill);row.append(less,track,more);widget.append(header,row);
+ const paint=valueNow=>{
+  const n=Math.max(0,Math.min(ceiling,Number(valueNow)||0));
+  value.textContent=n+' / '+ceiling;fill.style.width=100*n/ceiling+'%';
+  track.setAttribute('aria-valuenow',String(n));
+  less.disabled=!editable||n<=0;more.disabled=!editable||n>=ceiling;
+ };
+ paint(now);
+ if(!editable){less.hidden=true;more.hidden=true}
+ else for(const [btn,delta]of [[less,-1],[more,1]])btn.addEventListener('click',async()=>{
+  if(btn.disabled)return;less.disabled=true;more.disabled=true;
+  try{const result=await onDelta(delta);if(result!=null)paint(result)}
+  catch(error){say('room-status','Erro ao ajustar '+label+': '+error.message,true)}
+  finally{paint(Number(value.textContent.split('/')[0]))}
+ });
+ return widget;
+}
+async function changeResource(characterId,kind,delta){
+ const {data,error}=await db.rpc('dh_room_adjust_track',{p_room:roomId,p_character:characterId,p_track:kind,p_delta:delta});
+ if(error)throw Error(error.message);
+ requestRoomRefresh();return data;
+}
+function trackMaximum(p,kind){
+ const stored=trackLimits[p.character_id]||{};
+ return kind==='void'?stored.void_max??Math.max(3,Number(p.void_points)||0):
+  stored.momentum_max??Math.max(6,Number(p.momentum)||0);
+}
 function stressControl(now,max,editable,onDelta){
  const current=Math.min(Math.max(0,Number(now)||0),Math.max(0,Number(max)||0));
  const ceiling=Math.max(0,Number(max)||0);
@@ -251,8 +289,11 @@ function renderMasterShield(){
   meta.append(node('small',(p.archetype||'Sem arquétipo')+' · '+(presenceReady&&onlineUsers.has(p.user_id)?'Na mesa':'Inscrito')));
   heading.append(letter,meta);card.append(heading);
   card.append(stressControl(p.stress_now,p.stress_max,true,delta=>changeStress({characterId:p.character_id,delta})));
+  for(const [kind,label,value] of [['void','Pontos do Vazio',p.void_points],['momentum','Momentum',p.momentum]]){
+   card.append(resourceTrack(label,value,trackMaximum(p,kind),true,delta=>changeResource(p.character_id,kind,delta)));
+  }
   const stats=node('div',null,'gm-shield-resources');
-  for(const [label,value] of [['Vazio',p.void_points],['Momentum',p.momentum],['Moedas',fmt(p.coins)],['XP',fmt(p.xp)]]){
+  for(const [label,value] of [['Moedas',fmt(p.coins)],['XP',fmt(p.xp)]]){
    const stat=node('div',null,'gm-shield-resource');stat.append(node('small',label),node('strong',value??0));stats.append(stat);
   }
   card.append(stats);
@@ -270,7 +311,9 @@ function rosterView(){
   card.append(node('p',(p.is_gm?'Mestre · ':'')+(p.character_name?(p.archetype||'Sem arquétipo'):'Sem personagem selecionado')));
   if(p.character_id){
    card.append(stressControl(p.stress_now,p.stress_max,gm()||p.user_id===me.id,delta=>changeStress({characterId:p.character_id,delta})));
-   card.append(node('p','Vazio: '+p.void_points+' · Momentum: '+p.momentum));
+   for(const [kind,label,value] of [['void','Pontos do Vazio',p.void_points],['momentum','Momentum',p.momentum]]){
+    card.append(resourceTrack(label,value,trackMaximum(p,kind),gm()||p.user_id===me.id,delta=>changeResource(p.character_id,kind,delta)));
+   }
    if(gm())card.append(node('p','Moedas: '+fmt(p.coins)+' · XP: '+fmt(p.xp)));
   }
   if(gm()&&p.character_id){
@@ -558,15 +601,19 @@ async function refresh({side=false}={}){
  if(busy){queuedRoomRefresh=true;return}
  busy=true;
  try{
-  const [r,m,st,pu,enemyResponse]=await Promise.all([
+  const [r,m,st,pu,enemyResponse,limitsResponse]=await Promise.all([
    db.from('dh_rooms').select('id,code,name,owner_id,shop_open,chaos,adventure_number,active,revision,test_difficulty,show_test_difficulty').eq('id',roomId).single(),
    db.rpc('dh_room_roster',{p_room:roomId}),
    db.from('dh_room_stock').select('catalog_id,available,quantity').eq('room_id',roomId),
    db.from('dh_room_purchases').select('id,room_id,character_id,catalog_id,amount,currency,created_at').eq('room_id',roomId).order('created_at',{ascending:false}).limit(200),
-   db.rpc('dh_room_enemies_roster',{p_room:roomId})
+   db.rpc('dh_room_enemies_roster',{p_room:roomId}),
+   db.rpc('dh_room_track_limits',{p_room:roomId})
   ]);
   if(r.error)throw Error('Sala não encontrada ou sem acesso. '+r.error.message);
   const roomChanged=fingerprint(room)!==fingerprint(r.data);
+  const nextLimits=limitsResponse.error?trackLimits:Object.fromEntries((limitsResponse.data||[]).map(x=>[x.character_id,x]));
+  const limitsChanged=fingerprint(trackLimits)!==fingerprint(nextLimits);
+  trackLimits=nextLimits;
   const rosterChanged=fingerprint(roster)!==fingerprint(m.data||[]);
   const stockChanged=fingerprint(stock)!==fingerprint(st.data||[]);
   const purchasesChanged=fingerprint(purchases)!==fingerprint(pu.data||[]);
@@ -577,7 +624,7 @@ async function refresh({side=false}={}){
   purchases=pu.error?purchases:pu.data||[];enemies=enemyResponse.error?enemies:enemyResponse.data||[];
   mine=roster.find(x=>x.user_id===me.id)||null;
   if(roomChanged){roomView();if(rollsSnapshot)refreshRolls(true)}
-  if(rosterChanged)rosterView();
+  if(rosterChanged||limitsChanged)rosterView();
   if(enemiesChanged)enemyView();
   if(stockChanged&&gm())stockView();
   $('coins').textContent='Moedas: '+(mine?.character_id?fmt(mine.coins):'—');

@@ -42,8 +42,10 @@ export function allActions(sheet,catalog,extraOwned=[]){
 }
 export function mountActionEditor({root,sheet,catalog=[],onChange=()=>{},getFocuses=()=>[]}){
  let actions=(Array.isArray(sheet.combatActions)?structuredClone(sheet.combatActions):[]).map(normalizeAction);
- let records=catalog;let selectedId='';
- const current=()=>allActions({...sheet,combatActions:actions},records);
+ let records=catalog;let selectedId='',extraOwned=[],extraPowers=[];
+ const current=()=>allActions({...sheet,combatActions:actions,
+  catalogSelections:{...(sheet.catalogSelections||{}),
+   power:[...(sheet.catalogSelections?.power||[]),...extraPowers.map(name=>({name}))]}},records,extraOwned);
  function tell(message,bad=false){
   const node=root.querySelector('.combat-editor-status');node.textContent=message;node.classList.toggle('error',bad);
  }
@@ -104,5 +106,7 @@ export function mountActionEditor({root,sheet,catalog=[],onChange=()=>{},getFocu
   root.append(el('p','','combat-editor-status'));
  }
  draw();
- return {getActions:()=>structuredClone(actions),setCatalog:(next)=>{records=next||[];draw()},refresh:()=>draw()};
+ return {getActions:()=>structuredClone(actions),setCatalog:(next)=>{records=next||[];draw()},
+ setOwned:({items=[],powers=[]}={})=>{extraOwned=items;extraPowers=powers;draw()},
+ refresh:()=>draw()};
 }

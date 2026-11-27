@@ -14,7 +14,8 @@
   <div class="desktop-panel-toolbar-heading"><strong>Organizar a mesa</strong><span>Oculte painéis para ampliar o que importa agora.</span></div>
   <div class="desktop-panel-controls" role="group" aria-label="Painéis visíveis">
     <button type="button" class="desktop-panel-toggle" data-panel-toggle="sheets" aria-pressed="true" aria-controls="table-sheets">✓ Fichas</button>
-    <button type="button" class="desktop-panel-toggle" data-panel-toggle="rolls" aria-pressed="true" aria-controls="table-rolls">✓ Dados e histórico</button>
+    <button type="button" class="desktop-panel-toggle" data-panel-toggle="rolls" aria-pressed="true" aria-controls="table-rolls">✓ Rolagem</button>
+    <button type="button" class="desktop-panel-toggle" data-panel-toggle="history" aria-pressed="true" aria-controls="table-history">✓ Histórico</button>
     <button type="button" class="desktop-panel-toggle" data-panel-toggle="character" aria-pressed="true" aria-controls="table-actions">✓ Ficha e ações</button>
     <button type="button" id="desktop-panels-reset" class="secondary">Mostrar todos</button>
   </div>
@@ -27,7 +28,7 @@
   <div id="gm-shield-cards" class="gm-shield-cards"></div>
 </div><div class="roster" id="roster"></div><div class="row between" style="margin-top:18px"><h3>Inimigos e NPCs</h3><a id="bestiary-link" class="btn secondary hidden" href="bestiario.html">+ Bestiário / Criar inimigo</a></div><div id="enemy-roster" class="roster"><p class="small">Nenhum adversário na mesa.</p></div>
 </aside>
-<section class="table-panel" id="table-rolls"><h2>Dados e histórico</h2><p class="small">Os resultados são calculados no servidor. Rolagens privadas ficam visíveis somente para quem rolou e para o mestre. As exclusivas do mestre não aparecem para os demais jogadores.</p><div class="rolls" id="rolls"><p>Carregando histórico...</p></div>
+<section class="table-panel" id="table-rolls"><h2>Rolagem de dados</h2>
 <div class="subpanel"><h3>Nova rolagem</h3><div class="roll-mode" role="group" aria-label="Tipo de rolagem"><button type="button" id="roll-mode-quick" class="secondary" aria-pressed="true">Rápida</button><button type="button" id="roll-mode-custom" class="secondary" aria-pressed="false">Personalizada</button></div><div class="quick-favorites-bar"><span>Suas ações favoritas</span><button id="roll-favorites-manage" type="button" class="secondary">Organizar favoritos</button></div>
 <div id="roll-favorite-actions" class="quick-actions roll-favorite-actions"></div>
 <details id="roll-more-actions" class="roll-more-actions"><summary>Todas as ações rápidas</summary><div id="roll-quick-actions" class="quick-actions"></div></details><p class="small" id="roll-character-hint"></p><div id="roll-custom-fields"><div class="form-grid">
@@ -41,6 +42,11 @@
 <div><label for="roll-visibility">Privacidade</label><select id="roll-visibility"><option value="public">Pública: todos veem</option><option value="private">Privada: eu e mestre</option><option value="gm_only">Somente mestre vê resultado</option></select></div>
 </div><div class="roll-difficulty-readonly" id="roll-difficulty-display"><span>Dificuldade definida pelo mestre</span><strong id="roll-difficulty-value">1</strong></div>
 <div class="row mobile-roll-buttons" style="margin-top:12px"><button id="roll-submit" type="button">Rolar dados</button><button id="roll-repeat" type="button" class="secondary" disabled>Repetir última rolagem</button><span id="roll-msg" class="status" role="status"></span></div></div></section>
+<section class="table-panel" id="table-history" aria-labelledby="history-title">
+<h2 id="history-title">Histórico de rolagens</h2>
+<p class="small">Resultados calculados no servidor. Rolagens privadas aparecem apenas para quem rolou e para o mestre.</p>
+<div class="rolls" id="rolls"><p>Carregando histórico...</p></div>
+</section>
 <aside class="table-panel" id="table-actions"><h2 id="right-title">Minha ficha e ações</h2><div id="gm-selected" class="hidden"><div class="row between"><span class="tag">Editor do mestre</span><button type="button" id="gm-back-own" class="secondary">Voltar à minha ficha</button></div><div id="gm-editor"></div><p id="gm-editor-status" class="status" role="status"></p></div><div id="player-side"><div id="my-character"><p>Carregando personagem...</p></div><details id="session-gear-panel" class="panel session-gear-panel"><summary>🎒 Equipamentos e melhorias ativas</summary><p class="small">Ative ou desative as melhorias instaladas pelo mestre. Os efeitos e a capacidade adicional ficam visíveis durante a sessão.</p><div id="session-gear-list"></div></details><div class="money"><span id="coins">Moedas: —</span><span id="xp">XP: —</span></div>
 <label class="mobile-category-label" for="mobile-category">Consultar ficha e recursos</label>
 <select id="mobile-category" class="mobile-category" aria-label="Escolher seção da ficha">

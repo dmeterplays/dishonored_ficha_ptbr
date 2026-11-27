@@ -365,3 +365,22 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
  #table.table-layout.desktop-panels>.table-panel[data-desktop-hidden="false"]{display:block}
 }
 @media(max-width:760px){.desktop-panel-toolbar{display:none!important}}
+
+/* Histórico independente do lançador de dados no desktop. */
+@media(min-width:761px){
+ main.wrap.mobile-table-main{max-width:1680px}
+ #table.table-layout.desktop-panels[data-visible-panels="4"]{gap:12px}
+ #table-history .rolls{max-height:min(75vh,900px);min-height:240px;overflow-y:auto}
+ #table-rolls>.subpanel{margin-top:0}
+}
+@media(min-width:761px) and (max-width:1290px){
+ #table.table-layout.desktop-panels[data-visible-panels="4"]{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px){
+ /* O celular continua usando Dados como uma área, com o histórico abaixo da rolagem. */
+ .table-layout[data-mobile-view="rolls"]>#table-history{display:block!important;margin-top:12px}
+ .table-layout[data-mobile-view="rolls"]>#table-rolls{display:block!important}
+ #table-history .rolls{max-height:none;min-height:100px;overflow:visible}
+ #table-history>h2{margin-bottom:8px}
+ #table-rolls>.subpanel{margin-top:0}
+}

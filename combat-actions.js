@@ -53,7 +53,7 @@ export function allActions(sheet,catalog,extraOwned=[]){
 }
 export function mountActionEditor({root,sheet,catalog=[],onChange=()=>{},getFocuses=()=>[]}){
  let actions=(Array.isArray(sheet.combatActions)?structuredClone(sheet.combatActions):[]).map(normalizeAction);
- let records=catalog;let selectedId='',creating=false,extraOwned=[],extraPowers=[];
+ let records=catalog;let selectedId='',extraOwned=[],extraPowers=[];
  const current=()=>allActions({...sheet,combatActions:actions,
   catalogSelections:{...(sheet.catalogSelections||{}),
    power:[...(sheet.catalogSelections?.power||[]),...extraPowers.map(name=>({name}))]}},records,extraOwned);
@@ -73,16 +73,15 @@ export function mountActionEditor({root,sheet,catalog=[],onChange=()=>{},getFocu
    const info=el('div',null,'combat-action-card-info');
    info.append(el('strong',action.name));
    info.append(el('small',action.skill+' + '+action.style+' · Dano '+action.damage+(action.bonus?' '+(action.bonus>0?'+':'')+action.bonus:'')+(action.voidCost?' · Vazio '+action.voidCost:'')));
-   const edit=el('button','Configurar','secondary');edit.type='button';edit.addEventListener('click',()=>{selectedId=action.id;creating=false;draw()});
+   const edit=el('button','Configurar','secondary');edit.type='button';edit.addEventListener('click',()=>{selectedId=action.id;draw()});
    card.append(info,edit);list.append(card);
   }
   root.append(list);
-  const add=el('button','+ Criar ataque personalizado','secondary');
-  add.type='button';add.setAttribute('aria-expanded',String(creating));
-  add.addEventListener('click',()=>{creating=!creating;selectedId='';draw()});
-  root.append(add);
+  const accordion=el('details',null,'combat-action-accordion');
+  const summary=el('summary','+ Adicionar ataque personalizado');
+  accordion.append(summary);
+  root.append(accordion);
   const status=el('p','','combat-editor-status');root.append(status);
-  if(!selectedId&&!creating)return;
   const panel=el('div',null,'combat-action-form');
   panel.append(el('h3',selectedId?'Configurar ataque / ação':'Adicionar ataque personalizado'));
   let action=data.find(x=>x.id===selectedId)||normalizeAction({id:'custom:new',name:'',source:'custom',skill:'Lutar',style:'Ousadamente'});
@@ -106,11 +105,11 @@ export function mountActionEditor({root,sheet,catalog=[],onChange=()=>{},getFocu
     skill:skill.value,style:style.value,focus:focus.value,damage:vDamage,bonus:vBonus,voidCost:vCost};
    const idx=actions.findIndex(x=>x.id===edit.id);
    if(idx>=0)actions[idx]=edit;else actions.push(edit);
-   selectedId='';creating=false;onChange();draw();tell('Ação configurada. Salve a ficha para registrar.');
+   selectedId='';onChange();draw();tell('Ação configurada. Salve a ficha para registrar.');
   });
   buttons.append(save);
-  if(selectedId||creating){
-   const cancel=el('button','Cancelar','secondary');cancel.type='button';cancel.addEventListener('click',()=>{selectedId='';creating=false;draw()});buttons.append(cancel);
+  {
+   const cancel=el('button','Cancelar','secondary');cancel.type='button';cancel.addEventListener('click',()=>{selectedId='';draw()});buttons.append(cancel);
   }
   if(selectedId){
    if(action.source==='custom'){
@@ -121,7 +120,8 @@ export function mountActionEditor({root,sheet,catalog=[],onChange=()=>{},getFocu
     reset.addEventListener('click',()=>{actions=actions.filter(x=>x.id!==selectedId);selectedId='';onChange();draw()});buttons.append(reset);
    }
   }
-  panel.append(buttons);root.append(panel);
+  panel.append(buttons);
+  if(selectedId){root.append(panel)}else{accordion.append(panel)}
  }
  draw();
  return {getActions:()=>structuredClone(actions),setCatalog:(next)=>{records=next||[];draw()},

@@ -223,3 +223,12 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
  .combat-action-card button{width:100%}
  .combat-action-buttons{display:grid;grid-template-columns:1fr}
 }
+
+.character-resource-tracks{display:grid;gap:13px;margin:15px 0}
+.character-resource-track{background:#18282b;border:1px solid #71634c;padding:12px;min-width:0}
+.character-resource-track .stress-widget-header{margin-bottom:8px}
+.character-resource-track .stress-widget-row{display:flex;align-items:center;gap:9px}
+.character-resource-track .stress-widget-track{flex:1;min-width:35px}
+.character-resource-track .stress-step{min-width:44px;min-height:44px}
+.resource-sheet-config{border-top:1px solid #76694d;margin-top:16px;padding-top:15px}
+.resource-sheet-config h3{margin-top:0}

@@ -54,6 +54,31 @@ function renderNotes(){
   root.append(section);
  }
 }
+// No celular, os formulários longos ficam em painéis acessíveis, sem desmontar a ficha.
+function setupCompactSheet(){
+ const target=$('sheet');if(!target)return;
+ for(const section of [...target.querySelectorAll(':scope > section.panel')]){
+  if(section.classList.contains('sheet-hero'))continue;
+  const heading=section.querySelector(':scope > h2, :scope > .row h2');
+  if(!heading)continue;
+  const label=heading.textContent.trim();
+  const panel=document.createElement('details');panel.className='mobile-sheet-details';
+  const summary=document.createElement('summary');summary.textContent=label;
+  panel.append(summary);
+  const body=document.createElement('div');body.className='mobile-sheet-panel-body';
+  while(section.firstChild)body.append(section.firstChild);
+  panel.append(body);section.append(panel);
+  panel.open=window.matchMedia('(min-width:761px)').matches;
+ }
+ const update=()=>{
+  if(window.matchMedia('(min-width:761px)').matches){
+   for(const details of target.querySelectorAll('.mobile-sheet-details'))details.open=true;
+  }
+ };
+ window.addEventListener('resize',update);
+}
+setupCompactSheet();
+
 function renderPhoto(url){
  const root=$('photo-wrap');root.replaceChildren();
  if(url){const img=el('img');img.alt='Retrato de '+character.name;img.src=url;img.className='hero-photo';root.append(img);}

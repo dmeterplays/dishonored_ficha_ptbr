@@ -194,3 +194,32 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
  .mobile-sheet-panel-body .tabs{gap:6px}
  .mobile-sheet-panel-body .tabs button{flex:1 1 100px}
 }
+
+/* Editor de ataques e ações e barra de Estresse segmentada. */
+#sheet-stress-track{position:relative;min-width:0}
+#sheet-stress-fill{position:absolute;inset:0 auto 0 0}
+.sheet-stress-marks{position:absolute;inset:0;display:grid;gap:2px;padding:2px}
+.sheet-stress-mark{min-width:0;border-right:1px solid #0d2026a8}
+.sheet-stress-mark:last-child{border-right:0}
+.sheet-stress-mark.is-filled{background:#e7b88a18}
+.combat-action-list{display:grid;gap:8px;margin:14px 0}
+.combat-action-card{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px;border:1px solid #75634b;background:#1c2b30}
+.combat-action-card-info{display:grid;gap:5px;min-width:0;flex:1}
+.combat-action-card-info strong{color:#f0d8ae;overflow-wrap:anywhere}
+.combat-action-card-info small{color:#c8d2cb;font-size:13px;overflow-wrap:anywhere}
+.combat-action-card button{min-height:44px}
+.combat-action-form{padding:15px;border:1px solid #8b7555;background:#1a272b}
+.combat-action-form h3{margin:0 0 12px;color:#f0d4a5}
+.combat-action-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.combat-action-fields label{display:block;font-size:13px;margin:0 0 7px}
+.combat-action-fields input,.combat-action-fields select{width:100%;min-height:45px;background:#0f2024;color:#ede4d3;border:1px solid #806b4e;padding:9px;font-size:16px}
+.combat-action-fields input:disabled{opacity:.65}
+.combat-action-buttons{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.combat-action-buttons button{min-height:44px}
+.combat-editor-status{font-size:14px;color:#a7e6d4}
+@media(max-width:690px){
+ .combat-action-fields{grid-template-columns:1fr}
+ .combat-action-card{flex-direction:column;align-items:stretch}
+ .combat-action-card button{width:100%}
+ .combat-action-buttons{display:grid;grid-template-columns:1fr}
+}

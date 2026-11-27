@@ -46,4 +46,13 @@ try{
  if(ce)msg('join-message',ce.message,true);
  for(const ch of chars||[]){if(ch.creation_status!=='ready')continue;const opt=document.createElement('option');opt.value=ch.id;opt.textContent=ch.name+' — '+(ch.archetype||'Sem arquétipo');select.append(opt)}
  await showRooms();
-}catch(e){msg('join-message',e.message,true)}
+}catch(e){
+ const root=$('rooms');root.replaceChildren();
+ const text=document.createElement('p');text.className='error';
+ text.textContent='Não foi possível carregar suas campanhas. O serviço de autenticação ou o banco de dados pode estar temporariamente indisponível.';
+ const retry=document.createElement('button');retry.type='button';retry.className='secondary';
+ retry.textContent='Tentar novamente';retry.addEventListener('click',()=>location.reload());
+ root.append(text,retry);
+ msg('rooms-message','Erro de conexão: '+e.message,true);
+ msg('join-message','Não foi possível verificar a conta. Tente novamente quando o Supabase estiver disponível.',true);
+}

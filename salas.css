@@ -486,3 +486,35 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
   height:max(320px,calc(100dvh - 240px));
  }
 }
+
+
+/* Inventário do mestre categorizado e edição isolada em janela flutuante. */
+.gm-inventory-group{margin:12px 0 16px;border:1px solid #5a5141;background:#111b20}
+.gm-inventory-group>h4{margin:0;padding:10px 12px;background:#1d292c;color:#e5d0a5}
+.gm-inventory-group .gm-inventory-entry{padding:10px 12px;gap:12px;min-width:0}
+.gm-inventory-info{display:grid;gap:3px;min-width:0;flex:1}
+.gm-inventory-info strong{font-size:15px;color:#e9ddc8;overflow-wrap:anywhere}
+.gm-inventory-info small{font-size:13px;color:#acbdb8}
+.gm-inventory-actions{display:flex;gap:7px;flex-wrap:wrap}
+.gm-inventory-actions button{min-height:36px;padding:7px 10px;font-size:10px}
+.gm-item-modal-backdrop{position:fixed;inset:0;z-index:10000;background:#05080bd9;display:flex;align-items:center;justify-content:center;padding:18px}
+.gm-item-modal{width:min(720px,100%);max-height:min(88dvh,900px);display:flex;flex-direction:column;background:#151b20;border:2px solid #aa8c5d;color:#f0e3cf;box-shadow:0 20px 80px #000c;min-width:0}
+.gm-item-modal-header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 17px;border-bottom:1px solid #786447}
+.gm-item-modal-header h3{margin:0;color:#e6c991;font-size:17px}
+.gm-item-modal-close{font-size:24px!important;line-height:1;padding:5px 12px!important;min-height:36px}
+.gm-item-modal-body{overflow-y:auto;min-height:0;padding:15px 18px;overscroll-behavior:contain}
+.gm-item-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.gm-item-fields label{min-width:0;display:grid;gap:6px;margin:0}
+.gm-item-fields label:last-child{grid-column:1/-1}
+.gm-item-fields input,.gm-item-fields select,.gm-item-fields textarea{width:100%;min-width:0;min-height:43px;background:#0e171d;color:#e9e0d2;border:1px solid #8d795a;padding:9px;font-size:16px}
+.gm-item-upgrade-section{margin-top:16px;border-top:1px solid #5f5746;padding-top:10px}
+.gm-item-upgrade-section h4{margin:4px 0;color:#e7cfa2}
+.gm-item-upgrade-options{display:grid;gap:8px;max-height:280px;overflow-y:auto}
+.gm-item-upgrade-option{display:flex!important;align-items:flex-start;gap:10px;padding:9px;background:#1d292b;border:1px solid #4e605b;margin:0!important;cursor:pointer}
+.gm-item-upgrade-option input{width:20px;height:20px;flex:0 0 20px;accent-color:#c3a778}
+.gm-item-upgrade-option span{display:grid;gap:4px;min-width:0}
+.gm-item-upgrade-option strong{color:#ead3a8}
+.gm-item-upgrade-option small{color:#bfc9c2;line-height:1.35}
+.gm-item-modal-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid #786447}
+.gm-item-modal-actions button{min-height:42px}
+@media(max-width:600px){.gm-item-modal-backdrop{padding:8px}.gm-item-fields{grid-template-columns:1fr}.gm-item-fields label:last-child{grid-column:auto}.gm-inventory-actions{flex:0 0 auto}.gm-item-modal-body{padding:12px}}

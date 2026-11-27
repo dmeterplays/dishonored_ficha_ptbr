@@ -27,7 +27,7 @@ export function catalogActions(sheet,catalog,extraOwned=[]){
     skill:'Lutar',style:ranged?'Cuidadosamente':'Ousadamente',damage:Number(rules.dano)}));
   }else if(record.category==='power'){
    if(/passivo/i.test(rules.tipo||''))continue;
-   if(!sources.some(x=>clean(x)===clean(name)))continue;
+   if(!sources.some(x=>clean(x)===clean(name)||clean(x).startsWith(clean(name)+' -')))continue;
    list.push(normalizeAction({id:'power:'+record.id,name,source:'power',sourceId:record.id,sourceName:name,
     skill:'Falar',style:'Forçosamente',damage:Number(rules.dano)||0,voidCost:Number(rules.custo_vazio)||0}));
   }

@@ -186,7 +186,7 @@ function gather(){
  data.stressMax=String(stressMax);data.stressAtual=String(stressNow);
  for(const [field,key,current] of [['void-max','voidMax',character.void_points],['momentum-max','momentumMax',character.momentum]]){
   const n=Number($(field).value);
-  if(!Number.isInteger(n)||n<1||n>50||n<Number(current||0))throw Error('O máximo de '+(key==='voidMax'?'Pontos do Vazio':'Momentum')+' deve estar entre 1 e 50 e não pode ser menor que o valor atual.');
+  if(!Number.isInteger(n)||n<1||n>(key==='voidMax'?20:50)||n<Number(current||0))throw Error('O máximo de '+(key==='voidMax'?'Pontos do Vazio':'Momentum')+' deve estar entre 1 e '+(key==='voidMax'?20:50)+' e não pode ser menor que o valor atual.');
   data[key]=n;
  }
  for(const key of ['skills','styles']){

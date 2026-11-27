@@ -408,3 +408,15 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .gm-stress-square.is-filled{background:linear-gradient(135deg,#b86656,#dd9f76)!important;border-color:#e3b98d!important}
 .gm-stress-square:focus-visible{outline:2px solid #79e1d5;outline-offset:2px}
 @media(max-width:760px){.combat-roll-launcher .row{display:grid;grid-template-columns:1fr}.combat-roll-launcher{padding:12px}}
+
+/* Três trilhas consistentes de recursos no editor e nos cartões da mesa. */
+.gm-resource-tracks{display:grid;gap:14px;margin:14px 0 18px}
+.gm-resource-track{padding:10px 12px;border:1px solid #6d644b;background:#18282b;min-width:0}
+.gm-resource-track .stress-widget-header{margin-bottom:8px}
+.gm-resource-track .stress-widget-row,.resource-widget .stress-widget-row{display:flex;align-items:center;gap:8px}
+.gm-resource-track .stress-widget-track,.resource-widget .stress-widget-track{flex:1;min-width:30px}
+.gm-resource-track .stress-step,.resource-widget .stress-step{width:42px;min-width:42px;min-height:42px}
+.resource-widget{padding:8px 0;border-top:1px solid #536051}
+.resource-widget .stress-widget-header{margin-bottom:6px}
+.gm-shield-card>.resource-widget{margin:8px 0}
+@media(max-width:760px){.gm-resource-track{padding:10px}.gm-resource-track .stress-step{min-height:44px}}

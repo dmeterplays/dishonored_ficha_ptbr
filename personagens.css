@@ -167,3 +167,30 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
 .imported-notes>summary{cursor:pointer;font:600 14px Cinzel,serif;color:#e7c999;padding:8px 0}
 .imported-notes h4{font-size:13px;color:#e5c18f;margin:17px 0 5px}
 .imported-notes .imported-note-text{white-space:pre-wrap;overflow-wrap:anywhere;background:#222b30;border-left:2px solid #8c6d3f;color:#eee5d6;padding:12px;font-size:16px;line-height:1.5}
+
+/* Resumo rápido e seções recolhíveis para ficha de personagem no celular. */
+.mobile-player-summary{display:none}
+.mobile-sheet-details>summary{display:none}
+.mobile-sheet-panel-body{min-width:0}
+@media(max-width:760px){
+ .sheet-hero{grid-template-columns:1fr;gap:12px}
+ .sheet-hero>.hero-photo{max-width:100%}
+ .mobile-player-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0}
+ .mobile-player-stat{background:#152a2c;border:1px solid #576c60;padding:10px 7px;min-width:0;text-align:center}
+ .mobile-player-stat small{display:block;color:#b9d2c7;font-size:12px;margin-bottom:5px}
+ .mobile-player-stat strong{color:#f2d7a7;font:600 16px Cinzel,serif;overflow-wrap:anywhere}
+ .mobile-sheet-details{min-width:0}
+ .mobile-sheet-details>summary{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 13px;cursor:pointer;color:#efd3a0;font:600 14px Cinzel,serif;letter-spacing:.02em;list-style:none;min-height:52px}
+ .mobile-sheet-details>summary::-webkit-details-marker{display:none}
+ .mobile-sheet-details>summary:after{content:'⌄';font:700 22px Georgia,serif;color:#79dfd0}
+ .mobile-sheet-details[open]>summary:after{content:'⌃'}
+ .mobile-sheet-details[open]>summary{border-bottom:1px solid #67583b}
+ .mobile-sheet-panel-body{padding:13px 5px}
+ .mobile-sheet-panel-body>.row:first-child h2,.mobile-sheet-panel-body>h2:first-child{display:none}
+ #sheet>section.panel:not(.sheet-hero){padding:0 11px;margin:12px 0}
+ .collection-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ .collection-tabs button{min-height:44px;font-size:11px}
+ .sheet-hero input,.mobile-sheet-panel-body input,.mobile-sheet-panel-body select,.mobile-sheet-panel-body button{min-height:44px}
+ .mobile-sheet-panel-body .tabs{gap:6px}
+ .mobile-sheet-panel-body .tabs button{flex:1 1 100px}
+}

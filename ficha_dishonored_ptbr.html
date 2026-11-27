@@ -296,6 +296,7 @@ footer{
     <div class="sub">Ficha de Personagem — traduzida por João</div>
     <div class="save-bar">
       <span id="save-status">Salvo neste dispositivo</span>
+      <button class="mini-btn" type="button" onclick="migrarFichaParaConta()">Levar para a mesa online</button>
       <button class="mini-btn" onclick="exportarFicha()">⭳ Exportar cópia</button>
       <button class="mini-btn" onclick="document.getElementById('import-file').click()">⭱ Importar cópia</button>
       <input type="file" id="import-file" accept=".json" style="display:none">
@@ -695,6 +696,15 @@ function carregarLocal(){
   }
 }
 
+function migrarFichaParaConta(){
+ try{
+  // Garante que as alterações mais recentes foram gravadas antes de abrir a importação.
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(coletarEstado()));
+  window.location.href='fichas.html#legacy-transfer';
+ }catch(error){
+  alert('Não foi possível salvar esta ficha no navegador. Exporte uma cópia JSON antes de continuar.');
+ }
+}
 function exportarFicha(){
   const estado = coletarEstado();
   const blob = new Blob([JSON.stringify(estado, null, 2)], {type:'application/json'});

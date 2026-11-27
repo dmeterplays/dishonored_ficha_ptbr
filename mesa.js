@@ -1,6 +1,7 @@
 import {db,getAuth} from './personagens-common.js';
 import {initMasterEditor} from './mesa-mestre.js?v=gm-catalog2';
 import {renderOwnedGear} from './active-upgrade-ui.js?v=2';
+import {allActions} from './combat-actions.js?v=actions1';
 const $=id=>document.getElementById(id),roomId=new URLSearchParams(location.search).get('id');
 const isUuid=x=>/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(x||'');
 const node=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined&&txt!==null)e.textContent=String(txt);if(cls)e.className=cls;return e};
@@ -320,7 +321,8 @@ function diceView(rolls){
   const character=roster.find(x=>x.character_id&&x.character_id===r.character_id);
   const actorName=r.actor_name||character?.character_name||npc?.name||(r.enemy_id?'Inimigo':r.character_id?'Personagem':r.action_label?'Inimigo':'Participante');
   const div=node('article',null,'roll-card'+(r.visibility==='public'?'':' private'));
-  const h=node('h4',actorName+' · '+(r.action_label&&r.action_label!=='Teste livre'?r.action_label+' · ':'')+r.skill+' + '+r.style);
+  const title=r.action_name||((r.action_label&&r.action_label!=='Teste livre')?r.action_label:null);
+  const h=node('h4',actorName+' · '+(title?title+' · ':'')+r.skill+' + '+r.style);
   const vis=r.visibility==='public'?'Pública':r.visibility==='private'?'Privada':'Somente mestre';
   const date=new Date(r.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   div.append(h,node('p',date+' · '+vis+(difficultyIsVisible()?' · Dificuldade '+r.difficulty:' · Dificuldade oculta')));
@@ -329,6 +331,11 @@ function diceView(rolls){
   // O servidor continua calculando os resultados; a dificuldade numérica não aparece ao jogador.
   div.append(node('p',r.successes+' sucesso(s) · '+r.complications+' complicação(ões) · '+(passed?'Sucesso':'Falha'),passed?'success':'fail'));
   div.append(node('p','Alvo: '+r.target+(r.focus?' · Foco: '+r.focus+' ('+r.focus_value+')':'')));
+  if(r.action_name){
+   const dmg=r.successes>=r.difficulty?Number(r.damage||0):0;
+   div.append(node('p',dmg>0?'⚔ Dano fixo: '+dmg+' de Estresse (aplicação pelo mestre)':r.successes>=r.difficulty?'Ação bem-sucedida · sem dano direto':'Ataque falhou · nenhum dano','action-damage'));
+   if(Number(r.void_spent)>0)div.append(node('p','✦ Vazio gasto: '+r.void_spent,'small'));
+  }
   root.append(div);
  }
 }
@@ -464,6 +471,53 @@ $('gm-save-difficulty').addEventListener('click',async()=>{
  say('gm-msg','Dificuldade '+chosen+' aplicada a todos os testes da sala.');
 });
 
+let pendingCombatAction=false;
+function availableCombatActions(){
+ if(!mySheet)return [];
+ const extension=structuredClone(mySheet);
+ extension.catalogSelections=structuredClone(mySheet.catalogSelections||{});
+ extension.catalogSelections.power=[...(extension.catalogSelections.power||[])];
+ const names=[];
+ for(const purchase of purchases.filter(x=>x.character_id===mine?.character_id)){
+  const record=byId(purchase.catalog_id);if(!record)continue;
+  if(record.category==='power')extension.catalogSelections.power.push({name:record.name});
+  if(record.category==='item')names.push(record.name);
+ }
+ return allActions(extension,items,names);
+}
+function paintCombatActions(){
+ const picker=$('combat-roll-action'),old=picker.value,actions=availableCombatActions();
+ picker.replaceChildren();option(picker,'','Selecione um ataque ou poder');
+ for(const action of actions)option(picker,action.id,action.name+(action.source==='power'?' ✦':''));
+ if([...picker.options].some(x=>x.value===old))picker.value=old;
+ const action=actions.find(x=>x.id===picker.value);
+ const preview=$('combat-roll-preview');
+ preview.textContent=action?
+  action.skill+' + '+action.style+(action.focus?' · Foco '+action.focus:'')+
+   ' · Dano '+Math.max(0,action.damage+action.bonus)+(action.voidCost?' · Custo: '+action.voidCost+' Vazio':''):
+  'Escolha um ataque configurado ou uma arma/poder do personagem.';
+ $('combat-roll-use').disabled=!action||pendingCombatAction;
+ $('combat-roll-edit').href=mine?.character_id?'personagem.html?id='+encodeURIComponent(mine.character_id)+'#character-combat-actions':'fichas.html';
+}
+$('combat-roll-action').addEventListener('change',paintCombatActions);
+$('combat-roll-use').addEventListener('click',async()=>{
+ if(pendingCombatAction||!mySheet||!mine?.character_id)return;
+ const action=availableCombatActions().find(x=>x.id===$('combat-roll-action').value);
+ if(!action)return say('roll-msg','Escolha uma ação válida da ficha.',true);
+ if(action.voidCost>Number(mine.void_points||0))return say('roll-msg','Pontos do Vazio insuficientes.',true);
+ if(action.voidCost&&!confirm('Usar '+action.name+' e gastar '+action.voidCost+' ponto(s) do Vazio, mesmo se o ataque falhar?'))return;
+ pendingCombatAction=true;paintCombatActions();
+ try{
+  const {error}=await db.rpc('dh_room_roll_action',{
+   p_room:roomId,p_action_key:action.id,p_dice:Number($('roll-dice').value),
+   p_visibility:$('roll-visibility').value
+  });
+  if(error)throw Error(error.message);
+  say('roll-msg','Ação '+action.name+' executada. O histórico informa acerto e dano fixo. O mestre aplica o dano ao alvo.');
+  await Promise.all([refreshRolls(true),refresh({side:true})]);
+ }catch(error){say('roll-msg','Falha ao executar ação: '+error.message,true)}
+ finally{pendingCombatAction=false;paintCombatActions()}
+});
 function rollerView(){
  const disabled=!mySheet;
  $('roll-submit').disabled=disabled;
@@ -477,6 +531,7 @@ function rollerView(){
  for(const item of focusOptions())option(focus,item.name,item.name+' ('+item.rank+')');
  if([...focus.options].some(o=>o.value===old))focus.value=old;
  paintQuickActions();
+ paintCombatActions();
 }
 const fingerprint=value=>JSON.stringify(value??null);
 function requestRoomRefresh(){
@@ -489,7 +544,7 @@ function requestRollRefresh(){
 }
 async function refreshRolls(force=false){
  const {data,error}=await db.from('dh_room_rolls')
-  .select('id,user_id,character_id,enemy_id,actor_name,action_label,skill,style,focus,focus_value,difficulty,dice,rolls,target,successes,complications,visibility,created_at')
+  .select('id,user_id,character_id,enemy_id,actor_name,action_label,action_name,action_kind,damage,void_spent,skill,style,focus,focus_value,difficulty,dice,rolls,target,successes,complications,visibility,created_at')
   .eq('room_id',roomId).order('created_at',{ascending:false}).limit(65);
  if(error){say('room-status','Erro ao buscar rolagens: '+error.message,true);connectionState('offline','Histórico indisponível');return}
  const next=fingerprint(data||[]);
@@ -529,6 +584,7 @@ async function refresh({side=false}={}){
   $('xp').textContent='XP: '+(mine?.character_id?fmt(mine.xp):'—');
   if(oldCharacterId!==mine?.character_id){lastRoll=null;setRepeatReady()}
   if(side||oldMode!==room.shop_open||purchasesChanged||stockChanged||oldCharacterId!==mine?.character_id)renderSide();
+  if(purchasesChanged||oldCharacterId!==mine?.character_id)paintCombatActions();
   if(!m.error&&mine?.character_id)await loadMySheet(false);
   if(!mine?.character_id&&oldCharacterId)await loadMySheet(false);
   if(roomChanged||rosterChanged||enemiesChanged)say('room-status','');
@@ -824,7 +880,7 @@ async function loadCatalog(){
  const [{data,error},{data:settings}]=await Promise.all([db.from('dh_catalog').select('id,category,name,archetype,description,xp_cost,coins_cost,rules,published').in('category',['item','talent','power','bonecharm','focus']).eq('published',true).order('name').limit(400),db.from('dh_settings').select('key,value')]);
  for(const item of settings||[])costs[item.key]=item.value;
  if(error){say('side-msg','Erro no catálogo: '+error.message,true);return}
- items=data||[];stockView();renderSide();
+ items=data||[];stockView();renderSide();paintCombatActions();
 }
 for(const button of document.querySelectorAll('[data-tab]'))button.addEventListener('click',()=>{tab=button.dataset.tab;renderSide()});
 $('mobile-category').addEventListener('change',event=>{tab=event.target.value;renderSide()});

@@ -392,3 +392,19 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 #gm-difficulty-visibility-status{margin:5px 0 12px;font-size:13px}
 .roll-difficulty-readonly[data-hidden-difficulty="true"]{border-style:dashed}
 .roll-difficulty-readonly[data-hidden-difficulty="true"] strong{font-size:15px;color:#d1c5ad}
+
+/* Ataques e poderes como ações executáveis na mesa. */
+.combat-roll-launcher{padding:12px 14px;margin:14px 0;border:1px solid #8b724e;background:#1b2a2e}
+.combat-roll-launcher h4{margin:0 0 7px;color:#ecd3a4;font:600 14px Cinzel,serif}
+.combat-roll-launcher p{margin:5px 0 12px}
+.combat-roll-launcher label{font-size:13px}
+.combat-roll-launcher select{min-height:46px;font-size:16px}
+.combat-roll-launcher .row{margin:11px 0 5px}
+.combat-roll-launcher .row button,.combat-roll-launcher .row a{min-height:44px}
+.combat-roll-preview{padding:8px;background:#142225;color:#ecdcbf;margin-top:8px;min-height:34px}
+.action-damage{color:#f0cea0;font-weight:600}
+.gm-stress-squares{display:grid;grid-template-columns:repeat(auto-fit,minmax(21px,1fr));gap:4px;margin:14px 0 7px}
+.gm-stress-square{min-height:26px;padding:0!important;border:1px solid #ad9772!important;background:#152024!important;transition:background .15s;cursor:pointer}
+.gm-stress-square.is-filled{background:linear-gradient(135deg,#b86656,#dd9f76)!important;border-color:#e3b98d!important}
+.gm-stress-square:focus-visible{outline:2px solid #79e1d5;outline-offset:2px}
+@media(max-width:760px){.combat-roll-launcher .row{display:grid;grid-template-columns:1fr}.combat-roll-launcher{padding:12px}}

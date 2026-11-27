@@ -41,6 +41,7 @@ function connectionState(state,label){
 let reconnecting=false;
 async function retryConnection(){
  if(reconnecting)return;
+ if(!me){window.location.reload();return}
  reconnecting=true;
  const button=$('reconnect-now');button.disabled=true;button.textContent='Sincronizando...';
  try{
@@ -141,14 +142,14 @@ function startPresence(){
  .on('presence',{event:'sync'},()=>{
   const state=presenceChannel.presenceState();
   onlineUsers=new Set(Object.keys(state).filter(id=>Array.isArray(state[id])&&state[id].length));
-  presenceReady=true;participantView();
+  presenceReady=true;participantView();if(gm())renderMasterShield();
  })
  .subscribe(async status=>{
   if(status==='SUBSCRIBED'){
    try{await presenceChannel.track({joined:true})}catch(e){presenceReady=false;participantView()}
   }
   if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'){
-   presenceReady=false;onlineUsers.clear();participantView();
+   presenceReady=false;onlineUsers.clear();participantView();if(gm())renderMasterShield();
   }
  });
 }
@@ -162,7 +163,7 @@ function renderMasterShield(){
  $('gm-shield-count').textContent=players.length+' personagem(ns)';
  if(!players.length){root.append(node('p','Nenhum personagem vinculado.','small'));return}
  for(const p of players){
-  const card=node('article',null,'gm-shield-card');
+  const card=node('article',null,'gm-shield-card');card.dataset.characterId=p.character_id;
   const heading=node('div',null,'gm-shield-heading');
   const letter=node('span',(p.character_name||p.display_name||'?').trim().slice(0,1).toUpperCase(),'gm-shield-avatar');
   const meta=node('div',null,'gm-shield-meta');
@@ -795,4 +796,7 @@ async function boot(){
  if(selectedEnemy&&gm()&&enemies.some(e=>e.id===selectedEnemy)){await gmEditor.chooseEnemy(selectedEnemy);history.replaceState(null,'','mesa.html?id='+encodeURIComponent(roomId));}
  startLiveUpdates();startPresence();
 }
-try{await boot()}catch(e){say('room-status',e.message,true)}
+try{await boot()}catch(e){
+ say('room-status','Não foi possível abrir a mesa: '+e.message,true);
+ connectionState('offline','Falha ao carregar a sessão');
+}

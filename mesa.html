@@ -29,7 +29,14 @@
 </div><div class="roster" id="roster"></div><div class="row between" style="margin-top:18px"><h3>Inimigos e NPCs</h3><a id="bestiary-link" class="btn secondary hidden" href="bestiario.html">+ Bestiário / Criar inimigo</a></div><div id="enemy-roster" class="roster"><p class="small">Nenhum adversário na mesa.</p></div>
 </aside>
 <section class="table-panel" id="table-rolls"><h2>Rolagem de dados</h2>
-<div class="subpanel"><h3>Nova rolagem</h3><div class="roll-mode" role="group" aria-label="Tipo de rolagem"><button type="button" id="roll-mode-quick" class="secondary" aria-pressed="true">Rápida</button><button type="button" id="roll-mode-custom" class="secondary" aria-pressed="false">Personalizada</button></div><div class="quick-favorites-bar"><span>Suas ações favoritas</span><button id="roll-favorites-manage" type="button" class="secondary">Organizar favoritos</button></div>
+<div class="subpanel"><h3>Nova rolagem</h3><div class="roll-mode" role="group" aria-label="Tipo de rolagem"><button type="button" id="roll-mode-quick" class="secondary" aria-pressed="true">Rápida</button><button type="button" id="roll-mode-custom" class="secondary" aria-pressed="false">Personalizada</button></div><div class="combat-roll-launcher" id="combat-roll-launcher">
+<h4>⚔ Meus ataques e poderes</h4>
+<p class="small">O acerto usa os d20 e a dificuldade do mestre; o dano da arma é fixo. Poderes gastam Vazio no servidor ao serem usados.</p>
+<label for="combat-roll-action">Ataque ou poder</label><select id="combat-roll-action"><option value="">Selecione uma ação da ficha</option></select>
+<div id="combat-roll-preview" class="combat-roll-preview small"></div>
+<div class="row"><button type="button" id="combat-roll-use" class="secondary" disabled>Executar ação</button><a href="fichas.html" id="combat-roll-edit" class="btn secondary">Configurar ataques na ficha</a></div>
+</div>
+<div class="quick-favorites-bar"><span>Suas ações favoritas</span><button id="roll-favorites-manage" type="button" class="secondary">Organizar favoritos</button></div>
 <div id="roll-favorite-actions" class="quick-actions roll-favorite-actions"></div>
 <details id="roll-more-actions" class="roll-more-actions"><summary>Todas as ações rápidas</summary><div id="roll-quick-actions" class="quick-actions"></div></details><p class="small" id="roll-character-hint"></p><div id="roll-custom-fields"><div class="form-grid">
 <div><label for="roll-skill">Perícia</label><select id="roll-skill"></select></div>

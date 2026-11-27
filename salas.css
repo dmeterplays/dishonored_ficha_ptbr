@@ -346,3 +346,22 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .is-room-gm #roster{display:none}
 .gm-shield-card.gm-active{border-color:#d7b77c;box-shadow:inset 0 0 0 1px #a98b58}
 @media(max-width:760px){.roll-shared-fields>div:first-child{grid-column:1/-1}}
+
+/* Personalização da mesa no computador: cada coluna pode ser ocultada. */
+.desktop-panel-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:12px 0 15px;padding:11px 13px;border:1px solid #6d624c;background:#182225}
+.desktop-panel-toolbar-heading{display:grid;gap:4px}
+.desktop-panel-toolbar-heading strong{color:#efd5a4;font:600 13px Cinzel,serif;letter-spacing:.04em}
+.desktop-panel-toolbar-heading span{font:14px 'Crimson Text',serif;color:#b8c9c3}
+.desktop-panel-controls{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.desktop-panel-toggle{min-height:40px;padding:8px 11px;border:1px solid #927f5a;background:#283b39;color:#f1d7ab;font-size:11px}
+.desktop-panel-toggle[aria-pressed="false"]{border:1px dashed #64736a;background:#19272a;color:#aebbb6}
+.desktop-panel-toggle:hover{filter:brightness(1.14)}
+.desktop-panel-controls #desktop-panels-reset{min-height:40px;padding:8px 11px;font-size:11px}
+.desktop-panel-toolbar .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(min-width:761px){
+ #table.table-layout.desktop-panels{grid-template-columns:var(--desktop-panel-grid);align-items:start}
+ #table.table-layout.desktop-panels>.table-panel{grid-column:auto;min-width:0}
+ #table.table-layout.desktop-panels>.table-panel[data-desktop-hidden="true"]{display:none!important}
+ #table.table-layout.desktop-panels>.table-panel[data-desktop-hidden="false"]{display:block}
+}
+@media(max-width:760px){.desktop-panel-toolbar{display:none!important}}

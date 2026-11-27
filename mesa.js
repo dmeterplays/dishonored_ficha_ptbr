@@ -28,7 +28,34 @@ function mobileNavigate(next,scroll=true){
 function connectionState(state,label){
  const el=$('connection-status');if(!el)return;
  el.dataset.status=state;el.textContent=label;
+ const panel=$('reconnect-panel');
+ if(panel){
+  const offline=state==='offline';
+  panel.classList.toggle('hidden',!offline);
+  if(offline){
+   $('reconnect-title').textContent='Conexão com a mesa instável';
+   $('reconnect-description').textContent=label+'. Os dados carregados continuam visíveis. Toque em Atualizar a mesa para tentar novamente.';
+  }
+ }
 }
+let reconnecting=false;
+async function retryConnection(){
+ if(reconnecting)return;
+ reconnecting=true;
+ const button=$('reconnect-now');button.disabled=true;button.textContent='Sincronizando...';
+ try{
+  await refresh({side:true});await refreshRolls();
+  // Apenas uma resposta bem-sucedida confirma que o banco voltou.
+  if(room?.id){
+   connectionState(realtimeChannel?.state==='joined'?'live':'offline',
+    realtimeChannel?.state==='joined'?'Sincronizado':'Banco acessível, tempo real em reconexão');
+  }
+ }catch(error){connectionState('offline','Falha ao sincronizar: '+error.message)}
+ finally{reconnecting=false;button.disabled=false;button.textContent='↻ Atualizar a mesa'}
+}
+$('reconnect-now').addEventListener('click',retryConnection);
+window.addEventListener('online',()=>{connectionState('offline','Internet reconectada · sincronizando');retryConnection()});
+window.addEventListener('offline',()=>connectionState('offline','Sem internet'));
 function setRepeatReady(){
  const button=$('roll-repeat');
  if(button)button.disabled=!mySheet||!lastRoll;
@@ -127,8 +154,36 @@ function startPresence(){
  });
 }
 $('participants-view-sheets').addEventListener('click',()=>mobileNavigate('sheets'));
+function renderMasterShield(){
+ const panel=$('gm-shield'),root=$('gm-shield-cards');root.replaceChildren();
+ panel.classList.toggle('hidden',!gm());
+ document.body.classList.toggle('is-room-gm',!!gm());
+ if(!gm())return;
+ const players=roster.filter(p=>p.character_id);
+ $('gm-shield-count').textContent=players.length+' personagem(ns)';
+ if(!players.length){root.append(node('p','Nenhum personagem vinculado.','small'));return}
+ for(const p of players){
+  const card=node('article',null,'gm-shield-card');
+  const heading=node('div',null,'gm-shield-heading');
+  const letter=node('span',(p.character_name||p.display_name||'?').trim().slice(0,1).toUpperCase(),'gm-shield-avatar');
+  const meta=node('div',null,'gm-shield-meta');
+  meta.append(node('strong',p.character_name||p.display_name||'Personagem'));
+  meta.append(node('small',(p.archetype||'Sem arquétipo')+' · '+(presenceReady&&onlineUsers.has(p.user_id)?'Na mesa':'Inscrito')));
+  heading.append(letter,meta);card.append(heading);
+  card.append(stressControl(p.stress_now,p.stress_max,true,delta=>changeStress({characterId:p.character_id,delta})));
+  const stats=node('div',null,'gm-shield-resources');
+  for(const [label,value] of [['Vazio',p.void_points],['Momentum',p.momentum],['Moedas',fmt(p.coins)],['XP',fmt(p.xp)]]){
+   const stat=node('div',null,'gm-shield-resource');stat.append(node('small',label),node('strong',value??0));stats.append(stat);
+  }
+  card.append(stats);
+  const action=node('button','Abrir e editar ficha','secondary');action.type='button';
+  action.addEventListener('click',()=>gmEditor?.choosePlayer(p.character_id));card.append(action);
+  root.append(card);
+ }
+}
 function rosterView(){
  const root=$('roster');root.replaceChildren();
+ renderMasterShield();
  for(const p of roster){
   const card=node('div',null,'player-card');
   card.append(node('strong',p.character_name||p.display_name||(p.is_gm?'Mestre':'Jogador')));
@@ -232,17 +287,54 @@ function chooseQuickAction(skill,style){
  for(const btn of document.querySelectorAll('.quick-action-btn'))btn.setAttribute('aria-pressed',String(btn.dataset.skill===skill&&btn.dataset.style===style));
  say('roll-msg','Ação selecionada: '+skill+' + '+style+'.');
 }
+let favoriteEditing=false;
+const favoriteKey=()=>mySheet&&mine?.character_id?'dishonored-roll-favorites-'+me.id+'-'+mine.character_id:null;
+function readFavoriteKeys(){
+ try{const key=favoriteKey();if(!key)return [];const saved=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(saved)?saved.filter(x=>typeof x==='string').slice(0,20):[]}
+ catch{return []}
+}
+function setFavoriteKeys(keys){
+ try{const key=favoriteKey();if(key)localStorage.setItem(key,JSON.stringify(keys))}
+ catch{say('roll-msg','Não foi possível salvar os favoritos neste navegador.',true)}
+}
+function actionKey(skill,style){return skill+'|'+style}
 function paintQuickActions(){
- const root=$('roll-quick-actions');root.replaceChildren();
+ const root=$('roll-quick-actions'),favRoot=$('roll-favorite-actions');
+ root.replaceChildren();favRoot.replaceChildren();
+ const favoriteKeys=readFavoriteKeys();
+ const favorites=[];
  for(const [name,skill,style] of quickActions){
+  const key=actionKey(skill,style),isFavorite=favoriteKeys.includes(key);
+  const entry=node('div',null,'quick-action-entry');
   const btn=node('button',name,'secondary quick-action-btn');btn.type='button';
   btn.dataset.skill=skill;btn.dataset.style=style;
   btn.disabled=!mySheet;
   btn.setAttribute('aria-pressed',String($('roll-skill').value===skill&&$('roll-style').value===style));
   btn.addEventListener('click',()=>chooseQuickAction(skill,style));
-  root.append(btn);
+  const star=node('button',isFavorite?'★':'☆','quick-star');star.type='button';
+  star.disabled=!mySheet;
+  star.setAttribute('aria-label',(isFavorite?'Remover ':'Adicionar ')+name+(isFavorite?' dos favoritos':' aos favoritos'));
+  star.setAttribute('aria-pressed',String(isFavorite));
+  star.addEventListener('click',()=>{
+   const next=readFavoriteKeys();const index=next.indexOf(key);
+   if(index>=0)next.splice(index,1);else next.push(key);
+   setFavoriteKeys(next);paintQuickActions();
+  });
+  entry.append(btn,star);root.append(entry);
+  if(isFavorite)favorites.push([name,skill,style]);
  }
+ if(!favorites.length)favRoot.append(node('p','Toque em ☆ ao lado de uma ação para deixá-la aqui.','small'));
+ for(const [name,skill,style] of favorites){
+  const btn=node('button','★ '+name,'secondary favorite-shortcut');btn.type='button';btn.disabled=!mySheet;
+  btn.addEventListener('click',()=>chooseQuickAction(skill,style));favRoot.append(btn);
+ }
+ $('roll-more-actions').open=favoriteEditing||!favorites.length;
+ $('roll-favorites-manage').textContent=favoriteEditing?'Concluir':'Organizar favoritos';
 }
+$('roll-favorites-manage').addEventListener('click',()=>{
+ favoriteEditing=!favoriteEditing;paintQuickActions();
+ if(favoriteEditing)$('roll-more-actions').open=true;
+});
 function setRollMode(mode){
  rollMode=mode;
  $('roll-custom-fields').classList.toggle('roll-custom-collapsed',mode==='quick');
@@ -301,7 +393,7 @@ async function refreshRolls(){
  const {data,error}=await db.from('dh_room_rolls')
   .select('id,user_id,character_id,enemy_id,actor_name,action_label,skill,style,focus,focus_value,difficulty,dice,rolls,target,successes,complications,visibility,created_at')
   .eq('room_id',roomId).order('created_at',{ascending:false}).limit(65);
- if(error){say('room-status','Erro ao buscar rolagens: '+error.message,true);return}
+ if(error){say('room-status','Erro ao buscar rolagens: '+error.message,true);connectionState('offline','Histórico indisponível');return}
  const next=fingerprint(data||[]);
  if(next===rollsSnapshot)return;
  rollsSnapshot=next;
@@ -342,7 +434,7 @@ async function refresh({side=false}={}){
   if(!m.error&&mine?.character_id)await loadMySheet(false);
   if(!mine?.character_id&&oldCharacterId)await loadMySheet(false);
   if(roomChanged||rosterChanged||enemiesChanged)say('room-status','');
- }catch(e){say('room-status',e.message,true)}
+ }catch(e){say('room-status',e.message,true);connectionState('offline','Falha de conexão com o banco')}
  finally{
   busy=false;
   if(queuedRoomRefresh){queuedRoomRefresh=false;requestRoomRefresh()}
@@ -356,7 +448,7 @@ function startLiveUpdates(){
  .on('postgres_changes',{event:'INSERT',schema:'public',table:'dh_room_rolls',filter:'room_id=eq.'+roomId},requestRollRefresh)
  .subscribe(status=>{
   if(status==='SUBSCRIBED'){connectionState('live','Sincronizado');requestRoomRefresh();requestRollRefresh()}
-  if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){connectionState('offline','Reconectando...');say('room-status','Conexão em tempo real instável. A mesa continuará sincronizando periodicamente.',true)}
+  if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'){connectionState('offline','Tempo real desconectado');say('room-status','Conexão em tempo real instável. Você pode atualizar a mesa manualmente.',true)}
   if(status==='CLOSED')connectionState('offline','Offline');
  });
  setInterval(()=>{
@@ -529,6 +621,7 @@ function renderUpgrade(){
 function renderSide(){
  const root=$('side-content');root.replaceChildren();
  for(const b of document.querySelectorAll('[data-tab]'))b.setAttribute('aria-selected',String(b.dataset.tab===tab));
+ if($('mobile-category'))$('mobile-category').value=tab;
  if(tab==='shop'){renderShop();return}
  if(tab==='upgrade'){renderUpgrade();return}
  if(tab==='sheet'){
@@ -546,8 +639,28 @@ function renderSide(){
    const button=node('button',label,'secondary');button.type='button';button.addEventListener('click',action);shortcuts.append(button);
   }
   root.append(shortcuts);
-  root.append(node('p','Momentum: '+mine.momentum,'small'));
-
+  const stressPercent=Math.max(0,Math.min(100,Math.round(100*Number(mine.stress_now||0)/Math.max(1,Number(mine.stress_max)||12))));
+  const stressHead=node('div',null,'compact-stress-heading');
+  stressHead.append(node('span','Estresse atual'),node('strong',mine.stress_now+' / '+mine.stress_max));
+  const stressTrack=node('div',null,'compact-stress-track');
+  stressTrack.setAttribute('role','progressbar');stressTrack.setAttribute('aria-label','Estresse do personagem');
+  stressTrack.setAttribute('aria-valuemin','0');stressTrack.setAttribute('aria-valuemax',String(mine.stress_max||12));
+  stressTrack.setAttribute('aria-valuenow',String(mine.stress_now||0));
+  const stressFill=node('span',null,'compact-stress-fill');stressFill.style.width=stressPercent+'%';stressTrack.append(stressFill);
+  root.append(stressHead,stressTrack);
+  const momentum=node('div',null,'compact-momentum');momentum.append(node('small','Momentum'),node('strong',mine.momentum+' / 6'));root.append(momentum);
+  if(mySheet){
+   const focusPanel=node('details',null,'compact-sheet-categories');
+   const names=focusOptions();
+   focusPanel.append(node('summary','Focos ('+names.length+') · consultar níveis'));
+   const body=node('div',null,'compact-focus-grid');
+   for(const item of names){
+    const row=node('div',null,'compact-focus-row');
+    row.append(node('strong',item.name),node('span','Nível '+item.rank));body.append(row);
+   }
+   if(!names.length)body.append(node('p','Nenhum foco cadastrado.','small'));
+   focusPanel.append(body);root.append(focusPanel);
+  }
   const link=node('a','Editar ficha completa','btn secondary');link.href='personagem.html?id='+encodeURIComponent(mine.character_id);root.append(link);
   return;
  }
@@ -616,6 +729,7 @@ async function loadCatalog(){
  items=data||[];stockView();renderSide();
 }
 for(const button of document.querySelectorAll('[data-tab]'))button.addEventListener('click',()=>{tab=button.dataset.tab;renderSide()});
+$('mobile-category').addEventListener('change',event=>{tab=event.target.value;renderSide()});
 $('copy-code').addEventListener('click',async()=>{
  try{await navigator.clipboard.writeText(room.code);say('room-status','Código copiado: '+room.code)}
  catch(e){say('room-status','Código: '+room.code)}

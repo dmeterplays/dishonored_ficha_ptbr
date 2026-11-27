@@ -17,9 +17,10 @@ const available=x=>{const s=storeRecord(x);return !s||(s.available&&s.quantity!=
 const isMobile=()=>window.matchMedia('(max-width:760px)').matches;
 
 const desktopPanels=[
- {id:'sheets',element:'table-sheets',label:'Fichas',weight:1},
- {id:'rolls',element:'table-rolls',label:'Dados e histórico',weight:1.55},
- {id:'character',element:'table-actions',label:'Ficha e ações',weight:1.25}
+ {id:'sheets',element:'table-sheets',label:'Fichas',weight:1.05},
+ {id:'rolls',element:'table-rolls',label:'Rolagem',weight:1.25},
+ {id:'history',element:'table-history',label:'Histórico',weight:1.15},
+ {id:'character',element:'table-actions',label:'Ficha e ações',weight:1.35}
 ];
 const panelPreferenceKey='dh-desktop-table-panels-v1:'+roomId;
 let desktopPanelState=Object.fromEntries(desktopPanels.map(p=>[p.id,true]));
@@ -27,7 +28,11 @@ function loadDesktopPanels(){
  try{
   const saved=JSON.parse(localStorage.getItem(panelPreferenceKey)||'null');
   if(saved&&typeof saved==='object'&&!Array.isArray(saved)){
-   const restored=Object.fromEntries(desktopPanels.map(p=>[p.id,saved[p.id]!==false]));
+   // Preferências antigas tinham "Dados e histórico" como um único painel.
+   // Se o histórico ainda não existir na preferência, respeite a visibilidade anterior de Dados.
+   const restored=Object.fromEntries(desktopPanels.map(p=>[
+    p.id,p.id==='history'&&typeof saved.history!=='boolean'?saved.rolls!==false:saved[p.id]!==false
+   ]));
    if(Object.values(restored).some(Boolean))desktopPanelState=restored;
   }
  }catch(error){console.warn('Não foi possível restaurar a visualização dos painéis.',error)}
@@ -38,6 +43,7 @@ function renderDesktopPanels(){
  const any=active.length?active:desktopPanels;
  table.classList.add('desktop-panels');
  table.style.setProperty('--desktop-panel-grid',any.map(p=>'minmax(0,'+p.weight+'fr)').join(' '));
+ table.dataset.visiblePanels=String(active.length);
  for(const panel of desktopPanels){
   const visible=desktopPanelState[panel.id],target=$(panel.element);
   target.dataset.desktopHidden=String(!visible);

@@ -1,4 +1,4 @@
-import {mountActionEditor} from './combat-actions.js?v=actions2';
+import {mountActionEditor} from './combat-actions.js?v=actions3';
 // Painel de mestre: seleção de participantes e NPCs, edição salva por RPCs autorizadas no banco.
 const $=id=>document.getElementById(id);
 const make=(tag,text,cls)=>{const x=document.createElement(tag);if(text!==undefined&&text!==null)x.textContent=String(text);if(cls)x.className=cls;return x};

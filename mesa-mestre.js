@@ -30,6 +30,7 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog,onSelect=()=>{}})
   $('gm-selected').classList.add('hidden');$('player-side').classList.remove('hidden');
   $('right-title').textContent='Minha ficha e ações';$('gm-editor').replaceChildren();message('');
   document.querySelectorAll('.player-card.gm-active').forEach(x=>x.classList.remove('gm-active'));
+  onSelect();
  }
  $('gm-back-own').addEventListener('click',close);
  const norm=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
@@ -580,5 +581,5 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog,onSelect=()=>{}})
    card.classList.toggle('gm-active',!!match);
   }
  }
- return {choosePlayer,chooseEnemy,highlight,selected:()=>selected,close};
+ return {choosePlayer,chooseEnemy,highlight,selected:()=>selected,rollContext:()=>selected&&working?{kind:selected.kind,id:selected.id,name:working.name||working.sheet?.nome||'Personagem',sheet:working.sheet||{}}:null,close};
 }

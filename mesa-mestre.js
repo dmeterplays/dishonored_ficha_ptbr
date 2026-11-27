@@ -137,10 +137,23 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog,onSelect=()=>{}})
   if(!inventory.length)root.append(make('p','Nenhum equipamento concedido pelo mestre.','small'));
   inventory.forEach((item,i)=>{
    const row=make('div',null,'gm-inventory-entry');
-   const title=make('span',(item.name||'Item')+' ×'+(item.quantity||1));
+   const title=make('span',item.name||'Item');
+   const qtyWrap=make('label','Quantidade');qtyWrap.className='gm-inventory-quantity';
+   const quantity=make('input');quantity.type='number';quantity.min='1';quantity.max='999';quantity.step='1';
+   quantity.value=String(item.quantity??1);quantity.setAttribute('aria-label','Quantidade de '+(item.name||'Item'));
+   quantity.addEventListener('change',()=>{
+    const next=Number(quantity.value);
+    if(!Number.isInteger(next)||next<1||next>999){
+     quantity.value=String(item.quantity??1);
+     message('A quantidade deve estar entre 1 e 999.',true);return;
+    }
+    item.quantity=next;
+    message('Quantidade ajustada. Clique em Salvar ficha para confirmar.');
+   });
+   qtyWrap.append(quantity);
    const remove=make('button','Remover','secondary');remove.type='button';
-   remove.addEventListener('click',()=>{inventory.splice(i,1);drawInventory()});
-   row.append(title,remove);root.append(row);
+   remove.addEventListener('click',()=>{inventory.splice(i,1);drawInventory();message('Item removido da edição. Salve a ficha para confirmar.')});
+   row.append(title,qtyWrap,remove);root.append(row);
   });
  }
 

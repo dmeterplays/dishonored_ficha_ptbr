@@ -44,12 +44,11 @@ async function retryConnection(){
  reconnecting=true;
  const button=$('reconnect-now');button.disabled=true;button.textContent='Sincronizando...';
  try{
+  const {data,error}=await db.from('dh_rooms').select('id').eq('id',roomId).single();
+  if(error||!data?.id)throw Error(error?.message||'Sala inacessível');
   await refresh({side:true});await refreshRolls();
-  // Apenas uma resposta bem-sucedida confirma que o banco voltou.
-  if(room?.id){
-   connectionState(realtimeChannel?.state==='joined'?'live':'offline',
-    realtimeChannel?.state==='joined'?'Sincronizado':'Banco acessível, tempo real em reconexão');
-  }
+  connectionState('live',realtimeChannel?.state==='joined'?'Sincronizado':'Banco acessível · atualização manual disponível');
+  say('room-status','Mesa atualizada com sucesso.');
  }catch(error){connectionState('offline','Falha ao sincronizar: '+error.message)}
  finally{reconnecting=false;button.disabled=false;button.textContent='↻ Atualizar a mesa'}
 }
@@ -379,6 +378,7 @@ function rollerView(){
  const focus=$('roll-focus'),old=focus.value;focus.replaceChildren();option(focus,'','Sem foco');
  for(const item of focusOptions())option(focus,item.name,item.name+' ('+item.rank+')');
  if([...focus.options].some(o=>o.value===old))focus.value=old;
+ paintQuickActions();
 }
 const fingerprint=value=>JSON.stringify(value??null);
 function requestRoomRefresh(){

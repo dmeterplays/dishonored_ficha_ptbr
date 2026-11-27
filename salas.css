@@ -341,3 +341,8 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
  .quick-favorites-bar button,.quick-favorites-bar span{font-size:12px}
 }
 @media(max-width:390px){.roll-favorite-actions{grid-template-columns:1fr}.gm-shield-resources{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Escudo substitui a lista repetida para mestres; participantes não vinculados continuam no cabeçalho da mesa. */
+.is-room-gm #roster{display:none}
+.gm-shield-card.gm-active{border-color:#d7b77c;box-shadow:inset 0 0 0 1px #a98b58}
+@media(max-width:760px){.roll-shared-fields>div:first-child{grid-column:1/-1}}

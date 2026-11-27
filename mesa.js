@@ -15,6 +15,63 @@ const storeRecord=x=>stock.find(s=>s.catalog_id===x.id);
 const available=x=>{const s=storeRecord(x);return !s||(s.available&&s.quantity!==0)};
 
 const isMobile=()=>window.matchMedia('(max-width:760px)').matches;
+
+const desktopPanels=[
+ {id:'sheets',element:'table-sheets',label:'Fichas',weight:1},
+ {id:'rolls',element:'table-rolls',label:'Dados e histórico',weight:1.55},
+ {id:'character',element:'table-actions',label:'Ficha e ações',weight:1.25}
+];
+const panelPreferenceKey='dh-desktop-table-panels-v1:'+roomId;
+let desktopPanelState=Object.fromEntries(desktopPanels.map(p=>[p.id,true]));
+function loadDesktopPanels(){
+ try{
+  const saved=JSON.parse(localStorage.getItem(panelPreferenceKey)||'null');
+  if(saved&&typeof saved==='object'&&!Array.isArray(saved)){
+   const restored=Object.fromEntries(desktopPanels.map(p=>[p.id,saved[p.id]!==false]));
+   if(Object.values(restored).some(Boolean))desktopPanelState=restored;
+  }
+ }catch(error){console.warn('Não foi possível restaurar a visualização dos painéis.',error)}
+}
+function renderDesktopPanels(){
+ const table=$('table');
+ const active=desktopPanels.filter(p=>desktopPanelState[p.id]);
+ const any=active.length?active:desktopPanels;
+ table.classList.add('desktop-panels');
+ table.style.setProperty('--desktop-panel-grid',any.map(p=>'minmax(0,'+p.weight+'fr)').join(' '));
+ for(const panel of desktopPanels){
+  const visible=desktopPanelState[panel.id],target=$(panel.element);
+  target.dataset.desktopHidden=String(!visible);
+  const button=document.querySelector('[data-panel-toggle="'+panel.id+'"]');
+  if(button){
+   button.setAttribute('aria-pressed',String(visible));
+   button.textContent=(visible?'✓ ':'+ ')+panel.label;
+   button.title=visible?'Ocultar '+panel.label:'Mostrar '+panel.label;
+  }
+ }
+ $('desktop-panels-reset').disabled=active.length===desktopPanels.length;
+}
+function setDesktopPanel(id){
+ if(isMobile())return;
+ const next={...desktopPanelState,[id]:!desktopPanelState[id]};
+ if(!Object.values(next).some(Boolean)){
+  $('desktop-panel-message').textContent='Mantenha pelo menos um painel visível.';
+  return;
+ }
+ desktopPanelState=next;
+ try{localStorage.setItem(panelPreferenceKey,JSON.stringify(desktopPanelState))}catch(error){console.warn('Preferências não puderam ser salvas.',error)}
+ renderDesktopPanels();
+ $('desktop-panel-message').textContent=desktopPanelState[id]?'Painel exibido.':'Painel ocultado.';
+}
+loadDesktopPanels();
+renderDesktopPanels();
+for(const button of document.querySelectorAll('[data-panel-toggle]'))button.addEventListener('click',()=>setDesktopPanel(button.dataset.panelToggle));
+$('desktop-panels-reset').addEventListener('click',()=>{
+ desktopPanelState=Object.fromEntries(desktopPanels.map(p=>[p.id,true]));
+ try{localStorage.setItem(panelPreferenceKey,JSON.stringify(desktopPanelState))}catch(error){}
+ renderDesktopPanels();
+ $('desktop-panel-message').textContent='Todos os painéis estão visíveis.';
+});
+
 function mobileNavigate(next,scroll=true){
  if(!['sheets','rolls','character','more'].includes(next))return;
  mobileView=next;

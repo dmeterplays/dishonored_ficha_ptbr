@@ -35,6 +35,37 @@ async function refreshItems(){
   const card=document.createElement('details');card.className='granted-card';
   const summary=document.createElement('summary');summary.textContent=item.name+' ×'+item.quantity+' · '+(item.upgrades?.length||0)+' melhoria(s)';card.append(summary);
   card.append(text('p',item.description||'Sem descrição.'));
+  const editPanel=document.createElement('details');editPanel.className='granted-item-editor';
+  const editSummary=text('summary','✎ Editar item, quantidade e descrição');editPanel.append(editSummary);
+  const editFields=document.createElement('div');editFields.className='granted-item-fields';
+  function editField(label,value,type='text'){
+   const wrap=document.createElement('label');wrap.textContent=label;
+   const input=document.createElement(type==='textarea'?'textarea':'input');
+   if(type!=='textarea')input.type=type;
+   input.value=String(value??'');wrap.append(input);editFields.append(wrap);return input;
+  }
+  const nameField=editField('Nome do item',item.name);
+  nameField.maxLength=160;
+  const qtyField=editField('Quantidade',item.quantity,'number');
+  qtyField.min='1';qtyField.max='10000';qtyField.step='1';
+  const descField=editField('Descrição',item.description||'','textarea');
+  descField.maxLength=3000;descField.rows=3;
+  const saveItem=text('button','Salvar alterações');saveItem.type='button';
+  saveItem.addEventListener('click',async()=>{
+   const name=nameField.value.trim(),quantity=Number(qtyField.value),description=descField.value.trim();
+   if(!name||name.length>160)return say('Informe um nome válido (até 160 caracteres).',true);
+   if(!Number.isInteger(quantity)||quantity<1||quantity>10000)return say('A quantidade deve ser um número inteiro entre 1 e 10000.',true);
+   if(description.length>3000)return say('A descrição não pode ultrapassar 3000 caracteres.',true);
+   saveItem.disabled=true;
+   const {error}=await db.from('dh_character_items').update({name,quantity,description,updated_at:new Date().toISOString()}).eq('id',item.id).eq('character_id',selected);
+   saveItem.disabled=false;
+   if(error)return say('Erro ao editar item: '+error.message,true);
+   window.__expandedEquipment=item.id;
+   say('Item atualizado: '+name+' ×'+quantity+'.');
+   await refreshItems();
+  });
+  editPanel.append(editFields,saveItem);
+  card.append(editPanel);
   const installed=new Set((item.upgrades||[]).map(v=>typeof v==='string'?v:v.id));
   const upgrades=UPGRADES.filter(u=>!u.legacy&&!u.hidden).map(u=>mergedUpgrade(u.id,upgradeConfigs)).filter(u=>compatibleUpgrade(item,u)).sort((a,b)=>['D2','D1','DLC','DOTO'].indexOf(a.game)-['D2','D1','DLC','DOTO'].indexOf(b.game));
   const legacyInstalled=UPGRADES.filter(u=>u.legacy&&installed.has(u.id));

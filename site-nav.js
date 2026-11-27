@@ -1,14 +1,12 @@
 /* Navegação consistente entre páginas do Dishonored RPG. */
 (()=>{
  const links=[
-  ['index.html','Início','Portal e atalhos'],
-  ['salas.html','Campanhas','Entrar na mesa'],
-  ['fichas.html','Personagens','Minhas fichas'],
-  ['criar-personagem.html','Criar ficha','Novo personagem'],
+  ['salas.html','Campanhas','Suas mesas de jogo'],
+  ['fichas.html','Personagens','Minhas fichas e importação antiga'],
   ['catalogo.html','Compêndio','Regras e itens'],
   ['campanha.html','Conta','Perfil e acesso']
  ];
- const path=location.pathname.split('/').pop()||'index.html';
+ const path=location.pathname.split('/').pop()||'salas.html';
  const current=links.find(x=>x[0]===path)?.[1]||({
   'personagem.html':'Ficha completa','bestiario.html':'Bestiário',
   'mesa.html':'Mesa de jogo','diario.html':'Diário de Bordo','arquetipos.html':'Arquétipos',
@@ -26,13 +24,20 @@
  const list=document.createElement('div');list.className='global-site-links';
  const params=new URLSearchParams(location.search);
  const room=params.get('room')||(path==='mesa.html'?params.get('id'):null);
- const all=room?[...links.slice(0,2),['mesa.html?id='+encodeURIComponent(room),'Mesa atual','Voltar à campanha'],['diario.html?room='+encodeURIComponent(room),'Diário de Bordo','Resumos das sessões'],...links.slice(2)]:links;
+ const all=room?[links[0],['mesa.html?id='+encodeURIComponent(room),'Mesa atual','Voltar à campanha'],['diario.html?room='+encodeURIComponent(room),'Diário de Bordo','Resumos das sessões'],...links.slice(1)]:links;
  for(const [href,title,help] of all){
   const a=document.createElement('a');a.href=href;a.textContent=title;a.title=help;
   const dest=href.split('?')[0];if(dest===path){a.setAttribute('aria-current','page');}
   list.append(a);
  }
  const actualLinks=builtInMenu?.querySelector('.dh-header-menu-links')||list;
+ if(builtInMenu){
+  // Menos opções no cabeçalho: criação permanece em Minhas fichas; o portal antigo está em portal.html.
+  for(const a of [...actualLinks.querySelectorAll('a')]){
+   const destination=new URL(a.href,location.href).pathname.split('/').pop();
+   if(destination==='index.html'||destination==='criar-personagem.html'||(!destination&&a.textContent.trim()==='Início'))a.remove();
+  }
+ }
  if(builtInMenu){
   const currentLink=[...actualLinks.querySelectorAll('a')].find(a=>(new URL(a.href,location.href)).pathname===location.pathname);
   if(currentLink)currentLink.setAttribute('aria-current','page');

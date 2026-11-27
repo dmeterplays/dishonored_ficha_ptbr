@@ -10,6 +10,16 @@
 <div id="participants-list" class="participants-list" aria-live="polite"></div>
 </section>
 <div class="row diary-table-link"><a id="diary-link" class="btn secondary" href="salas.html">📖 Diário de Bordo · Histórico das sessões</a></div>
+<div class="desktop-panel-toolbar" id="desktop-panel-toolbar" aria-label="Personalizar painéis da mesa">
+  <div class="desktop-panel-toolbar-heading"><strong>Organizar a mesa</strong><span>Oculte painéis para ampliar o que importa agora.</span></div>
+  <div class="desktop-panel-controls" role="group" aria-label="Painéis visíveis">
+    <button type="button" class="desktop-panel-toggle" data-panel-toggle="sheets" aria-pressed="true" aria-controls="table-sheets">✓ Fichas</button>
+    <button type="button" class="desktop-panel-toggle" data-panel-toggle="rolls" aria-pressed="true" aria-controls="table-rolls">✓ Dados e histórico</button>
+    <button type="button" class="desktop-panel-toggle" data-panel-toggle="character" aria-pressed="true" aria-controls="table-actions">✓ Ficha e ações</button>
+    <button type="button" id="desktop-panels-reset" class="secondary">Mostrar todos</button>
+  </div>
+  <span id="desktop-panel-message" class="sr-only" role="status" aria-live="polite"></span>
+</div>
 <div id="table" class="table-layout hidden" data-mobile-view="rolls">
 <aside class="table-panel" id="table-sheets"><h2>Fichas da campanha <span id="roster-count" class="roster-count"></span></h2><p class="small">Personagens inscritos, estresse e Pontos do Vazio. Os valores são atualizados durante a sessão.</p><div id="gm-shield" class="gm-shield hidden">
   <div class="row between"><h3>Escudo do Mestre</h3><span id="gm-shield-count" class="small"></span></div>

@@ -17,11 +17,22 @@ export function catalogActions(sheet,catalog,extraOwned=[]){
  const owned=[...(sheet?.gmInventory||[]).filter(x=>Number(x.quantity)>0).map(x=>x.name),...extraOwned];
  const sources=[...(sheet?.catalogSelections?.power||[]).map(x=>x.name).filter(Boolean)];
  const list=[];
+ // Um inventário como "Besta de pulso" deve corresponder à arma mais específica,
+ // não gerar também uma segunda ação genérica chamada "Besta".
+ const damageItems=(catalog||[]).filter(x=>x.category==='item'&&
+  x.rules?.dano!=null&&Number.isFinite(Number(x.rules.dano))&&Number(x.rules.dano)>0);
+ const bestItemIds=new Set();
+ for(const ownedName of owned){
+  const matches=damageItems.filter(x=>clean(ownedName)===clean(x.name)||
+   clean(ownedName).startsWith(clean(x.name)+' '));
+  matches.sort((a,b)=>clean(b.name).length-clean(a.name).length);
+  if(matches.length)bestItemIds.add(matches[0].id);
+ }
  for(const record of catalog||[]){
   const rules=record.rules||{},name=String(record.name||'');
   if(record.category==='item'){
    if(!Number.isFinite(Number(rules.dano))||rules.dano==null||Number(rules.dano)<=0)continue;
-   if(!owned.some(x=>clean(x)===clean(name)||clean(x).startsWith(clean(name)+' ')))continue;
+   if(!bestItemIds.has(record.id))continue;
    const ranged=/pistola|rifle|besta|arco|granada|revolver|revólver|bomba/i.test(name);
    list.push(normalizeAction({id:'item:'+record.id,name,source:'item',sourceId:record.id,sourceName:name,
     skill:'Lutar',style:ranged?'Cuidadosamente':'Ousadamente',damage:Number(rules.dano)}));

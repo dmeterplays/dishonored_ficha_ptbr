@@ -232,3 +232,13 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
 .character-resource-track .stress-step{min-width:44px;min-height:44px}
 .resource-sheet-config{border-top:1px solid #76694d;margin-top:16px;padding-top:15px}
 .resource-sheet-config h3{margin-top:0}
+
+
+/* Cadastro de ataque personalizado recolhido por padrão. */
+.combat-action-accordion{margin-top:13px;border:1px solid #8b7555;background:#1a272b}
+.combat-action-accordion>summary{cursor:pointer;list-style:none;padding:13px 15px;min-height:44px;color:#f0d4a5;font:600 13px Cinzel,serif;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.combat-action-accordion>summary::-webkit-details-marker{display:none}
+.combat-action-accordion>summary::after{content:'⌄';font-size:18px}
+.combat-action-accordion[open]>summary::after{content:'⌃'}
+.combat-action-accordion[open]>.combat-action-form{border:0;border-top:1px solid #8b7555}
+.combat-action-accordion>summary:focus-visible{outline:2px solid #77cbbd;outline-offset:2px}

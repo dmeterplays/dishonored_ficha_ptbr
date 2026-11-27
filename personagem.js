@@ -107,6 +107,44 @@ for(const [id,delta] of [['sheet-stress-less',-1],['sheet-stress-more',1]])$(id)
  paintSheetStress();setDirty();
 });
 for(const id of ['stress-now','stress-max'])$(id).addEventListener('input',paintSheetStress);
+for(const id of ['void-max','momentum-max'])$(id).addEventListener('input',()=>{setDirty();renderResourceTracks()});
+function renderResourceTracks(){
+ const root=$('character-resource-tracks');if(!root)return;
+ root.replaceChildren();
+ for(const [key,title,field,col] of [
+  ['void','Pontos do Vazio','void-max','void_points'],
+  ['momentum','Momentum','momentum-max','momentum']
+ ]){
+  const max=Math.max(1,Number($(field).value)||1);
+  const current=Math.max(0,Number(character[col])||0);
+  const wrapper=el('div',null,'character-resource-track');
+  const label=el('div',null,'stress-widget-header');
+  label.append(el('strong',title),el('span',current+' / '+max,'stress-value'));
+  const row=el('div',null,'stress-widget-row'),minus=el('button','−','secondary stress-step'),plus=el('button','+','secondary stress-step');
+  minus.type='button';plus.type='button';
+  minus.setAttribute('aria-label','Diminuir '+title);plus.setAttribute('aria-label','Aumentar '+title);
+  const track=el('div',null,'stress-widget-track');
+  track.setAttribute('role','progressbar');track.setAttribute('aria-label',title);
+  track.setAttribute('aria-valuemin','0');track.setAttribute('aria-valuemax',String(max));
+  track.setAttribute('aria-valuenow',String(current));
+  const fill=el('span',null,'stress-widget-fill');fill.style.width=(100*Math.min(current,max)/max)+'%';track.append(fill);
+  minus.disabled=current<=0;plus.disabled=current>=max;
+  const adjust=async(delta)=>{
+   minus.disabled=true;plus.disabled=true;
+   try{
+    if(Number(character[col])+delta>max)throw Error('Salve primeiro o novo máximo na ficha.');
+    const {data,error}=await db.rpc('dh_character_adjust_track',{p_character:character.id,p_track:key,p_delta:delta});
+    if(error)throw Error(error.message);
+    character[col]=Number(data);
+    $('track-status').textContent=title+' atualizado.';
+    renderResourceTracks();
+    $('resources').textContent='XP: '+character.xp+' • Momentum: '+character.momentum+' • Vazio: '+character.void_points+' • Moedas: '+(character.coins??0);
+   }catch(error){$('track-status').textContent='Não foi possível ajustar '+title+': '+error.message;renderResourceTracks()}
+  };
+  minus.addEventListener('click',()=>adjust(-1));plus.addEventListener('click',()=>adjust(1));
+  row.append(minus,track,plus);wrapper.append(label,row);root.append(wrapper);
+ }
+}
 function renderMain(){
  $('sheet').classList.remove('hidden');
  const resume=$('resume-wizard');resume.classList.toggle('hidden',!(character.creation_status==='draft'&&character.sheet?.creation));resume.href='criar-personagem.html?id='+encodeURIComponent(character.id);
@@ -118,7 +156,9 @@ function renderMain(){
  $('background').value=character.sheet.background??'';
  $('stress-now').value=character.sheet.stressAtual??0;
  $('stress-max').value=character.sheet.stressMax??12;
- paintSheetStress();
+ $('void-max').value=character.sheet.voidMax??Math.max(3,Number(character.void_points)||0);
+ $('momentum-max').value=character.sheet.momentumMax??Math.max(6,Number(character.momentum)||0);
+ paintSheetStress();renderResourceTracks();
  $('resources').textContent='XP: '+character.xp+' • Momentum: '+character.momentum+' • Vazio: '+character.void_points+' • Moedas: '+(character.coins??0);
  const glance=$('mobile-player-summary');
  if(glance){
@@ -144,6 +184,11 @@ function gather(){
  if(!Number.isInteger(stressMax)||stressMax<1||stressMax>20)throw Error('O estresse máximo deve estar entre 1 e 20.');
  if(!Number.isInteger(stressNow)||stressNow<0||stressNow>stressMax)throw Error('O estresse atual deve estar entre 0 e o máximo.');
  data.stressMax=String(stressMax);data.stressAtual=String(stressNow);
+ for(const [field,key,current] of [['void-max','voidMax',character.void_points],['momentum-max','momentumMax',character.momentum]]){
+  const n=Number($(field).value);
+  if(!Number.isInteger(n)||n<1||n>50||n<Number(current||0))throw Error('O máximo de '+(key==='voidMax'?'Pontos do Vazio':'Momentum')+' deve estar entre 1 e 50 e não pode ser menor que o valor atual.');
+  data[key]=n;
+ }
  for(const key of ['skills','styles']){
  data[key]=(character.sheet[key]||[]).map((entry,i)=>{
  const field=$(key+'-'+i);const val=Number(field.value);

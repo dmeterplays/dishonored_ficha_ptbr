@@ -270,9 +270,10 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog,onSelect=()=>{}})
     });stressSquares.append(square);
    }
   };
+  // Os inputs precisam estar conectados ao DOM antes da leitura inicial.
+  root.append(resources);
   for(const id of ['gm-stress','gm-stressmax'])$(id).addEventListener('input',paintStressSquares);
   paintStressSquares();
-  root.append(resources);
   const stats=section('Perícias e estilos');
   for(const [title,key,names] of [['Perícias','skills',skills],['Estilos','styles',styles]]){
    stats.append(make('h4',title));

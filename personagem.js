@@ -318,7 +318,14 @@ async function init(){
  if(error||!data){status('Esta ficha não foi encontrada na sua conta.',true);return}
  character=data;if(!validSheet(character.sheet)){status('Os dados desta ficha estão incompletos; reimporte o JSON original.',true);return}
  renderMain();collections=initCharacterCollections({db,sheet:character.sheet,onChange:setDirty});
-combatEditor=mountActionEditor({root:$('combat-actions-editor'),sheet:character.sheet,
+let extraWeaponInventory=[];
+try{
+ const {data:grantedItems,error:grantedError}=await db.from('dh_character_items')
+  .select('name,quantity').eq('character_id',character.id);
+ if(!grantedError)extraWeaponInventory=(grantedItems||[]).filter(x=>Number(x.quantity)>0);
+}catch(error){console.warn('Inventário de armas indisponível:',error)}
+combatEditor=mountActionEditor({root:$('combat-actions-editor'),
+ sheet:{...character.sheet,gmInventory:[...(character.sheet.gmInventory||[]),...extraWeaponInventory]},
  onChange:setDirty,getFocuses:()=>collections?.getFocuses?.()||[]});
 try{
  const {data:actionCatalog,error:actionError}=await db.from('dh_catalog')

@@ -36,6 +36,23 @@ function renderNotes(){
  const area=el('textarea');area.id=key;area.value=character.sheet.notas?.[key]||'';
  box.append(lbl,area);root.append(box);
  }
+ const oldNotes=[
+  ['nota-focos','Focos e especialidades da ficha antiga'],
+  ['nota-poderes','Poderes anotados na ficha antiga'],
+  ['nota-talentos','Talentos anotados na ficha antiga'],
+  ['nota-pertences','Pertences anotados na ficha antiga']
+ ];
+ const recovered=oldNotes.filter(([key])=>typeof character.sheet.notas?.[key]==='string'&&character.sheet.notas[key].trim());
+ if(recovered.length){
+  const section=el('details',null,'imported-notes');
+  section.append(el('summary','Anotações recuperadas da ficha antiga ('+recovered.length+')'));
+  section.append(el('p','O texto original foi preservado. Para usar focos nas rolagens, confira também os níveis na aba Focos.','small'));
+  for(const [key,label] of recovered){
+   section.append(el('h4',label));
+   section.append(el('p',character.sheet.notas[key],'imported-note-text'));
+  }
+  root.append(section);
+ }
 }
 function renderPhoto(url){
  const root=$('photo-wrap');root.replaceChildren();

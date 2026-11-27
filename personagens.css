@@ -161,3 +161,9 @@ hr{border:0;border-top:1px solid var(--line);margin:20px 0}
 .focus-editor-item{align-items:stretch;flex-direction:column}
 .focus-editor-controls{justify-content:flex-end}
 }
+
+/* Registros de texto da ficha antiga continuam consultáveis após importação. */
+.imported-notes{grid-column:1/-1;border:2px double #8c6d3f;background:#1b2429;padding:13px;margin:8px 0;color:#e7ddcd}
+.imported-notes>summary{cursor:pointer;font:600 14px Cinzel,serif;color:#e7c999;padding:8px 0}
+.imported-notes h4{font-size:13px;color:#e5c18f;margin:17px 0 5px}
+.imported-notes .imported-note-text{white-space:pre-wrap;overflow-wrap:anywhere;background:#222b30;border-left:2px solid #8c6d3f;color:#eee5d6;padding:12px;font-size:16px;line-height:1.5}

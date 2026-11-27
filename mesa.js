@@ -7,6 +7,9 @@ const isUuid=x=>/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/
 const node=(tag,txt,cls)=>{const e=document.createElement(tag);if(txt!==undefined&&txt!==null)e.textContent=String(txt);if(cls)e.className=cls;return e};
 let trackLimits={};let ownedCombatItems=[];let lastGearCharacter=null;let me,room,roster=[],enemies=[],mine=null,mySheet=null,items=[],stock=[],purchases=[],tab='sheet',rollMode='quick',busy=false,costs={},gmEditor=null,realtimeChannel=null,presenceChannel=null,presenceReady=false,onlineUsers=new Set(),roomRefreshTimer=null,rollRefreshTimer=null,rollsSnapshot='',queuedRoomRefresh=false,lastRoll=null,mobileView='rolls';
 const gm=()=>room?.owner_id===me?.id;
+const gmRollContext=()=>gm()?gmEditor?.rollContext?.()||null:null;
+const rollSheet=()=>gmRollContext()?.sheet||mySheet;
+const rollIdentity=()=>gmRollContext()?.id||mine?.character_id||null;
 const say=(id,msg,bad=false)=>{$(id).textContent=msg;$(id).className=bad?'error':'status'};
 const clip=x=>String(x??'').slice(0,5000);
 const fmt=n=>Number(n||0).toLocaleString('pt-BR');
@@ -122,7 +125,7 @@ window.addEventListener('online',()=>{connectionState('offline','Internet recone
 window.addEventListener('offline',()=>connectionState('offline','Sem internet'));
 function setRepeatReady(){
  const button=$('roll-repeat');
- if(button)button.disabled=!mySheet||!lastRoll;
+ if(button)button.disabled=!rollSheet()||!lastRoll||lastRoll._actor!==(gmRollContext()?gmRollContext().kind+':'+gmRollContext().id:'own');
 }
 for(const button of document.querySelectorAll('[data-mobile-target]'))button.addEventListener('click',()=>mobileNavigate(button.dataset.mobileTarget));
 
@@ -382,7 +385,7 @@ function diceView(rolls){
   root.append(div);
  }
 }
-function focusOptions(){
+function focusOptions(sheet=rollSheet()){
  const normalize=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
  const result=[];
  const add=(name,rank)=>{
@@ -391,13 +394,13 @@ function focusOptions(){
   result.push({name:label,rank:level});
  };
  // Fichas atualizadas usam a lista estruturada. Uma lista vazia indica remoção intencional.
- if(Array.isArray(mySheet?.focuses)){
-  for(const f of mySheet.focuses)add(f.name||f.nome,f.rank??f.valor);
+ if(Array.isArray(sheet?.focuses)){
+  for(const f of sheet.focuses)add(f.name||f.nome,f.rank??f.valor);
   return result;
  }
- const built=mySheet?.creation?.focus;
+ const built=sheet?.creation?.focus;
  if(Array.isArray(built))for(const f of built)add(f.nome||f.name,f.valor??f.rank);
- for(const f of mySheet?.catalogSelections?.focus||[])
+ for(const f of sheet?.catalogSelections?.focus||[])
   if(f.origin==='starting'||f.origin==='sheet')add(f.name,f.rank);
  return result;
 }
@@ -418,7 +421,7 @@ function chooseQuickAction(skill,style){
  say('roll-msg','Ação selecionada: '+skill+' + '+style+'.');
 }
 let favoriteEditing=false;
-const favoriteKey=()=>mySheet&&mine?.character_id?'dishonored-roll-favorites-'+me.id+'-'+mine.character_id:null;
+const favoriteKey=()=>rollSheet()&&rollIdentity()?'dishonored-roll-favorites-'+me.id+'-'+rollIdentity():null;
 function readFavoriteKeys(){
  try{const key=favoriteKey();if(!key)return [];const saved=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(saved)?saved.filter(x=>typeof x==='string').slice(0,20):[]}
  catch{return []}
@@ -438,11 +441,11 @@ function paintQuickActions(){
   const entry=node('div',null,'quick-action-entry');
   const btn=node('button',name,'secondary quick-action-btn');btn.type='button';
   btn.dataset.skill=skill;btn.dataset.style=style;
-  btn.disabled=!mySheet;
+  btn.disabled=!rollSheet();
   btn.setAttribute('aria-pressed',String($('roll-skill').value===skill&&$('roll-style').value===style));
   btn.addEventListener('click',()=>chooseQuickAction(skill,style));
   const star=node('button',isFavorite?'★':'☆','quick-star');star.type='button';
-  star.disabled=!mySheet;
+  star.disabled=!rollSheet();
   star.setAttribute('aria-label',(isFavorite?'Remover ':'Adicionar ')+name+(isFavorite?' dos favoritos':' aos favoritos'));
   star.setAttribute('aria-pressed',String(isFavorite));
   star.addEventListener('click',()=>{
@@ -455,7 +458,7 @@ function paintQuickActions(){
  }
  if(!favorites.length)favRoot.append(node('p','Toque em ☆ ao lado de uma ação para deixá-la aqui.','small'));
  for(const [name,skill,style] of favorites){
-  const btn=node('button','★ '+name,'secondary favorite-shortcut');btn.type='button';btn.disabled=!mySheet;
+  const btn=node('button','★ '+name,'secondary favorite-shortcut');btn.type='button';btn.disabled=!rollSheet();
   btn.addEventListener('click',()=>chooseQuickAction(skill,style));favRoot.append(btn);
  }
  $('roll-more-actions').open=favoriteEditing||!favorites.length;
@@ -516,7 +519,7 @@ $('gm-save-difficulty').addEventListener('click',async()=>{
 
 let pendingCombatAction=false;
 function availableCombatActions(){
- if(!mySheet)return [];
+ if(gmRollContext()||!mySheet)return [];
  const extension=structuredClone(mySheet);
  extension.catalogSelections=structuredClone(mySheet.catalogSelections||{});
  extension.catalogSelections.power=[...(extension.catalogSelections.power||[])];
@@ -540,7 +543,8 @@ function paintCombatActions(){
    ' · Dano '+Math.max(0,action.damage+action.bonus)+(action.voidCost?' · Custo: '+action.voidCost+' Vazio':''):
   'Escolha um ataque configurado ou uma arma/poder do personagem.';
  $('combat-roll-use').disabled=!action||pendingCombatAction;
- $('combat-roll-edit').href=mine?.character_id?'personagem.html?id='+encodeURIComponent(mine.character_id)+'#character-combat-actions':'fichas.html';
+ $('combat-roll-edit').href=mine?.character_id&&!gmRollContext()?'personagem.html?id='+encodeURIComponent(mine.character_id)+'#character-combat-actions':'fichas.html';
+ $('combat-roll-edit').classList.toggle('hidden',!!gmRollContext());
 }
 $('combat-roll-action').addEventListener('change',paintCombatActions);
 $('combat-roll-use').addEventListener('click',async()=>{
@@ -562,16 +566,17 @@ $('combat-roll-use').addEventListener('click',async()=>{
  finally{pendingCombatAction=false;paintCombatActions()}
 });
 function rollerView(){
- const disabled=!mySheet;
+ const context=gmRollContext(),sheet=rollSheet();
+ const disabled=!sheet;
  $('roll-submit').disabled=disabled;
- $('roll-character-hint').textContent=disabled?'Escolha uma ficha pronta pelo lobby para rolar.':'Você está rolando como '+(mine?.character_name||'personagem')+'. Escolha a privacidade antes de enviar.';
+ $('roll-character-hint').textContent=disabled?'Escolha uma ficha pronta pelo lobby para rolar.':context?'Mestre: rolando como '+context.name+' ('+(context.kind==='enemy'?'NPC / inimigo':'jogador')+'). Feche o editor para voltar à sua ficha.':'Você está rolando como '+(mine?.character_name||'personagem')+'. Escolha a privacidade antes de enviar.';
  for(const [id,key] of [['roll-skill','skills'],['roll-style','styles']]){
   const select=$(id),old=select.value;select.replaceChildren();
-  for(const item of mySheet?.[key]||[])option(select,item.label,item.label+' ('+item.value+')');
+  for(const item of sheet?.[key]||[])option(select,item.label,item.label+' ('+item.value+')');
   if([...select.options].some(o=>o.value===old))select.value=old;
  }
  const focus=$('roll-focus'),old=focus.value;focus.replaceChildren();option(focus,'','Sem foco');
- for(const item of focusOptions())option(focus,item.name,item.name+' ('+item.rank+')');
+ for(const item of focusOptions(sheet))option(focus,item.name,item.name+' ('+item.rank+')');
  if([...focus.options].some(o=>o.value===old))focus.value=old;
  paintQuickActions();
  paintCombatActions();
@@ -953,19 +958,30 @@ const currentRollPayload=()=>({
 });
 async function sendRoll(payload){
  const submit=$('roll-submit'),repeat=$('roll-repeat');
+ const currentContext=gmRollContext();
  submit.disabled=true;repeat.disabled=true;
  try{
-  const {error}=await db.rpc('dh_roll_room',payload);
+  let functionName='dh_roll_room',args={...payload};
+  if(currentContext){
+   if(currentContext.kind==='player'){
+    functionName='dh_room_gm_roll_character';
+    args={p_room:roomId,p_character:currentContext.id,p_skill:payload.p_skill,p_style:payload.p_style,p_focus:payload.p_focus,p_dice:payload.p_dice,p_visibility:payload.p_visibility};
+   }else{
+    functionName='dh_room_enemy_roll';
+    args={p_room:roomId,p_enemy:currentContext.id,p_skill:payload.p_skill,p_style:payload.p_style,p_action:'Teste livre',p_dice:payload.p_dice,p_difficulty:payload.p_difficulty,p_visibility:payload.p_visibility};
+   }
+  }
+  const {error}=await db.rpc(functionName,args);
   if(error)throw Error(error.message);
-  lastRoll={...payload};
+  lastRoll={...payload,_actor:currentContext?currentContext.kind+':'+currentContext.id:'own'};
   say('roll-msg',payload.p_visibility==='gm_only'?'Rolagem enviada somente ao mestre.':'Rolagem registrada na mesa!');
   await refreshRolls();
  }catch(e){say('roll-msg',e.message,true)}
- finally{submit.disabled=!mySheet;setRepeatReady()}
+ finally{submit.disabled=!rollSheet();setRepeatReady()}
 }
 $('roll-submit').addEventListener('click',()=>sendRoll(currentRollPayload()));
 $('roll-repeat').addEventListener('click',()=>{
- if(lastRoll&&mySheet)sendRoll({...lastRoll});
+ if(lastRoll&&rollSheet()&&lastRoll._actor===(gmRollContext()?gmRollContext().kind+':'+gmRollContext().id:'own'))sendRoll({...lastRoll});
 });
 $('shop-toggle').addEventListener('click',async()=>{
  const {error}=await db.rpc('dh_room_set_shop',{p_room:roomId,p_open:!room.shop_open});
@@ -995,7 +1011,7 @@ $('stock-search').addEventListener('input',stockView);
 async function boot(){
  if(!isUuid(roomId))throw Error('Endereço de sala inválido.');
  me=await getAuth();
- gmEditor=initMasterEditor({db,roomId,getCatalog:()=>items,onSaved:async()=>{await refresh()},onSelect:()=>mobileNavigate('character')});
+ gmEditor=initMasterEditor({db,roomId,getCatalog:()=>items,onSaved:async()=>{await refresh()},onSelect:()=>{lastRoll=null;rollerView();setRepeatReady();mobileNavigate('character')}});
  await refresh({side:false});
  participantView();
  if(!room)return;

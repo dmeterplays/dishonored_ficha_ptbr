@@ -1,3 +1,5 @@
+import {UPGRADES,itemType,conflictingMasterwork} from './equipment-upgrades.js?v=wiki4';
+import {compatibleUpgrade,mergedUpgrade} from './upgrade-config.js?v=4';
 import {mountActionEditor} from './combat-actions.js?v=actions3';
 // Painel de mestre: seleção de participantes e NPCs, edição salva por RPCs autorizadas no banco.
 const $=id=>document.getElementById(id);
@@ -131,30 +133,122 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog,onSelect=()=>{}})
   }
   block.append(body);parent.append(block);
  }
+
+ const itemCategories={
+  arma:'Armas',armadura:'Armaduras',roupa:'Roupas e vestimentas',
+  ferramenta:'Ferramentas',consumivel:'Consumíveis',acessorio:'Acessórios',comum:'Itens comuns'
+ };
+ const categoryForItem=item=>{
+  if(item.category&&itemCategories[item.category])return item.category;
+  const type=itemType(item.name||'');
+  if(['pistol','crossbow','wristbow','sword','grenade','mine','trap','voltaic'].includes(type))return 'arma';
+  if(type==='armor')return /armadura|colete|capacete/i.test(item.name)?'armadura':'roupa';
+  if(type==='optic'||type==='bonecharm')return 'acessorio';
+  if(/lockpick|gazua|ferramenta|chave|kit|alicate/i.test(item.name))return 'ferramenta';
+  if(/muni[cç][aã]o|bala|comida|po[cç][aã]o|cigarro|rem[eé]dio|elixir|frasco/i.test(item.name))return 'consumivel';
+  return 'comum';
+ };
+ function openItemEditor(index){
+  const original=inventory[index];if(!original)return;
+  const existing=document.querySelector('.gm-item-modal-backdrop');if(existing)existing.remove();
+  const overlay=make('div',null,'gm-item-modal-backdrop');
+  const modal=make('section',null,'gm-item-modal');
+  modal.setAttribute('role','dialog');modal.setAttribute('aria-modal','true');modal.setAttribute('aria-label','Editar item do inventário');
+  const heading=make('div',null,'gm-item-modal-header');
+  heading.append(make('h3','Editar equipamento'));
+  const x=make('button','×','secondary gm-item-modal-close');x.type='button';x.setAttribute('aria-label','Fechar edição');
+  heading.append(x);modal.append(heading);
+  const body=make('div',null,'gm-item-modal-body');
+  const form=make('div',null,'gm-item-fields');
+  const field=(label,tag,value)=>{
+   const wrap=make('label',label);const input=make(tag);input.value=String(value??'');wrap.append(input);form.append(wrap);return input;
+  };
+  const name=field('Nome do item','input',original.name||'');name.maxLength=160;
+  const qty=field('Quantidade','input',original.quantity??1);qty.type='number';qty.min='1';qty.max='999';qty.step='1';
+  const cat=field('Categoria','select',categoryForItem(original));
+  for(const [key,label] of Object.entries(itemCategories)){const opt=make('option',label);opt.value=key;cat.append(opt)}
+  cat.value=categoryForItem(original);
+  const description=field('Descrição / observações','textarea',original.description||'');description.maxLength=3000;description.rows=3;
+  body.append(form);
+  const upgradeSection=make('section',null,'gm-item-upgrade-section');
+  upgradeSection.append(make('h4','Melhorias instaladas'));
+  upgradeSection.append(make('p','Selecione melhorias compatíveis. Pré-requisitos e obras-primas exclusivas são verificados.','small'));
+  const options=make('div',null,'gm-item-upgrade-options');
+  upgradeSection.append(options);
+  const installed=new Set((Array.isArray(original.upgrades)?original.upgrades:[]).map(u=>typeof u==='string'?u:u?.id).filter(Boolean));
+  const renderUpgrades=()=>{
+   options.replaceChildren();
+   const item={...original,name:name.value.trim()||original.name,category:cat.value};
+   const available=UPGRADES.filter(u=>!u.legacy&&!u.hidden).map(u=>mergedUpgrade(u.id,[])).filter(u=>compatibleUpgrade(item,u));
+   if(!available.length)options.append(make('p','Não há melhorias cadastradas para este tipo de item.','small'));
+   for(const upgrade of available){
+    const row=make('label',null,'gm-item-upgrade-option');
+    const check=make('input');check.type='checkbox';check.checked=installed.has(upgrade.id);
+    const info=make('span');info.append(make('strong',upgrade.name),make('small',upgrade.effect||''));
+    if(upgrade.requires?.length)info.append(make('small','Requer: '+upgrade.requires.map(id=>UPGRADES.find(u=>u.id===id)?.name||id).join(', ')));
+    check.addEventListener('change',()=>{
+     if(check.checked){
+      if(conflictingMasterwork(upgrade.id,installed)||upgrade.requires?.some(id=>!installed.has(id))){
+       check.checked=false;alert('Instale os pré-requisitos e confira as melhorias exclusivas antes.');return;
+      }
+      installed.add(upgrade.id);
+     }else{
+      if(UPGRADES.some(u=>installed.has(u.id)&&u.requires?.includes(upgrade.id))){
+       check.checked=true;alert('Remova primeiro as melhorias dependentes.');return;
+      }
+      installed.delete(upgrade.id);
+     }
+    });
+    row.append(check,info);options.append(row);
+   }
+   const outside=[...installed].filter(id=>!available.some(u=>u.id===id));
+   if(outside.length)options.append(make('p',outside.length+' melhoria(s) anterior(es) preservada(s), mas não compatíveis com o nome atual.','small'));
+  };
+  name.addEventListener('change',renderUpgrades);
+  body.append(upgradeSection);
+  modal.append(body);
+  const foot=make('div',null,'gm-item-modal-actions');
+  const cancel=make('button','Cancelar','secondary');cancel.type='button';
+  const save=make('button','Aplicar alterações');save.type='button';
+  const closeModal=()=>{document.removeEventListener('keydown',onKey);overlay.remove()};
+  const onKey=e=>{if(e.key==='Escape'){e.preventDefault();closeModal()}};
+  cancel.addEventListener('click',closeModal);x.addEventListener('click',closeModal);
+  overlay.addEventListener('click',e=>{if(e.target===overlay)closeModal()});
+  save.addEventListener('click',()=>{
+   const n=name.value.trim(),q=Number(qty.value);
+   if(!n||n.length>160){alert('Informe um nome válido para o item.');return}
+   if(!Number.isInteger(q)||q<1||q>999){alert('A quantidade deve estar entre 1 e 999.');return}
+   if(description.value.length>3000){alert('A descrição é muito longa.');return}
+   const updated={...original,name:n,quantity:q,category:cat.value,description:description.value.trim(),upgrades:[...installed]};
+   inventory[index]=updated;
+   closeModal();drawInventory();
+   message('Item atualizado na edição. Clique em Salvar ficha para confirmar.');
+  });
+  foot.append(cancel,save);modal.append(foot);overlay.append(modal);
+  document.body.append(overlay);document.addEventListener('keydown',onKey);
+  renderUpgrades();name.focus();
+ }
  function drawInventory(){
   const root=$('gm-inventory-list');if(!root)return;
   root.replaceChildren();
-  if(!inventory.length)root.append(make('p','Nenhum equipamento concedido pelo mestre.','small'));
-  inventory.forEach((item,i)=>{
-   const row=make('div',null,'gm-inventory-entry');
-   const title=make('span',item.name||'Item');
-   const qtyWrap=make('label','Quantidade');qtyWrap.className='gm-inventory-quantity';
-   const quantity=make('input');quantity.type='number';quantity.min='1';quantity.max='999';quantity.step='1';
-   quantity.value=String(item.quantity??1);quantity.setAttribute('aria-label','Quantidade de '+(item.name||'Item'));
-   quantity.addEventListener('change',()=>{
-    const next=Number(quantity.value);
-    if(!Number.isInteger(next)||next<1||next>999){
-     quantity.value=String(item.quantity??1);
-     message('A quantidade deve estar entre 1 e 999.',true);return;
-    }
-    item.quantity=next;
-    message('Quantidade ajustada. Clique em Salvar ficha para confirmar.');
-   });
-   qtyWrap.append(quantity);
-   const remove=make('button','Remover','secondary');remove.type='button';
-   remove.addEventListener('click',()=>{inventory.splice(i,1);drawInventory();message('Item removido da edição. Salve a ficha para confirmar.')});
-   row.append(title,qtyWrap,remove);root.append(row);
-  });
+  if(!inventory.length){root.append(make('p','Nenhum equipamento concedido pelo mestre.','small'));return}
+  for(const [category,label] of Object.entries(itemCategories)){
+   const group=inventory.map((item,index)=>({item,index})).filter(entry=>categoryForItem(entry.item)===category);
+   if(!group.length)continue;
+   const section=make('section',null,'gm-inventory-group');
+   section.append(make('h4',label+' ('+group.length+')'));
+   for(const {item,index} of group){
+    const row=make('div',null,'gm-inventory-entry');
+    const info=make('div',null,'gm-inventory-info');
+    info.append(make('strong',item.name||'Item'),make('small','Quantidade: '+(item.quantity??1)+(item.upgrades?.length?' · '+item.upgrades.length+' melhoria(s)':'')).cloneNode(true));
+    const actions=make('div',null,'gm-inventory-actions');
+    const edit=make('button','Editar','secondary');edit.type='button';edit.addEventListener('click',()=>openItemEditor(index));
+    const remove=make('button','Remover','secondary');remove.type='button';
+    remove.addEventListener('click',()=>{inventory.splice(index,1);drawInventory();message('Item removido da edição. Salve a ficha para confirmar.')});
+    actions.append(edit,remove);row.append(info,actions);section.append(row);
+   }
+   root.append(section);
+  }
  }
 
  function renderEnemyQuick(){

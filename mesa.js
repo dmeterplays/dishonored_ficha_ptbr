@@ -1,5 +1,5 @@
 import {db,getAuth} from './personagens-common.js';
-import {initMasterEditor} from './mesa-mestre.js?v=item-modal3';
+import {initMasterEditor} from './mesa-mestre.js?v=gm-roll-context4';
 import {renderOwnedGear} from './active-upgrade-ui.js?v=2';
 import {allActions} from './combat-actions.js?v=actions3';
 const $=id=>document.getElementById(id),roomId=new URLSearchParams(location.search).get('id');

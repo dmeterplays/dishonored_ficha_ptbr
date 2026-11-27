@@ -330,7 +330,16 @@ combatEditor=mountActionEditor({root:$('combat-actions-editor'),
 try{
  const {data:actionCatalog,error:actionError}=await db.from('dh_catalog')
   .select('id,category,name,rules,description').in('category',['item','power']).eq('published',true).limit(500);
- if(!actionError)combatEditor.setCatalog(actionCatalog||[]);
+ if(!actionError){
+  combatEditor.setCatalog(actionCatalog||[]);
+  const {data:purchaseList,error:purchaseError}=await db.from('dh_room_purchases')
+   .select('catalog_id').eq('character_id',character.id).limit(500);
+  if(!purchaseError){
+   const purchased=(actionCatalog||[]).filter(x=>(purchaseList||[]).some(p=>p.catalog_id===x.id));
+   combatEditor.setOwned({items:purchased.filter(x=>x.category==='item').map(x=>x.name),
+    powers:purchased.filter(x=>x.category==='power').map(x=>x.name)});
+  }
+ }
 }catch(error){console.warn('Catálogo de ações indisponível:',error)}
 await loadCatalogOverrides();
 }

@@ -90,6 +90,12 @@ function paintSheetStress(){
  const current=Math.max(0,Math.min(max,Number($('stress-now').value)||0));
  $('sheet-stress-value').textContent=current+' / '+max;
  $('sheet-stress-fill').style.width=(current/max*100)+'%';
+ const marks=$('sheet-stress-marks');
+ marks.replaceChildren();marks.style.gridTemplateColumns='repeat('+max+',minmax(0,1fr))';
+ for(let n=1;n<=max;n++){
+  const seg=el('span',null,'sheet-stress-mark'+(n<=current?' is-filled':''));
+  marks.append(seg);
+ }
  $('sheet-stress-track').setAttribute('aria-valuemax',String(max));
  $('sheet-stress-track').setAttribute('aria-valuenow',String(current));
  $('sheet-stress-less').disabled=current<=0;

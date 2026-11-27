@@ -576,7 +576,8 @@ function rollerView(){
   if([...select.options].some(o=>o.value===old))select.value=old;
  }
  const focus=$('roll-focus'),old=focus.value;focus.replaceChildren();option(focus,'','Sem foco');
- for(const item of focusOptions(sheet))option(focus,item.name,item.name+' ('+item.rank+')');
+ for(const item of context?.kind==='enemy'?[]:focusOptions(sheet))option(focus,item.name,item.name+' ('+item.rank+')');
+ focus.disabled=context?.kind==='enemy';
  if([...focus.options].some(o=>o.value===old))focus.value=old;
  paintQuickActions();
  paintCombatActions();
@@ -961,7 +962,8 @@ async function sendRoll(payload){
  const currentContext=gmRollContext();
  submit.disabled=true;repeat.disabled=true;
  try{
-  let functionName='dh_roll_room',args={...payload};
+  const {_actor:ignoredActor,...rollArgs}=payload;
+  let functionName='dh_roll_room',args={...rollArgs};
   if(currentContext){
    if(currentContext.kind==='player'){
     functionName='dh_room_gm_roll_character';

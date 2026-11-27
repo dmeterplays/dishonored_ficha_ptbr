@@ -384,3 +384,11 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
  #table-history>h2{margin-bottom:8px}
  #table-rolls>.subpanel{margin-top:0}
 }
+
+/* Alternância da dificuldade conhecida apenas pelo mestre durante a sessão. */
+.gm-difficulty-visibility{display:flex;align-items:center;gap:12px;cursor:pointer;margin:12px 0 8px;padding:11px 13px;border:1px solid #7c6e53;background:#1d302f;color:#ecd9af;min-height:52px}
+.gm-difficulty-visibility input[type="checkbox"]{width:22px;height:22px;min-width:22px;min-height:22px;accent-color:#cbb07a;margin:0;cursor:pointer}
+.gm-difficulty-visibility span{font-size:15px;line-height:1.4}
+#gm-difficulty-visibility-status{margin:5px 0 12px;font-size:13px}
+.roll-difficulty-readonly[data-hidden-difficulty="true"]{border-style:dashed}
+.roll-difficulty-readonly[data-hidden-difficulty="true"] strong{font-size:15px;color:#d1c5ad}

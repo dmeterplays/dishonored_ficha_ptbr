@@ -250,6 +250,27 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog,onSelect=()=>{}})
    paired(resources,put('gm-coins-direct','Moedas',working.coins??0,'number',1000000),put('gm-xp-direct','XP',working.xp??0,'number',1000000));
    paired(resources,put('gm-void','Pontos do Vazio',working.void_points??0,'number',20),put('gm-momentum','Momentum',working.momentum??0,'number',50));
   }
+  const stressSquares=make('div',null,'gm-stress-squares');stressSquares.id='gm-stress-squares';
+  const stressCaption=make('p','Clique em um segmento para definir o Estresse. O valor continua sincronizado com os campos acima e será salvo junto da ficha.','small');
+  resources.append(stressSquares,stressCaption);
+  const paintStressSquares=()=>{
+   const currentInput=$('gm-stress'),maximumInput=$('gm-stressmax');
+   const max=Math.min(40,Math.max(0,Number(maximumInput.value)||0));
+   const current=Math.min(max,Math.max(0,Number(currentInput.value)||0));
+   stressSquares.replaceChildren();
+   if(!max){stressSquares.append(make('span','Nenhum segmento de Estresse disponível.','small'));return}
+   for(let n=1;n<=max;n++){
+    const square=make('button',null,'gm-stress-square'+(n<=current?' is-filled':''));
+    square.type='button';square.title='Definir Estresse em '+n+' de '+max;
+    square.setAttribute('aria-label','Definir Estresse em '+n+' de '+max);
+    square.setAttribute('aria-pressed',String(n<=current));
+    square.addEventListener('click',()=>{
+     currentInput.value=String(n===current?n-1:n);paintStressSquares();
+    });stressSquares.append(square);
+   }
+  };
+  for(const id of ['gm-stress','gm-stressmax'])$(id).addEventListener('input',paintStressSquares);
+  paintStressSquares();
   root.append(resources);
   const stats=section('Perícias e estilos');
   for(const [title,key,names] of [['Perícias','skills',skills],['Estilos','styles',styles]]){

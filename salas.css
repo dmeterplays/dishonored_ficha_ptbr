@@ -420,3 +420,19 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{ou
 .resource-widget .stress-widget-header{margin-bottom:6px}
 .gm-shield-card>.resource-widget{margin:8px 0}
 @media(max-width:760px){.gm-resource-track{padding:10px}.gm-resource-track .stress-step{min-height:44px}}
+
+
+/* Rolagem independente dos painéis na mesa: expansões não deslocam as outras colunas. */
+@media (min-width:761px){
+ #table.table-layout.desktop-panels{align-items:stretch}
+ #table.table-layout.desktop-panels>.table-panel[data-desktop-hidden="false"]{
+  height:clamp(440px,calc(100dvh - 220px),1100px);
+  min-height:0;
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior-y:contain;
+  scrollbar-gutter:stable;
+ }
+ #table.table-layout.desktop-panels>.table-panel:focus-within{scrollbar-color:#a78c5c #172529}
+ #table-history .rolls{max-height:none;min-height:0;overflow:visible}
+}

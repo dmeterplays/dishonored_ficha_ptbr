@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101719">
+<title>Dishonored RPG | Portal da Campanha</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Crimson+Text:wght@400;600;700&display=swap');
+:root{color-scheme:dark;--bg:#101719;--panel:#1b2528;--panel2:#222f32;--line:#39494a;--gold:#cfb486;--ink:#e9e6dc;--muted:#a3b1b0;--red:#a84d43;--aqua:#6bafa7}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 72% -10%,#2a3a3a 0%,transparent 55%),linear-gradient(160deg,#101719,#151c20 70%);color:var(--ink);font-family:'Crimson Text',Georgia,serif;font-size:19px;min-height:100vh}
+button,input,textarea,select{font:inherit}button{cursor:pointer}a{color:inherit;text-decoration:none}.wrap{max-width:1180px;margin:auto;padding:0 22px}
+header{border-bottom:1px solid var(--line);background:#101719d9;position:sticky;top:0;z-index:5;backdrop-filter:blur(12px)}header .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:75px}.brand{font:700 18px 'Cinzel',serif;letter-spacing:.11em;color:var(--gold)}.brand small{display:block;color:var(--muted);letter-spacing:.19em;font-size:9px;margin-top:4px}nav{display:flex;gap:18px;flex-wrap:wrap;font-size:16px}nav a:hover{color:var(--gold)}
+.hero{padding:85px 0 62px;border-bottom:1px solid #334044;position:relative;overflow:hidden}.hero:after{content:'✦';position:absolute;right:10%;top:10px;font-size:300px;color:#81aaa9;opacity:.055;pointer-events:none}.eyebrow{text-transform:uppercase;letter-spacing:.29em;font:12px 'Cinzel',serif;color:var(--aqua)}h1,h2,h3{font-family:'Cinzel',serif;font-weight:600}h1{font-size:clamp(2.4rem,7vw,5.1rem);line-height:1.1;margin:17px 0 20px;max-width:810px;color:#f2e8d6}h1 em{font-style:normal;color:var(--gold)}p{color:var(--muted);line-height:1.55}.hero p{max-width:640px;font-size:22px}.actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;background:var(--gold);color:#111b1b;border:1px solid var(--gold);font:600 12px 'Cinzel',serif;letter-spacing:.05em;padding:13px 20px;text-transform:uppercase;min-height:43px}.btn.secondary{background:transparent;color:var(--gold)}.btn:hover{filter:brightness(1.13)}
+main{padding:45px 0 90px}.section-head{display:flex;align-items:baseline;justify-content:space-between;gap:15px;margin-bottom:18px}.section-head h2{font-size:1.5rem;margin:0;color:var(--gold)}.section-head span{color:var(--muted);font-size:15px}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.tile,.panel{background:linear-gradient(135deg,#202b2e,#172124);border:1px solid var(--line);padding:24px;position:relative}.tile{min-height:218px;display:flex;flex-direction:column}.tile:hover{border-color:#a58b60;transform:translateY(-2px);transition:.15s}.tile .symbol{color:var(--aqua);font-size:31px}.tile h3{color:#f2e2c5;margin:15px 0 5px;font-size:1rem}.tile p{font-size:16px;margin:0}.tile .go{margin-top:auto;padding-top:20px;color:var(--gold);font-size:15px}.tag{color:var(--aqua);font-size:12px;letter-spacing:.08em;text-transform:uppercase}
+.workspace{margin-top:46px;display:grid;grid-template-columns:1.4fr 1fr;gap:20px}.panel h2{margin:0 0 8px;font-size:20px;color:var(--gold)}.panel h3{font-size:15px;color:var(--gold);margin:23px 0 8px}.rule{border-top:1px solid var(--line);margin:18px 0}
+.counters{display:grid;grid-template-columns:1fr 1fr;gap:14px}.counter{border:1px solid var(--line);padding:18px;background:#152022}.counter .label{font:12px 'Cinzel',serif;color:var(--gold)}.counter .value{font:600 42px 'Cinzel',serif;text-align:center;margin:8px}.counter .controls{display:flex;justify-content:center;gap:10px}.smallbtn{background:#263438;border:1px solid #536264;color:var(--ink);width:36px;height:35px}.smallbtn:hover{background:#425458}
+label{display:block;color:var(--gold);font-size:14px;margin:14px 0 6px}input,textarea,select{background:#111b1e;border:1px solid #465558;color:var(--ink);width:100%;padding:10px;border-radius:0}textarea{min-height:120px;resize:vertical}.row{display:flex;gap:10px;align-items:center}.row>*{min-width:0}.row .grow{flex:1}.row .btn{white-space:nowrap}.truth{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line);padding:10px 0;overflow-wrap:anywhere}.truth button{background:none;color:#c78e87;border:0;font-size:16px}.hint{font-size:14px;color:var(--muted)}.track{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin:12px 0}.track button{height:32px;background:#182326;border:1px solid #64716c;color:#fff}.track button.on{background:var(--red);border-color:#d18470}
+.character-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:12px;margin-top:16px}.character-card{border:1px solid var(--line);background:#142023;padding:16px}.character-card h3{margin:0 0 6px;color:var(--gold);font-size:16px;overflow-wrap:anywhere}.character-card p{font-size:15px;margin:4px 0 12px}.character-card .actions{margin-top:10px;gap:7px}.character-card .btn{padding:9px 10px;min-height:38px}.character-card .remove{border:1px solid #72423d;color:#dda7a0;background:transparent}.empty-state{font-size:16px;color:var(--muted)}
+footer{border-top:1px solid var(--line);text-align:center;padding:24px;color:var(--muted);font-size:14px}
+@media(max-width:850px){.grid{grid-template-columns:1fr 1fr}.workspace{grid-template-columns:1fr}.hero{padding:58px 0 48px}}
+@media(max-width:560px){.grid,.counters{grid-template-columns:1fr}header .wrap{align-items:flex-start;flex-direction:column;padding-top:14px;padding-bottom:14px}nav{gap:14px}.hero p{font-size:19px}.row.stack{flex-direction:column;align-items:stretch}}
+</style>
+<link rel="stylesheet" href="./whalepunk-theme.css?v=contrast2"><link rel="stylesheet" href="./site-nav.css?v=menu-header-20261113c"></head>
+<body>
+<header><div class="wrap"><a href="./" class="brand">DISHONORED <small>ROLEPLAYING GAME • PT-BR</small></a><nav><a href="salas.html">Mesas online</a> <a href="fichas.html">Minhas fichas</a><a href="#recursos">Recursos</a><a href="salas.html">Entrar</a><a href="catalogo.html">Catálogo</a><a href="ficha_dishonored_ptbr.html">Ficha de personagem</a></nav></div><details class="dh-header-menu"><summary aria-label="Abrir ou fechar menu de navegação"><span aria-hidden="true">☰</span> Menu</summary><div class="dh-header-menu-links"><a href="./">Início</a><a href="salas.html">Campanhas</a><a href="fichas.html">Minhas fichas</a><a href="criar-personagem.html">Criar personagem</a><a href="catalogo.html">Catálogo</a><a href="campanha.html">Minha conta</a></div></details></header>
+<div class="hero"><div class="wrap"><div class="eyebrow">Império das Ilhas • Arquivo de campanha</div><h1>Suas escolhas <em>deixam marcas.</em></h1><p>Uma central para a sua campanha de Dishonored: personagens, rolagens, Verdades e o delicado equilíbrio entre Momentum e Caos.</p><div class="actions"><a class="btn" href="salas.html">Abrir minhas campanhas</a><a class="btn secondary" href="fichas.html">Meus personagens online</a><a class="btn secondary" href="criar-personagem.html">Criar personagem</a></div></div></div>
+<main class="wrap"><section id="personagens" class="character-section"><details class="legacy-import"><summary>Ferramenta antiga: importar ficha somente neste navegador</summary>
+<div class="section-head"><h2>Meus personagens</h2><span>Arquivos compatíveis com a ficha original</span></div>
+<div class="panel">
+ <div class="row stack" style="justify-content:space-between;flex-wrap:wrap"><div><h2>Importar ficha existente</h2><p class="hint">Selecione o arquivo .json exportado na ficha antiga. Você pode guardar vários personagens neste navegador.</p></div><button class="btn" id="import-character" type="button">⭱ Importar ficha</button></div>
+ <input id="character-file" type="file" accept=".json,application/json" multiple hidden aria-label="Selecionar fichas JSON">
+ <p id="character-status" class="hint" role="status" aria-live="polite"></p>
+ <div id="character-list" class="character-list"></div>
+ <p class="hint">Esta ferramenta é da versão antiga: as fichas aqui ficam apenas neste navegador. Para guardar personagens na conta e usá-los na mesa online, acesse Minhas fichas.</p>
+</div></details></section><section id="recursos" style="margin-top:45px"><div class="section-head"><h2>Arquivo da campanha</h2><span>Escolha para onde deseja ir</span></div><div class="grid"><a class="tile" href="fichas.html"><div class="symbol">◈</div><h3>Minhas fichas</h3><p>Galeria com fotos de personagens, fichas editáveis na conta e simulador de poderes e equipamentos.</p><span class="go">Abrir personagens →</span></a><a class="tile" href="campanha.html"><div class="symbol">⚖</div><h3>Campanha com login</h3><p>Seu perfil, acesso à campanha e informações da conta.</p><span class="go">Acessar →</span></a><a class="tile" href="catalogo.html"><div class="symbol">✧</div><h3>Catálogo e progressão</h3><p>Os 13 arquétipos, custos de XP, talentos, poderes e equipamentos.</p><span class="go">Consultar →</span></a></div></section>
+<section class="workspace" id="mesa"><div class="panel"><h2>Área de jogadores</h2><p>Importe seu personagem, veja o Momentum individual e solicite avanços de personagem.</p><a href="campanha.html" class="btn">Acessar área da campanha</a></div><div class="panel"><h2>Área do mestre</h2><p>Caos e informações privadas não são exibidos na página pública. O acesso depende de login e permissão de mestre no banco.</p><a href="campanha.html" class="btn secondary">Entrar como mestre</a></div></section></main>
+<footer>Projeto de fã para uso pessoal • Dishonored RPG 2d20 • A ficha original foi preservada</footer>
+<script>
+const CHARACTER_STORE='dishonored-personagens-v1';
+const ORIGINAL_SHEET_STORE='dishonored-ficha-v1';
+let characters=[];
+try{const found=JSON.parse(localStorage.getItem(CHARACTER_STORE)||'[]');if(Array.isArray(found))characters=found;}catch(e){}
+const charList=document.getElementById('character-list');
+const charStatus=document.getElementById('character-status');
+function isSheet(v){return v&&typeof v==='object'&&!Array.isArray(v)&&typeof v.nome==='string'&&Array.isArray(v.skills)&&v.skills.length>0&&v.skills.every(x=>x&&typeof x.label==='string'&&Number.isFinite(Number(x.value)))&&Array.isArray(v.styles)&&v.styles.length>0&&v.styles.every(x=>x&&typeof x.label==='string'&&Number.isFinite(Number(x.value)))&&(!('notas' in v)||(v.notas&&typeof v.notas==='object'&&!Array.isArray(v.notas)));}
+function saveCharacters(){localStorage.setItem(CHARACTER_STORE,JSON.stringify(characters));}
+function renderCharacters(){
+ charList.replaceChildren();
+ if(!characters.length){const p=document.createElement('p');p.className='empty-state';p.textContent='Nenhuma ficha importada ainda. Clique em “Importar ficha” para começar.';charList.appendChild(p);return;}
+ characters.forEach((character,i)=>{
+ const box=document.createElement('div');box.className='character-card';
+ const title=document.createElement('h3');title.textContent=character.data.nome.trim()||'Personagem sem nome';
+ const detail=document.createElement('p');detail.textContent='Arquétipo: '+(character.data.arquetipo||'Não informado');
+ const actions=document.createElement('div');actions.className='actions';
+ const open=document.createElement('button');open.className='btn';open.textContent='Abrir ficha';open.addEventListener('click',()=>openCharacter(i));
+ const exportBtn=document.createElement('button');exportBtn.className='btn secondary';exportBtn.textContent='Exportar';exportBtn.addEventListener('click',()=>{const blob=new Blob([JSON.stringify(character.data,null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='ficha_dishonored_'+(character.data.nome||'personagem').replace(/[^a-z0-9_-]/gi,'_')+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)});
+ const remove=document.createElement('button');remove.className='btn remove';remove.textContent='Remover';remove.addEventListener('click',()=>{if(!confirm('Remover esta cópia do portal? O arquivo original não será apagado.'))return;characters.splice(i,1);saveCharacters();renderCharacters()});
+ actions.append(open,exportBtn,remove);box.append(title,detail,actions);charList.appendChild(box);
+ });
+}
+function openCharacter(i){
+ const item=characters[i];if(!item)return;
+ // The original sheet reads a single localStorage key; preserve that sheet as
+ // a separate library entry before changing the active character.
+ let existing=null;try{existing=JSON.parse(localStorage.getItem(ORIGINAL_SHEET_STORE)||'null');}catch(e){}
+ if(isSheet(existing)){
+ const existingText=JSON.stringify(existing);
+ const targetText=JSON.stringify(item.data);
+ if(existingText!==targetText){
+ const currentName=existing.nome.trim()||'Personagem sem nome';
+ if(!confirm('A ficha atualmente aberta ('+currentName+') será substituída na tela. Uma cópia dela será guardada em Meus personagens antes de continuar. Deseja abrir '+(item.data.nome||'esta ficha')+'?'))return;
+ const backupId='auto-backup-'+Date.now()+'-'+Math.random().toString(36).slice(2);
+ characters.push({id:backupId,data:existing});
+ try{saveCharacters();}catch(err){alert('Sem espaço para salvar uma cópia de segurança. Exporte sua ficha atual antes de trocar.');return;}
+ }
+ }
+ try{localStorage.setItem(ORIGINAL_SHEET_STORE,JSON.stringify(item.data));window.location.href='ficha_dishonored_ptbr.html';}catch(err){alert('Não foi possível abrir a ficha. Verifique o armazenamento do navegador.');}
+}
+async function importCharacterFiles(files){
+ let ok=0;const failed=[];
+ for(const file of files){
+ try{
+ if(file.size>2*1024*1024)throw Error('arquivo muito grande');
+ const content=await file.text();const data=JSON.parse(content);
+ if(!isSheet(data))throw Error('formato incompatível');
+ const name=(data.nome||'').trim();
+ const same=characters.findIndex(x=>x.data.nome===data.nome&&JSON.stringify(x.data)===JSON.stringify(data));
+ if(same>=0){failed.push(file.name+' (cópia já importada)');continue;}
+ characters.push({id:'import-'+Date.now()+'-'+ok+'-'+Math.random().toString(36).slice(2),data});ok++;
+ }catch(err){failed.push(file.name+' ('+err.message+')');}
+ }
+ try{saveCharacters();renderCharacters();charStatus.textContent=ok+' ficha(s) importada(s).'+(failed.length?' Não importadas: '+failed.join('; '):'');}
+ catch(e){characters.splice(-ok,ok);charStatus.textContent='Não foi possível salvar no navegador. Verifique o espaço disponível.';}
+}
+const picker=document.getElementById('character-file');
+document.getElementById('import-character').addEventListener('click',()=>picker.click());
+
+picker.addEventListener('change',async()=>{if(picker.files.length)await importCharacterFiles([...picker.files]);picker.value='';});
+renderCharacters();
+
+</script>
+<script src="./site-nav.js?v=menu-header-20261113c" defer></script></body></html>

@@ -112,7 +112,15 @@ function renderMain(){
  $('stress-now').value=character.sheet.stressAtual??0;
  $('stress-max').value=character.sheet.stressMax??12;
  paintSheetStress();
- $('resources').textContent='XP: '+character.xp+' • Momentum: '+character.momentum+' • Vazio: '+character.void_points;
+ $('resources').textContent='XP: '+character.xp+' • Momentum: '+character.momentum+' • Vazio: '+character.void_points+' • Moedas: '+(character.coins??0);
+ const glance=$('mobile-player-summary');
+ if(glance){
+  glance.replaceChildren();
+  const data=[['Estresse',(character.sheet.stressAtual??0)+' / '+(character.sheet.stressMax??12)],['Momentum',character.momentum],['Vazio',character.void_points],['Moedas',character.coins??0]];
+  for(const [label,value] of data){
+   const card=el('div',null,'mobile-player-stat');card.append(el('small',label),el('strong',value));glance.append(card);
+  }
+ }
  updateHero();renderStats();renderNotes();renderPhoto(null);renderReadiness();
  if(character.portrait_path)portraitURL(character.portrait_path).then(renderPhoto);
  renderCatalog();

@@ -1,10 +1,11 @@
 import {db,el,cleanString,getAuth,validSheet,portraitURL,localJSON,placeholder} from './personagens-common.js';
 import {items,powers,bonecharms} from './catalogo-dados.js';
 import {initCharacterCollections} from './ficha-abas.js?v=focus-editor2';
+import {mountActionEditor} from './combat-actions.js?v=actions1';
 const $=id=>document.getElementById(id);
 const id=new URLSearchParams(location.search).get('id');
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-let user,character,activeKind='item',selected=null,dirty=false,saving=false,collections=null;
+let user,character,activeKind='item',selected=null,dirty=false,saving=false,collections=null,combatEditor=null;
 const noteKeys=[['nota-contatos','Contatos'],['nota-focos','Focos'],['nota-talentos','Talentos'],['nota-pertences','Pertences'],['nota-poderes','Poderes'],['nota-gerais','Notas gerais']];
 function status(text,bad=false){$('status').textContent=text;$('status').className=bad?'error':'status'}
 function formInput(parent,id,label,value,type='text'){
@@ -147,6 +148,7 @@ function gather(){
  data.notas={...(character.sheet.notas||{})};
  for(const [key] of noteKeys)if($(key))data.notas[key]=$(key).value;
  if(collections){data.catalogSelections=collections.getSelection();data.focuses=collections.getFocuses();}
+ if(combatEditor)data.combatActions=combatEditor.getActions();
  return data;
 }
 function ready(data){return !!(data.nome?.trim()&&data.arquetipo?.trim()&&data.verdade1?.trim()&&data.verdade2?.trim()&&data.background?.trim());}
@@ -309,6 +311,14 @@ async function init(){
  const {data,error}=await db.from('dh_characters').select('id,name,owner_id,archetype,xp,coins,momentum,void_points,sheet,portrait_path,creation_status,progression_locked').eq('id',id).eq('owner_id',user.id).single();
  if(error||!data){status('Esta ficha não foi encontrada na sua conta.',true);return}
  character=data;if(!validSheet(character.sheet)){status('Os dados desta ficha estão incompletos; reimporte o JSON original.',true);return}
- renderMain();collections=initCharacterCollections({db,sheet:character.sheet,onChange:setDirty});await loadCatalogOverrides();
+ renderMain();collections=initCharacterCollections({db,sheet:character.sheet,onChange:setDirty});
+combatEditor=mountActionEditor({root:$('combat-actions-editor'),sheet:character.sheet,
+ onChange:setDirty,getFocuses:()=>collections?.getFocuses?.()||[]});
+try{
+ const {data:actionCatalog,error:actionError}=await db.from('dh_catalog')
+  .select('id,category,name,rules,description').in('category',['item','power']).eq('published',true).limit(500);
+ if(!actionError)combatEditor.setCatalog(actionCatalog||[]);
+}catch(error){console.warn('Catálogo de ações indisponível:',error)}
+await loadCatalogOverrides();
 }
 try{await init()}catch(e){status(e.message,true)}

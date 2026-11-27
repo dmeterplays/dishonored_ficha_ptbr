@@ -244,36 +244,45 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog,onSelect=()=>{}})
   paired(ident,put('gm-truth','Verdade / característica',sheet.verdade1||''),put('gm-truth2','Segunda Verdade',sheet.verdade2||''));
   const story=make('textarea');story.id='gm-background';story.value=sheet.background||'';const storyLabel=make('label','Histórico e observações');storyLabel.htmlFor=story.id;ident.append(storyLabel,story);root.append(ident);
   const resources=section('Estresse e recursos');
-  paired(resources,put('gm-stress','Estresse atual',sheet.stressAtual??0,'number',1000),put('gm-stressmax',npc&&['menor','incidental'].includes(working.tier)?'Trilha (0 = derrotado com ataque)':'Estresse máximo',sheet.stressMax??12,'number',1000));
-  if(npc){
-   paired(resources,put('gm-void','Pontos do Vazio',sheet.void??0,'number',20),put('gm-momentum','Momentum',sheet.momentum??0,'number',50));
-  }else{
-   paired(resources,put('gm-coins-direct','Moedas',working.coins??0,'number',1000000),put('gm-xp-direct','XP',working.xp??0,'number',1000000));
-   paired(resources,put('gm-void','Pontos do Vazio',working.void_points??0,'number',20),put('gm-momentum','Momentum',working.momentum??0,'number',50));
+  resources.append(make('p','Os máximos são configurados na ficha do personagem. Aqui você ajusta apenas os valores atuais.','small'));
+  const maxStress=Math.max(1,Number(sheet.stressMax)||12);
+  const maxVoid=Math.max(1,Number(sheet.voidMax)||Math.max(3,Number(working.void_points)||0));
+  const maxMomentum=Math.max(1,Number(sheet.momentumMax)||Math.max(6,Number(working.momentum)||0));
+  const resourceTracks=make('div',null,'gm-resource-tracks');
+  function editorTrack(id,label,current,maximum){
+   const wrap=make('div',null,'gm-resource-track');
+   const row=make('div',null,'stress-widget-header'),value=make('span',null,'stress-value');
+   row.append(make('strong',label),value);
+   const control=make('div',null,'stress-widget-row');
+   const less=make('button','−','secondary stress-step'),more=make('button','+','secondary stress-step');
+   less.type='button';more.type='button';
+   less.setAttribute('aria-label','Diminuir '+label);more.setAttribute('aria-label','Aumentar '+label);
+   const track=make('div',null,'stress-widget-track'),fill=make('span',null,'stress-widget-fill');
+   track.setAttribute('role','progressbar');track.setAttribute('aria-label',label);
+   track.setAttribute('aria-valuemin','0');track.setAttribute('aria-valuemax',String(maximum));
+   track.append(fill);control.append(less,track,more);wrap.append(row,control);
+   const hidden=make('input');hidden.type='hidden';hidden.id=id;wrap.append(hidden);
+   const redraw=(next)=>{
+    const number=Math.max(0,Math.min(maximum,Number(next)||0));
+    hidden.value=String(number);value.textContent=number+' / '+maximum;
+    fill.style.width=(maximum?100*number/maximum:0)+'%';
+    track.setAttribute('aria-valuenow',String(number));
+    less.disabled=number<=0;more.disabled=number>=maximum;
+   };
+   less.addEventListener('click',()=>redraw(Number(hidden.value)-1));
+   more.addEventListener('click',()=>redraw(Number(hidden.value)+1));
+   redraw(current);return wrap;
   }
-  const stressSquares=make('div',null,'gm-stress-squares');stressSquares.id='gm-stress-squares';
-  const stressCaption=make('p','Clique em um segmento para definir o Estresse. O valor continua sincronizado com os campos acima e será salvo junto da ficha.','small');
-  resources.append(stressSquares,stressCaption);
-  const paintStressSquares=()=>{
-   const currentInput=$('gm-stress'),maximumInput=$('gm-stressmax');
-   const max=Math.min(40,Math.max(0,Number(maximumInput.value)||0));
-   const current=Math.min(max,Math.max(0,Number(currentInput.value)||0));
-   stressSquares.replaceChildren();
-   if(!max){stressSquares.append(make('span','Nenhum segmento de Estresse disponível.','small'));return}
-   for(let n=1;n<=max;n++){
-    const square=make('button',null,'gm-stress-square'+(n<=current?' is-filled':''));
-    square.type='button';square.title='Definir Estresse em '+n+' de '+max;
-    square.setAttribute('aria-label','Definir Estresse em '+n+' de '+max);
-    square.setAttribute('aria-pressed',String(n<=current));
-    square.addEventListener('click',()=>{
-     currentInput.value=String(n===current?n-1:n);paintStressSquares();
-    });stressSquares.append(square);
-   }
-  };
-  // Os inputs precisam estar conectados ao DOM antes da leitura inicial.
+  resourceTracks.append(
+   editorTrack('gm-stress','Estresse',sheet.stressAtual??0,maxStress),
+   editorTrack('gm-void','Pontos do Vazio',working.void_points??0,maxVoid),
+   editorTrack('gm-momentum','Momentum',working.momentum??0,maxMomentum)
+  );
+  resources.append(resourceTracks);
+  paired(resources,put('gm-coins-direct','Moedas',working.coins??0,'number',1000000),
+   put('gm-xp-direct','XP',working.xp??0,'number',1000000));
+  const maxField=make('input');maxField.type='hidden';maxField.id='gm-stressmax';maxField.value=String(maxStress);resources.append(maxField);
   root.append(resources);
-  for(const id of ['gm-stress','gm-stressmax'])$(id).addEventListener('input',paintStressSquares);
-  paintStressSquares();
   const stats=section('Perícias e estilos');
   for(const [title,key,names] of [['Perícias','skills',skills],['Estilos','styles',styles]]){
    stats.append(make('h4',title));

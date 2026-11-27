@@ -240,7 +240,7 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog,onSelect=()=>{}})
    for(const {item,index} of group){
     const row=make('div',null,'gm-inventory-entry');
     const info=make('div',null,'gm-inventory-info');
-    info.append(make('strong',item.name||'Item'),make('small','Quantidade: '+(item.quantity??1)+(item.upgrades?.length?' · '+item.upgrades.length+' melhoria(s)':'')).cloneNode(true));
+    info.append(make('strong',item.name||'Item'),make('small','Quantidade: '+(item.quantity??1)+(item.upgrades?.length?' · '+item.upgrades.length+' melhoria(s)':'')));
     const actions=make('div',null,'gm-inventory-actions');
     const edit=make('button','Editar','secondary');edit.type='button';edit.addEventListener('click',()=>openItemEditor(index));
     const remove=make('button','Remover','secondary');remove.type='button';

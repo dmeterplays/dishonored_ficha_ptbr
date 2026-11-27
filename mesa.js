@@ -126,6 +126,22 @@ function setRepeatReady(){
 for(const button of document.querySelectorAll('[data-mobile-target]'))button.addEventListener('click',()=>mobileNavigate(button.dataset.mobileTarget));
 
 function option(select,value,label){const o=node('option',label);o.value=String(value);select.append(o)}
+function difficultyIsVisible(){
+ return gm()||room?.show_test_difficulty!==false;
+}
+function renderDifficultyVisibility(){
+ const visible=difficultyIsVisible();
+ const value=$('roll-difficulty-value');
+ value.textContent=visible?String(room?.test_difficulty??1):'Oculta';
+ const display=$('roll-difficulty-display');
+ display.querySelector('span').textContent=visible?'Dificuldade definida pelo mestre':'Dificuldade secreta (definida pelo mestre)';
+ display.dataset.hiddenDifficulty=String(!visible);
+ const checkbox=$('gm-difficulty-public');
+ checkbox.checked=room?.show_test_difficulty!==false;
+ $('gm-difficulty-visibility-status').textContent=checkbox.checked?
+   'Os jogadores conseguem consultar a dificuldade.':
+   'A dificuldade fica oculta para jogadores na rolagem e no histórico.';
+}
 function roomView(){
  $('room-name').textContent=room.name;
  $('room-code').textContent='Código: '+room.code;
@@ -133,7 +149,7 @@ function roomView(){
  $('shop-toggle').textContent=room.shop_open?'Fechar loja':'Abrir loja';
  $('adventure-number').textContent='Aventura '+room.adventure_number;
  $('chaos-current').textContent=String(room.chaos??0);
- $('roll-difficulty-value').textContent=String(room.test_difficulty??1);
+ renderDifficultyVisibility();
  $('gm-test-difficulty').value=String(room.test_difficulty??1);
  $('gm-dashboard').classList.toggle('hidden',!gm());
 
@@ -307,9 +323,10 @@ function diceView(rolls){
   const h=node('h4',actorName+' · '+(r.action_label&&r.action_label!=='Teste livre'?r.action_label+' · ':'')+r.skill+' + '+r.style);
   const vis=r.visibility==='public'?'Pública':r.visibility==='private'?'Privada':'Somente mestre';
   const date=new Date(r.created_at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
-  div.append(h,node('p',date+' · '+vis+' · Dificuldade '+r.difficulty));
+  div.append(h,node('p',date+' · '+vis+(difficultyIsVisible()?' · Dificuldade '+r.difficulty:' · Dificuldade oculta')));
   div.append(node('div',(r.rolls||[]).join(' · '),'dice'));
   const passed=r.successes>=r.difficulty;
+  // O servidor continua calculando os resultados; a dificuldade numérica não aparece ao jogador.
   div.append(node('p',r.successes+' sucesso(s) · '+r.complications+' complicação(ões) · '+(passed?'Sucesso':'Falha'),passed?'success':'fail'));
   div.append(node('p','Alvo: '+r.target+(r.focus?' · Foco: '+r.focus+' ('+r.focus_value+')':'')));
   root.append(div);
@@ -418,6 +435,23 @@ function openMasterArea(id){
 }
 for(const btn of document.querySelectorAll('[data-gm-target]'))btn.addEventListener('click',()=>openMasterArea(btn.dataset.gmTarget));
 $('gm-open-journal').addEventListener('click',()=>location.assign('diario.html?room='+encodeURIComponent(roomId)));
+$('gm-difficulty-public').addEventListener('change',async event=>{
+ if(!gm())return;
+ const checkbox=event.currentTarget,show=checkbox.checked;
+ checkbox.disabled=true;
+ const {error}=await db.rpc('dh_room_set_difficulty_visibility',{p_room:roomId,p_show:show});
+ checkbox.disabled=false;
+ if(error){
+  checkbox.checked=room?.show_test_difficulty!==false;
+  say('gm-msg','Falha ao alterar a visibilidade da dificuldade: '+error.message,true);
+  return;
+ }
+ room.show_test_difficulty=show;
+ renderDifficultyVisibility();
+ // Reaplica o filtro na lista já carregada e notifica a sala pela revisão da campanha.
+ await refreshRolls(true);
+ say('gm-msg',show?'Dificuldade visível para os jogadores.':'Dificuldade oculta para os jogadores.');
+});
 $('gm-save-difficulty').addEventListener('click',async()=>{
  if(!gm())return;
  const chosen=Number($('gm-test-difficulty').value);
@@ -426,7 +460,7 @@ $('gm-save-difficulty').addEventListener('click',async()=>{
  btn.disabled=false;
  if(error){say('gm-msg','Falha ao definir dificuldade: '+error.message,true);return}
  room.test_difficulty=chosen;
- $('roll-difficulty-value').textContent=String(chosen);
+ renderDifficultyVisibility();
  say('gm-msg','Dificuldade '+chosen+' aplicada a todos os testes da sala.');
 });
 
@@ -453,13 +487,13 @@ function requestRollRefresh(){
  if(rollRefreshTimer!==null)clearTimeout(rollRefreshTimer);
  rollRefreshTimer=setTimeout(()=>{rollRefreshTimer=null;if(document.visibilityState==='visible')refreshRolls();},120);
 }
-async function refreshRolls(){
+async function refreshRolls(force=false){
  const {data,error}=await db.from('dh_room_rolls')
   .select('id,user_id,character_id,enemy_id,actor_name,action_label,skill,style,focus,focus_value,difficulty,dice,rolls,target,successes,complications,visibility,created_at')
   .eq('room_id',roomId).order('created_at',{ascending:false}).limit(65);
  if(error){say('room-status','Erro ao buscar rolagens: '+error.message,true);connectionState('offline','Histórico indisponível');return}
  const next=fingerprint(data||[]);
- if(next===rollsSnapshot)return;
+ if(!force&&next===rollsSnapshot)return;
  rollsSnapshot=next;
  const root=$('rolls'),atTop=root.scrollTop<30;
  diceView(data||[]);
@@ -470,7 +504,7 @@ async function refresh({side=false}={}){
  busy=true;
  try{
   const [r,m,st,pu,enemyResponse]=await Promise.all([
-   db.from('dh_rooms').select('id,code,name,owner_id,shop_open,chaos,adventure_number,active,revision,test_difficulty').eq('id',roomId).single(),
+   db.from('dh_rooms').select('id,code,name,owner_id,shop_open,chaos,adventure_number,active,revision,test_difficulty,show_test_difficulty').eq('id',roomId).single(),
    db.rpc('dh_room_roster',{p_room:roomId}),
    db.from('dh_room_stock').select('catalog_id,available,quantity').eq('room_id',roomId),
    db.from('dh_room_purchases').select('id,room_id,character_id,catalog_id,amount,currency,created_at').eq('room_id',roomId).order('created_at',{ascending:false}).limit(200),
@@ -487,7 +521,7 @@ async function refresh({side=false}={}){
   room=r.data;roster=m.error?roster:m.data||[];stock=st.error?stock:st.data||[];
   purchases=pu.error?purchases:pu.data||[];enemies=enemyResponse.error?enemies:enemyResponse.data||[];
   mine=roster.find(x=>x.user_id===me.id)||null;
-  if(roomChanged)roomView();
+  if(roomChanged){roomView();if(rollsSnapshot)refreshRolls(true)}
   if(rosterChanged)rosterView();
   if(enemiesChanged)enemyView();
   if(stockChanged&&gm())stockView();

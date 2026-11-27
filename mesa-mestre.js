@@ -1,3 +1,4 @@
+import {mountActionEditor} from './combat-actions.js?v=actions1';
 // Painel de mestre: seleção de participantes e NPCs, edição salva por RPCs autorizadas no banco.
 const $=id=>document.getElementById(id);
 const make=(tag,text,cls)=>{const x=document.createElement(tag);if(text!==undefined&&text!==null)x.textContent=String(text);if(cls)x.className=cls;return x};
@@ -6,7 +7,7 @@ const tiers={incidental:'Incidental',menor:'Menor',notavel:'Notável',principal:
 const skills=['Lutar','Mover','Estudar','Sobreviver','Falar','Consertar'];
 const styles=['Ousadamente','Cuidadosamente','Habilmente','Forçosamente','Silenciosamente','Rapidamente'];
 export function initMasterEditor({db,roomId,onSaved,getCatalog,onSelect=()=>{}}){
- let selected=null,working=null,inventory=[],focusEntries=[],selectionEntries={power:[],talent:[]},saving=false;
+ let selected=null,working=null,inventory=[],focusEntries=[],selectionEntries={power:[],talent:[]},combatEditor=null,saving=false;
  const message=(text,bad=false)=>{$('gm-editor-status').textContent=text;$('gm-editor-status').className=bad?'error':'status'};
  const put=(id,label,value,type='text',max)=>{
   const box=make('div');const lab=make('label',label);lab.htmlFor=id;
@@ -23,7 +24,7 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog,onSelect=()=>{}})
  const section=(title)=>{const s=make('section',null,'gm-sheet-section');s.append(make('h3',title));return s};
  const paired=(root,...fields)=>{const grid=make('div',null,'form-grid');grid.append(...fields);root.append(grid);};
  function close(){
-  selected=null;working=null;inventory=[];focusEntries=[];selectionEntries={power:[],talent:[]};
+  selected=null;working=null;inventory=[];focusEntries=[];selectionEntries={power:[],talent:[]};combatEditor=null;
   $('gm-selected').classList.add('hidden');$('player-side').classList.remove('hidden');
   $('right-title').textContent='Minha ficha e ações';$('gm-editor').replaceChildren();message('');
   document.querySelectorAll('.player-card.gm-active').forEach(x=>x.classList.remove('gm-active'));
@@ -305,6 +306,13 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog,onSelect=()=>{}})
   extras.append(extraBody);abilities.append(extras);
   root.append(abilities);
   drawFocuses();drawOtherCategory('power');drawOtherCategory('talent');
+  const attackSection=section('Ataques e ações rápidas');
+  const attackEditorRoot=make('div');attackEditorRoot.id='gm-attack-editor';
+  attackSection.append(attackEditorRoot);root.append(attackSection);
+  combatEditor=mountActionEditor({root:attackEditorRoot,sheet:{...sheet,gmInventory:inventory,
+   catalogSelections:{...(sheet.catalogSelections||{}),power:selectionEntries.power}},
+   catalog:getCatalog(),onChange:()=>message('Ataques alterados. Clique em Salvar ficha para registrar.'),
+   getFocuses:()=>focusEntries.map(x=>({name:x.nome,rank:x.valor}))});
   const inventorySection=section('Itens e equipamentos');
   inventorySection.append(make('p',npc?'Equipamentos deste inimigo.':'Inventário oficial concedido pelo mestre — separado de itens apenas anotados para teste.','small'));
   const invRoot=make('div');invRoot.id='gm-inventory-list';inventorySection.append(invRoot);
@@ -381,6 +389,7 @@ export function initMasterEditor({db,roomId,onSaved,getCatalog,onSelect=()=>{}})
   }
   sheet.ataques=$('gm-attack-text').value;
   sheet.regrasEspeciais=$('gm-special-text').value;
+  if(!npc&&combatEditor)sheet.combatActions=combatEditor.getActions();
   // Anotações da ficha antiga permanecem intactas. O catálogo usa campos estruturados.
   if(npc){sheet.void=readNum('gm-void',0,20);sheet.momentum=readNum('gm-momentum',0,50);sheet.defeated_on_success=['menor','incidental'].includes($('gm-tier').value);}
   else{sheet.arquetipo=$('gm-archetype').value.trim();sheet.gmInventory=structuredClone(inventory);}
